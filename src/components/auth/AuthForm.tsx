@@ -106,6 +106,7 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
           text="Continue with Email"
           icon="mail-outline"
           iconColor="black"
+          href="/auth/createAccount"
         />
         {/* <AuthButton text="Sign In with Facebook" icon="logo-google" />
         <AuthButton text="Sign In with Google" icon="logo-facebook" /> */}
