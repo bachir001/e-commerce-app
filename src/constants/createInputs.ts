@@ -1,9 +1,19 @@
 import { KeyboardTypeOptions } from "react-native";
+export type KeyboardTypeOption =
+  | "default"
+  | "email-address"
+  | "numeric"
+  | "phone-pad"
+  | "number-pad"
+  | "decimal-pad"
+  | "url"
+  | "web-search"
+  | "visible-password";
 
 interface CreateInputs {
   placeholder: string;
   label: string;
-  keyboardType?: string | KeyboardTypeOptions;
+  keyboardType?: KeyboardTypeOptions;
   isPassword?: boolean;
 }
 

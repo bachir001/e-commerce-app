@@ -37,6 +37,10 @@ export default function RootLayout() {
           screenOptions={{ headerShown: false, animation: "fade_from_bottom" }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="auth/signInAccount"
+            options={{ headerShown: true, title: "Sign In" }}
+          />
         </Stack>
       </SessionContext.Provider>
       <Toast />
