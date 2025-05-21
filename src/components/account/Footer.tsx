@@ -1,5 +1,11 @@
 // components/Footer.tsx
-import { View, Text, TouchableOpacity, Linking } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Linking,
+  StyleSheet,
+} from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import type { ComponentProps } from "react";
 
@@ -20,13 +26,10 @@ export default function Footer({
   version: string;
 }) {
   return (
-    <View className="items-center mb-6">
-      <View className="flex-row space-x-6 mb-2">
+    <View className="flex flex-col items-center bg-white mt-2 pt-20 h-full">
+      <View className="flex flex-row justify-around mb-2 w-full">
         {socials.map((s) => (
-          <TouchableOpacity
-            key={s.icon}
-            onPress={() => Linking.openURL(s.url)}
-          >
+          <TouchableOpacity key={s.icon} onPress={() => Linking.openURL(s.url)}>
             <FontAwesome5
               name={s.icon}
               size={24}
@@ -35,7 +38,7 @@ export default function Footer({
           </TouchableOpacity>
         ))}
       </View>
-      <Text className="text-sm text-gray-500">Version. {version}</Text>
+      <Text className="text-sm text-gray-500 mt-5">Version. {version}</Text>
     </View>
   );
 }

@@ -1,6 +1,5 @@
 // src/app/tabs/cart.tsx
-
-import React, { useEffect, useState, useCallback, memo } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   SafeAreaView,
   View,
@@ -16,9 +15,30 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
 import { useCartStore, CartItem } from '@/store/cartStore';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { MaterialIcons } from '@expo/vector-icons';
 import { getOrCreateSessionId } from '@/lib/session';
+
+// -----------------------
+// Best‑Sellers API types
+// -----------------------
+interface BestSellerRaw {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+  product_image?: string;
+}
+
+interface BestSellersApiResponse {
+  status: boolean;
+  message: string;
+  data: {
+    total_results: number;
+    results: BestSellerRaw[];
+  };
+  code: number;
+}
 
 interface BestSellerItem {
   id: string;
@@ -27,99 +47,164 @@ interface BestSellerItem {
   imageUrl: string;
 }
 
+// -----------------------
+// Cart Screen Component
+// -----------------------
 export default function CartScreen(): React.ReactElement {
+  // 1. Theme setup
   const router = useRouter();
-  const colorScheme = useColorScheme() === 'dark' ? 'dark' : 'light';
+  const rawColorScheme = useColorScheme();
+  const colorScheme: 'light' | 'dark' = rawColorScheme === 'dark' ? 'dark' : 'light';
   const styles = createStyles(colorScheme);
 
-  // Cart state & actions
-  const cartItems = useCartStore(s => s.items);
-  const cartError = useCartStore(s => s.error);
-  const fetchCart = useCartStore(s => s.fetchCart);
-  const addToCart = useCartStore(s => s.addToCart);
+  // 2. Zustand state & actions
+  const cartItems = useCartStore((s) => s.items);
+  const isCartLoading = useCartStore((s) => s.loading);
+  const cartErrorMessage = useCartStore((s) => s.error);
+  const fetchCart = useCartStore((s) => s.fetchCart);
+  const addToCart = useCartStore((s) => s.addToCart);
 
-  // Per-item updating set
-  const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
+  // 3. Fetch cart on mount
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
 
-  // Best-sellers
-  const [bestSellers, setBestSellers] = useState<BestSellerItem[]>([]);
-  const [isBestLoading, setBestLoading] = useState(false);
-  const [bestError, setBestError] = useState<string | null>(null);
+  // 4. Best‑sellers state (only when cart is empty)
+  const [bestSellerItems, setBestSellerItems] = useState<BestSellerItem[]>([]);
+  const [isBestSellersLoading, setIsBestSellersLoading] = useState(false);
+  const [bestSellersErrorMessage, setBestSellersErrorMessage] = useState<string | null>(null);
 
-  // Initial fetch
-  useEffect(() => { fetchCart(); }, [fetchCart]);
-
-  // Load best sellers only if cart is empty
   useEffect(() => {
     if (cartItems.length === 0) {
-      setBestLoading(true);
-      setBestError(null);
+      setIsBestSellersLoading(true);
+      setBestSellersErrorMessage(null);
+
       axios
-        .get('https://api-gocami-test.gocami.com/api/best-sellers?page=1&per_page=20')
-        .then(res => {
-          if (!res.data.status) throw new Error(res.data.message);
-          const mapped: BestSellerItem[] = res.data.data.results.map((r: any) => ({
-            id: String(r.id),
-            name: r.name,
-            price: r.price,
-            imageUrl: r.product_image ?? r.image,
+        .get<BestSellersApiResponse>(
+          'https://api-gocami-test.gocami.com/api/best-sellers?page=1&per_page=20'
+        )
+        .then((response) => {
+          if (!response.data.status) {
+            throw new Error(response.data.message || 'Failed to load best sellers');
+          }
+          const mapped = response.data.data.results.map((raw) => ({
+            id: raw.id.toString(),
+            name: raw.name,
+            price: raw.price,
+            imageUrl: raw.product_image ?? raw.image,
           }));
-          setBestSellers(mapped);
+          setBestSellerItems(mapped);
         })
-        .catch(err => setBestError(err.message || 'Unknown error'))
-        .finally(() => setBestLoading(false));
+        .catch((err) => {
+          setBestSellersErrorMessage(err instanceof Error ? err.message : 'Unknown error');
+        })
+        .finally(() => {
+          setIsBestSellersLoading(false);
+        });
     }
   }, [cartItems]);
 
-  // Helper to wrap any cart-update action
-  const performUpdate = useCallback(
-    async (itemId: string, action: () => Promise<void>) => {
-      setUpdatingItems(prev => new Set(prev).add(itemId));
-      try {
-        await action();
-        await fetchCart();
-      } finally {
-        setUpdatingItems(prev => {
-          const next = new Set(prev);
-          next.delete(itemId);
-          return next;
-        });
-      }
-    },
-    [fetchCart]
-  );
 
-  const handleRemove = useCallback(
-    (id: string) =>
-      performUpdate(id, async () => {
-        const sessionId = await getOrCreateSessionId();
-        const form = new FormData();
-        form.append('cart_item_id', id);
-        form.append('_method', 'DELETE');
-        await axios.post('https://api-gocami-test.gocami.com/api/cart/remove', form, {
-          headers: { 'Content-Type': 'multipart/form-data', 'x-session': sessionId }
-        });
-      }),
-    [performUpdate]
-  );
+  // 5. Remove handler
+  const handleRemove = async (cartItemId: string) => {    
+    try {
+      const sessionId = await getOrCreateSessionId();
+      const formData = new FormData();
+      formData.append('cart_item_id', cartItemId);
+      formData.append('_method', 'DELETE'); // Add _method to body
 
-  const changeQuantity = useCallback(
-    (item: CartItem, delta: number) =>
-      performUpdate(item.id, () =>
-        addToCart(item.productId, Math.abs(delta), delta > 0 ? 'increase' : 'decrease')
-      ),
-    [addToCart, performUpdate]
-  );
+      const remove = await axios.post(
+        'https://api-gocami-test.gocami.com/api/cart/remove', // Remove ?_method=DELETE from URL
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'x-session': sessionId, // Correct header key
+          },
+        }
+      );
+      
+      await fetchCart();
+    } catch (err) {
+      console.error('Error removing item:', err);
+    }
+  };
 
 
-  if (cartError) {
+  // 6. Render one cart row
+  function renderCartRow({ item }: { item: CartItem }) {
+    
     return (
-      <View style={styles.centeredContainer}>
-        <Text style={styles.errorText}>Error: {cartError}</Text>
+      <View style={styles.cartItemContainer}>
+        <Image source={{ uri: (item as any).imageUrl }} style={styles.productImage} />
+        <View style={styles.details}>
+          <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+          <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
+        </View>
+        <View style={styles.quantityContainer}>
+          
+          <Pressable
+              onPress={() =>
+                item.quantity > 1
+                  ? addToCart(item.productId, 1, 'decrease')
+                  : handleRemove(item.id)
+              }
+              disabled={item.quantity <= 1 || isCartLoading}
+            >
+                <Text
+                  style={[
+                    styles.qtyButton,
+                    (item.quantity <= 1 || isCartLoading) && styles.qtyButtonDisabled,
+                  ]}
+                >
+                  –
+                </Text>
+          </Pressable>
+
+          {isCartLoading ? (
+            <ActivityIndicator style={{ width: 24, marginHorizontal: 4 }} />
+                ) : (
+            <Text style={styles.qtyText}>{item.quantity}</Text>
+              )}
+          <Pressable onPress={() => addToCart(item.productId,  1,'increase')}>
+            <Text style={styles.qtyButton}>+</Text>
+          </Pressable>
+        </View>
+        <Pressable onPress={() => handleRemove(item.id)}>
+          <MaterialIcons name="delete-outline" size={24} color="#E53935" />
+        </Pressable>
       </View>
     );
   }
-  
+
+  // 7. Render one best‑seller card
+  function renderBestSellerCard({ item }: { item: BestSellerItem }) {
+    return (
+      <View style={styles.bestSellerCard}>
+        <Image source={{ uri: item.imageUrl }} style={styles.bestSellerImage} />
+        <Text style={styles.bestSellerName} numberOfLines={1}>{item.name}</Text>
+        <Text style={styles.bestSellerPrice}>${item.price.toFixed(2)}</Text>
+        <Pressable style={styles.bestSellerButton} onPress={() => addToCart(item.id, 1)}>
+          <Text style={styles.bestSellerButtonText}>Add to Cart</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  // 8. Compute total cost
+  const totalCartCost = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+  // 9. Loading / error states
+
+  if (cartErrorMessage) {
+    return (
+      <View style={styles.centeredContainer}>
+        <Text style={styles.errorText}>Error: {cartErrorMessage}</Text>
+      </View>
+    );
+  }
+
+  // 10. Empty cart view
   if (cartItems.length === 0) {
     return (
       <SafeAreaView style={styles.mainContainer}>
@@ -131,62 +216,45 @@ export default function CartScreen(): React.ReactElement {
           />
           <Text style={styles.emptyBasketText}>Your cart is empty</Text>
         </View>
+
+        <View>
+
         <Text style={styles.sectionTitle}>Check These Products</Text>
-        {isBestLoading && <ActivityIndicator />}
-        {bestError && <Text style={styles.errorText}>Error: {bestError}</Text>}
-        {!isBestLoading && !bestError && (
+        {isBestSellersLoading && <ActivityIndicator />}
+        {bestSellersErrorMessage && (
+          <Text style={styles.errorText}>Error: {bestSellersErrorMessage}</Text>
+        )}
+        {!isBestSellersLoading && !bestSellersErrorMessage && (
           <FlatList
-            data={bestSellers}
+            data={bestSellerItems}
             horizontal
             showsHorizontalScrollIndicator={false}
-            keyExtractor={item => item.id}
-            renderItem={({ item }) => (
-              <BestSellerCard
-                item={item}
-                onAdd={() =>
-                  changeQuantity(
-                    { id: item.id, productId: item.id, name: item.name, price: item.price, quantity: 0, imageUrl: item.imageUrl },
-                    +1
-                  )
-                }
-              />
-            )}
+            keyExtractor={(item) => item.id}
+            renderItem={renderBestSellerCard}
             contentContainerStyle={styles.bestSellersListContainer}
-            extraData={updatingItems}
           />
         )}
+
+        </View>
+
       </SafeAreaView>
     );
   }
 
-  // Calculate total
-  const total = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
-
+  // 11. Populated cart view
   return (
     <SafeAreaView style={styles.mainContainer}>
       <FlatList
         data={cartItems}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <CartItemRow
-            item={item}
-            isUpdating={updatingItems.has(item.id)}
-            onDecrease={() =>
-              item.quantity > 1
-                ? changeQuantity(item, -1)
-                : handleRemove(item.id)
-            }
-            onIncrease={() => changeQuantity(item, +1)}
-            onRemove={() => handleRemove(item.id)}
-          />
-        )}
+        keyExtractor={(item) => item.id}
+        renderItem={renderCartRow}
         ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
         ListHeaderComponent={<Text style={styles.cartTitle}>Your Cart</Text>}
         ListFooterComponent={
           <View style={styles.footer}>
             <View style={styles.footerRow}>
               <Text style={styles.footerLabel}>Subtotal</Text>
-              <Text style={styles.footerValue}>${total.toFixed(2)}</Text>
+              <Text style={styles.footerValue}>${totalCartCost.toFixed(2)}</Text>
             </View>
             <View style={styles.footerRow}>
               <Text style={styles.footerLabel}>Shipping</Text>
@@ -195,109 +263,38 @@ export default function CartScreen(): React.ReactElement {
             <View style={styles.divider} />
             <View style={styles.footerRow}>
               <Text style={[styles.footerLabel, styles.totalLabel]}>Total</Text>
-              <Text style={[styles.footerValue, styles.totalValue]}>${total.toFixed(2)}</Text>
+              <Text style={[styles.footerValue, styles.totalValue]}>
+                ${totalCartCost.toFixed(2)}
+              </Text>
             </View>
+
             <Pressable
-              style={styles.checkoutButton}
-              onPress={() => router.push('/cart/checkout')}
-            >
-              <Text style={styles.checkoutText}>Proceed to Checkout</Text>
+                style={styles.checkoutButton}
+                onPress={() => router.push('/cart/checkout')}>
+                <Text style={styles.checkoutText}>Proceed to Checkout</Text>
             </Pressable>
+            
           </View>
         }
-        extraData={updatingItems}
       />
     </SafeAreaView>
   );
 }
 
-// --- Subcomponents ---
-
-const CartItemRow = memo(function CartItemRow({
-  item,
-  isUpdating,
-  onDecrease,
-  onIncrease,
-  onRemove,
-}: {
-  item: CartItem;
-  isUpdating: boolean;
-  onDecrease: () => void;
-  onIncrease: () => void;
-  onRemove: () => void;
-}) {
-  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
-  const styles = createStyles(scheme);
-
-  return (
-    <View style={styles.cartItemContainer}>
-      <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
-      <View style={styles.details}>
-        <Text style={styles.productName} numberOfLines={2}>
-          {item.name}
-        </Text>
-        <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
-      </View>
-
-      <View style={styles.quantityContainer}>
-        <Pressable onPress={onDecrease} disabled={isUpdating} style={styles.qtyPressable}>
-          <Text style={styles.qtyButton}>–</Text>
-        </Pressable>
-
-        {isUpdating ? (
-          <ActivityIndicator size="small" style={styles.qtySpinner} />
-        ) : (
-          <Text style={styles.qtyText}>{item.quantity}</Text>
-        )}
-
-        <Pressable onPress={onIncrease} disabled={isUpdating} style={styles.qtyPressable}>
-          <Text style={styles.qtyButton}>+</Text>
-        </Pressable>
-      </View>
-
-      <Pressable onPress={onRemove} disabled={isUpdating} style={styles.removePressable}>
-        <MaterialIcons name="delete-outline" size={24} color="#E53935" />
-      </Pressable>
-    </View>
-  );
-});
-
-const BestSellerCard = memo(function BestSellerCard({
-  item,
-  onAdd,
-}: {
-  item: BestSellerItem;
-  onAdd: () => void;
-}) {
-  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
-  const styles = createStyles(scheme);
-
-  return (
-    <View style={styles.bestSellerCard}>
-      <Image source={{ uri: item.imageUrl }} style={styles.bestSellerImage} />
-      <Text style={styles.bestSellerName} numberOfLines={1}>
-        {item.name}
-      </Text>
-      <Text style={styles.bestSellerPrice}>${item.price.toFixed(2)}</Text>
-      <Pressable style={styles.bestSellerButton} onPress={onAdd}>
-        <Text style={styles.bestSellerButtonText}>Add to Cart</Text>
-      </Pressable>
-    </View>
-  );
-});
-
-// --- Styles (unchanged) ---
 const BRAND = '#5E3EBD';
 const screenWidth = Dimensions.get('window').width;
 
 export function createStyles(colorScheme: 'light' | 'dark') {
-  const bg = Colors[colorScheme].background;
-  const text = Colors[colorScheme].text;
+  const backgroundColor = Colors[colorScheme].background;
+  const textColor = Colors[colorScheme].text;
 
   return StyleSheet.create({
+    qtyButtonDisabled: {
+      color: '#CCC',
+    },
     mainContainer: {
       flex: 1,
-      backgroundColor: bg,
+      backgroundColor,
       paddingTop: 16,
     },
     centeredContainer: {
@@ -305,19 +302,19 @@ export function createStyles(colorScheme: 'light' | 'dark') {
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: 24,
-      backgroundColor: bg,
+      backgroundColor,
     },
     cartTitle: {
       fontSize: 24,
       fontWeight: 'bold',
-      color: text,
+      color: textColor,
       margin: 16,
     },
     cartItemContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       padding: 12,
-      backgroundColor: bg,
+      backgroundColor,
     },
     productImage: {
       width: 60,
@@ -331,7 +328,7 @@ export function createStyles(colorScheme: 'light' | 'dark') {
     productName: {
       fontSize: 16,
       fontWeight: '500',
-      color: text,
+      color: textColor,
       marginBottom: 4,
     },
     productPrice: {
@@ -348,28 +345,17 @@ export function createStyles(colorScheme: 'light' | 'dark') {
       paddingHorizontal: 8,
       marginRight: 12,
     },
-
-    qtyPressable: {
-      padding: 4,
-    },
     qtyButton: {
       fontSize: 18,
       width: 24,
       textAlign: 'center',
-      color: text,
+      color: textColor,
     },
     qtyText: {
       fontSize: 16,
       width: 24,
       textAlign: 'center',
-      color: text,
-    },
-    qtySpinner: {
-      width: 24,
-      height: 24,
-    },
-    removePressable: {
-      padding: 8,
+      color: textColor,
     },
     itemSeparator: {
       height: 1,
@@ -377,7 +363,7 @@ export function createStyles(colorScheme: 'light' | 'dark') {
     },
     footer: {
       padding: 16,
-      backgroundColor: bg,
+      backgroundColor,
     },
     footerRow: {
       flexDirection: 'row',
@@ -386,11 +372,11 @@ export function createStyles(colorScheme: 'light' | 'dark') {
     },
     footerLabel: {
       fontSize: 16,
-      color: text,
+      color: textColor,
     },
     footerValue: {
       fontSize: 16,
-      color: text,
+      color: textColor,
     },
     divider: {
       height: 1,
@@ -416,6 +402,7 @@ export function createStyles(colorScheme: 'light' | 'dark') {
       fontSize: 16,
       fontWeight: '600',
     },
+    // Empty state
     emptyBasketImage: {
       width: screenWidth * 0.6,
       height: screenWidth * 0.6,
@@ -423,13 +410,13 @@ export function createStyles(colorScheme: 'light' | 'dark') {
     },
     emptyBasketText: {
       fontSize: 20,
-      color: text,
+      color: textColor,
       marginBottom: 0,
     },
     sectionTitle: {
       fontSize: 22,
       fontWeight: '600',
-      color: text,
+      color: textColor,
       marginLeft: 16,
       marginBottom: 12,
     },
@@ -438,7 +425,7 @@ export function createStyles(colorScheme: 'light' | 'dark') {
     },
     bestSellerCard: {
       width: 140,
-      backgroundColor: bg,
+      backgroundColor,
       borderRadius: 8,
       marginRight: 12,
       padding: 8,
@@ -452,13 +439,13 @@ export function createStyles(colorScheme: 'light' | 'dark') {
     bestSellerName: {
       fontSize: 14,
       fontWeight: '500',
-      color: text,
+      color: textColor,
       marginBottom: 4,
     },
     bestSellerPrice: {
       fontSize: 16,
       fontWeight: '600',
-      color: text,
+      color: textColor,
       marginBottom: 8,
     },
     bestSellerButton: {
@@ -467,7 +454,7 @@ export function createStyles(colorScheme: 'light' | 'dark') {
       paddingVertical: 6,
     },
     bestSellerButtonText: {
-      color: '#FFF',
+      color: '#FFFFFF',
       textAlign: 'center',
       fontSize: 14,
       fontWeight: '600',
