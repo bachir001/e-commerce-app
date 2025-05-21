@@ -48,20 +48,3 @@ const IconGrid: React.FC<IconGridProps> = React.memo(({ items }) => {
 });
 
 export default IconGrid;
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     marginBottom: 16, // was mb-4
-//   },
-//   button: {
-//     flex: 1,
-//     alignItems: 'center',
-//   },
-//   label: {
-//     marginTop: 4,    // was mt-1
-//     fontSize: 16,    // was text-base
-//     color: '#333',
-//   },
-// });

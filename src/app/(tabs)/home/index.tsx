@@ -1,24 +1,25 @@
-import React, { useMemo } from 'react';
-import { StyleSheet } from 'react-native';
-import { ParallaxFlatList } from '@/components/common/ParallaxFlatList';
-import { HeaderView } from '@/components/common/HeaderView';
-import { ThemedView } from '@/components/common/ThemedView';
-import { ThemedText } from '@/components/common/ThemedText';
-import { IconSymbol } from '@/components/common/IconSymbol';
-import ProductsList from '@/components/ProductList';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
+import React, { useMemo } from "react";
+import { StyleSheet } from "react-native";
+import { ParallaxFlatList } from "@/components/common/ParallaxFlatList";
+import { HeaderView } from "@/components/common/HeaderView";
+import { ThemedView } from "@/components/common/ThemedView";
+import { ThemedText } from "@/components/common/ThemedText";
+import { IconSymbol } from "@/components/common/IconSymbol";
+import ProductsList from "@/components/ProductList";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
   const rawScheme = useColorScheme();
-  const scheme = rawScheme === 'dark' ? 'dark' : 'light';
+  const scheme = rawScheme === "dark" ? "dark" : "light";
   const colors = Colors[scheme];
 
   const sections = useMemo(
     () => [
-      { key: 'header', element: <HeaderView /> },
+      { key: "header", element: <HeaderView /> },
       {
-        key: 'title',
+        key: "title",
         element: (
           <ThemedView style={styles.titleContainer}>
             <ThemedText type="title" style={styles.titleText}>
@@ -27,33 +28,35 @@ export default function HomeScreen() {
           </ThemedView>
         ),
       },
-      { key: 'products', element: <ProductsList /> },
+      { key: "products", element: <ProductsList /> },
     ],
     []
   );
 
   return (
-    <ParallaxFlatList<typeof sections[0]>
-      data={sections}
-      renderItem={({ item }) => item.element}
-      keyExtractor={(item) => item.key}
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="sparkles"
-          style={styles.headerImage}
-        />
-      }
-      contentContainerStyle={styles.contentContainer}
-    />
+    <SafeAreaView className="flex-1">
+      <ParallaxFlatList<(typeof sections)[0]>
+        data={sections}
+        renderItem={({ item }) => item.element}
+        keyExtractor={(item) => item.key}
+        headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
+        headerImage={
+          <IconSymbol
+            size={310}
+            color="#808080"
+            name="sparkles"
+            style={styles.headerImage}
+          />
+        }
+        contentContainerStyle={styles.contentContainer}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   headerImage: {
-    position: 'absolute',
+    position: "absolute",
     bottom: -90,
     left: -35,
   },

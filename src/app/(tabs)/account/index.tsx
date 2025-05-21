@@ -30,19 +30,18 @@ export default function AccountScreen() {
     []
   );
 
-  // Handlers for grid actions
-  const handleSignIn = useCallback(() => {
-    // TODO: navigate to Sign In screen
-  }, []);
-
-  const handleSignUp = useCallback(() => {
-    // TODO: navigate to Sign Up screen
-  }, []);
-
   const contactItems: IconGridItem[] = useMemo(
     () => [
-      { icon: "user", label: "Sign in", onPress: handleSignIn },
-      { icon: "user-plus", label: "Sign up", onPress: handleSignUp },
+      {
+        icon: "user",
+        label: "Sign in",
+        onPress: () => router.push("/auth/signIn"),
+      },
+      {
+        icon: "user-plus",
+        label: "Sign up",
+        onPress: () => router.push("/auth/signUp"),
+      },
       {
         icon: "phone",
         label: "Contact",
@@ -51,7 +50,7 @@ export default function AccountScreen() {
         },
       },
     ],
-    [handleSignIn, handleSignUp]
+    [router]
   );
 
   const helpItems: IconGridItem[] = useMemo(
