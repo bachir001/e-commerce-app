@@ -8,7 +8,7 @@ import {
   Pressable,
   StyleSheet,
   Dimensions,
-  Image
+  Image,
 } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
@@ -21,31 +21,24 @@ export default function CheckoutScreen() {
   const scheme: 'light' | 'dark' = rawScheme === 'dark' ? 'dark' : 'light';
   const styles = createStyles(scheme);
 
-  const cartItems = useCartStore(s => s.items);
-  const fetchCart = useCartStore(s => s.fetchCart);
+  const cartItems = useCartStore((s) => s.items);
+  const fetchCart = useCartStore((s) => s.fetchCart);
 
   // Compute totals
   const subtotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const quantity = cartItems.reduce((sum, i) => sum + i.quantity, 0);
 
-
   // Refresh cart when leaving this screen
-  useEffect(() => {
-    return () => {
-      fetchCart();
-    };
-  }, [fetchCart]);
+  useEffect(() => () => { fetchCart(); }, [fetchCart]);
 
   function renderRow({ item }: { item: CartItem }) {
-    
     return (
       <View style={styles.row}>
         <View style={styles.rowLeft}>
-        <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.sku}>SKU: {item.productId}</Text>
-          </View>
+          <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
+          <Text style={styles.name} numberOfLines={1}>
+            {item.name}
+          </Text>
         </View>
         <Text style={styles.price}>
           ${(item.price * item.quantity).toFixed(2)}
@@ -56,48 +49,59 @@ export default function CheckoutScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.header}>Checkout</Text>
+      <FlatList
+        data={cartItems}
+        keyExtractor={(i) => i.id}
+        renderItem={renderRow}
+        ItemSeparatorComponent={() => <View style={styles.divider} />}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Order Summary</Text>
-        <FlatList
-          data={cartItems}
-          keyExtractor={i => i.id}
-          renderItem={renderRow}
-          ItemSeparatorComponent={() => <View style={styles.divider} />}
-        />
-      </View>
+        // Header: Checkout title + Order Summary card
+        ListHeaderComponent={() => (
+          <>
+            <Text style={styles.header}>Checkout</Text>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Order Summary</Text>
+            </View>
+          </>
+        )}
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Cart Totals</Text>
-        <View style={styles.totalsRow}>
-          <Text style={styles.label}>
-           {quantity} item{quantity > 1 ? 's' : ''}
-          </Text>
-          <Text style={styles.value}>${subtotal.toFixed(2)}</Text>
-        </View>
-        <View style={styles.totalsRow}>
-          <Text style={styles.label}>Shipping</Text>
-          <Text style={styles.value}>Calculated at next step</Text>
-        </View>
-        <View style={styles.divider} />
-        <View style={styles.totalsRow}>
-          <Text style={[styles.label, styles.totalLabel]}>Total</Text>
-          <Text style={[styles.value, styles.totalValue]}>
-            ${subtotal.toFixed(2)}
-          </Text>
-        </View>
+        // Footer: Cart Totals card
+        ListFooterComponent={() => (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Cart Totals</Text>
 
-        <Pressable
-          style={styles.actionButton}
-          onPress={() => {
-            // TODO: call your “place order” API
-            router.push('/cart/shipping');
-          }}
-        >
-          <Text style={styles.actionText}>Proceed to Shipping</Text>
-        </Pressable>
-      </View>
+            <View style={styles.totalsRow}>
+              <Text style={styles.label}>
+                {quantity} item{quantity > 1 ? 's' : ''}
+              </Text>
+              <Text style={styles.value}>${subtotal.toFixed(2)}</Text>
+            </View>
+
+            <View style={styles.totalsRow}>
+              <Text style={styles.label}>Shipping</Text>
+              <Text style={styles.value}>Calculated at next step</Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.totalsRow}>
+              <Text style={[styles.label, styles.totalLabel]}>Total</Text>
+              <Text style={[styles.value, styles.totalValue]}>
+                ${subtotal.toFixed(2)}
+              </Text>
+            </View>
+
+            <Pressable
+              style={styles.actionButton}
+              onPress={() => router.push('/cart/shipping')}
+            >
+              <Text style={styles.actionText}>Proceed to Shipping</Text>
+            </Pressable>
+          </View>
+        )}
+      />
     </SafeAreaView>
   );
 }
@@ -112,11 +116,8 @@ function createStyles(colorScheme: 'light' | 'dark') {
       backgroundColor: bg,
       padding: 16,
     },
-    productImage: {
-      width: 60,
-      height: 60,
-      borderRadius: 8,
-      marginRight: 12,
+    listContent: {
+      paddingBottom: 32,
     },
     header: {
       fontSize: 32,
@@ -146,15 +147,33 @@ function createStyles(colorScheme: 'light' | 'dark') {
       justifyContent: 'space-between',
       paddingVertical: 8,
     },
-    rowLeft: { flexDirection: 'row', alignItems: 'center' },
-
-    name: { fontSize: 16, fontWeight: '500', color: txt },
-    sku: { fontSize: 12, color: '#666', marginTop: 4 },
-    price: { fontSize: 16, fontWeight: '600', color: '#222' },
+    rowLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    productImage: {
+      width: 40,
+      height: 40,
+      borderRadius: 6,
+      marginRight: 8,
+    },
+    name: {
+      flex: 1,
+      fontSize: 16,
+      fontWeight: '500',
+      color: txt,
+    },
+    price: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#222',
+      marginLeft: 12,
+    },
     divider: {
       height: 1,
       backgroundColor: '#EEE',
-      marginVertical: 8,
+      marginVertical: 4,
     },
     totalsRow: {
       flexDirection: 'row',
