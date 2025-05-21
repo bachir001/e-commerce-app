@@ -132,7 +132,7 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
           <Text>
             Don't have an account?{" "}
             <Link
-              href="/auth/sign-up"
+              href="/auth/signUp"
               replace
               className="text-[#5856d6] font-bold"
             >
