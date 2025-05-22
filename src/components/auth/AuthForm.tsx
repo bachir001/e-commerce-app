@@ -112,13 +112,8 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
               : "/auth/signInAccount"
           }
         />
-        {/* <AuthButton text="Sign In with Facebook" icon="logo-google" />
-        <AuthButton text="Sign In with Google" icon="logo-facebook" /> */}
-        <AuthButton
-          text="Continue with Whatsapp"
-          icon="logo-whatsapp"
-          iconColor="green"
-        />
+        <AuthButton text="Sign In with Facebook" icon="logo-google" />
+        <AuthButton text="Sign In with Google" icon="logo-facebook" />
       </View>
 
       <View className="bg-gray-100 flex flex-row items-center justify-center absolute bottom-0 left-0 right-0 h-40">

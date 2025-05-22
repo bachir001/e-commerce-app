@@ -1,11 +1,9 @@
-// components/IconGrid.tsx
 import React from "react";
 import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  AccessibilityRole,
+  type AccessibilityRole,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 
@@ -25,22 +23,24 @@ interface IconGridProps {
 
 const IconGrid: React.FC<IconGridProps> = React.memo(({ items }) => {
   return (
-    <View className="flex flex-row justify-between items-center bg-white px-16 py-10">
+    <View className="flex flex-row justify-between items-center py-6 px-6">
       {items.map((it) => (
         <TouchableOpacity
           key={it.label}
           onPress={it.onPress}
           accessibilityRole={"button" as AccessibilityRole}
           accessibilityLabel={it.label}
-          className="flex flex-col items-center gap-2"
+          className="flex flex-col items-center"
         >
-          <FontAwesome5
-            name={it.icon}
-            size={26}
-            color="#555"
-            {...(it.brand ? { brand: true } : {})}
-          />
-          <Text className="text-sm">{it.label}</Text>
+          <View className="w-14 h-14 bg-gray-50 rounded-full items-center justify-center mb-2">
+            <FontAwesome5
+              name={it.icon}
+              size={22}
+              color="#6366F1"
+              {...(it.brand ? { brand: true } : {})}
+            />
+          </View>
+          <Text className="text-sm font-medium text-gray-700">{it.label}</Text>
         </TouchableOpacity>
       ))}
     </View>

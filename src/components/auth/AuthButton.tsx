@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 interface AuthButtonParams {
   text: string;
   icon: string;
-  iconColor: string;
+  iconColor?: string;
   href?: string;
 }
 export default function AuthButton({

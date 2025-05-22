@@ -1,10 +1,8 @@
-// src/app/(tabs)/account/index.tsx
-
-import React, { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import Header from "@/components/account/AccountHeader";
-import IconGrid, { IconGridItem } from "@/components/account/IconGrid";
+import IconGrid, { type IconGridItem } from "@/components/account/IconGrid";
 import Footer from "@/components/account/Footer";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -81,7 +79,7 @@ export default function AccountScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-100">
+    <SafeAreaView className="flex-1 bg-gray-50">
       <View>
         <Header
           logo={require("@/assets/images/logo.png")}
@@ -89,19 +87,35 @@ export default function AccountScreen() {
           languages={languages}
         />
 
-        <IconGrid items={contactItems} />
+        <View className="mt-4 mx-4 bg-white rounded-2xl shadow-sm overflow-hidden">
+          <IconGrid items={contactItems} />
+        </View>
 
-        <View className="bg-white mt-2 pt-2">
-          <Text className="font-bold px-16 text-lg">Help Center</Text>
+        <View className="mt-4 mx-4 bg-white rounded-2xl shadow-sm overflow-hidden">
+          <Text className="font-semibold px-6 pt-4 text-gray-800 text-lg">
+            Help Center
+          </Text>
           <IconGrid items={helpItems} />
         </View>
 
         <Footer
           socials={[
-            { icon: "facebook", url: "https://facebook.com", brand: true },
+            {
+              icon: "facebook",
+              url: "https://www.facebook.com/GoCamiShop/",
+              brand: true,
+            },
             { icon: "tiktok", url: "https://tiktok.com", brand: true },
-            { icon: "linkedin", url: "https://linkedin.com", brand: true },
-            { icon: "instagram", url: "https://instagram.com", brand: true },
+            {
+              icon: "linkedin",
+              url: "https://www.linkedin.com/company/gocami/posts/?feedView=all",
+              brand: true,
+            },
+            {
+              icon: "instagram",
+              url: "https://www.instagram.com/gocami.shop/",
+              brand: true,
+            },
             { icon: "twitter", url: "https://x.com", brand: true },
           ]}
           version="0.1"
