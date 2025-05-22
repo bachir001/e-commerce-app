@@ -63,7 +63,7 @@ const ProductCard = ({
               pressed && styles.buttonPressed
             ]}
           >
-            <Ionicons name="cart" size={25} color="red" onPress={()=> handleAddToCart(id.toString())}/>
+            <Ionicons name="cart" size={25} color="#7B23CD" onPress={()=> handleAddToCart(id.toString())}/>
           </Pressable>
         </View>
       </View>

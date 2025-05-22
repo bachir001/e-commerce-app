@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, SafeAreaView, StyleSheet } from 'react-native';
 import { Slot, useSegments } from 'expo-router';
 import Sidebar from '@/components/Sidebar';
