@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useContext, useEffect, useMemo } from "react";
 import { StyleSheet } from "react-native";
 import { ParallaxFlatList } from "@/components/common/ParallaxFlatList";
 import { HeaderView } from "@/components/common/HeaderView";
@@ -9,11 +9,15 @@ import ProductsList from "@/components/ProductList";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SessionContext } from "@/app/_layout";
+import { storage } from "@/Services/mmkv";
 
 export default function HomeScreen() {
   const rawScheme = useColorScheme();
   const scheme = rawScheme === "dark" ? "dark" : "light";
-  const colors = Colors[scheme];
+
+  const { setIsLogged, setToken, token, setUser } = useContext(SessionContext);
 
   const sections = useMemo(
     () => [
@@ -32,6 +36,28 @@ export default function HomeScreen() {
     ],
     []
   );
+
+  useEffect(() => {
+    const checkForToken = async () => {
+      const token_ = storage.getString("token");
+      const userJSON = storage.getString("user");
+
+      console.log(userJSON);
+
+      let parsedUser;
+      if (typeof userJSON === "string") {
+        parsedUser = JSON.parse(userJSON);
+      }
+
+      if (token_ !== null && typeof token_ === "string") {
+        setIsLogged(true);
+        // setToken(token_);
+        // setUser(parsedUser);
+      }
+    };
+
+    checkForToken();
+  }, []);
 
   return (
     <SafeAreaView className="flex-1">

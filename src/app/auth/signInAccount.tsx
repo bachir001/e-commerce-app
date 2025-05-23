@@ -15,6 +15,7 @@ import { Link, Stack, useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
 import { SessionContext } from "../_layout";
+import { storage } from "@/Services/mmkv";
 
 interface LoginBody {
   email?: string;
@@ -28,7 +29,7 @@ export default function loginAccount() {
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
-  const { user, setUser, setToken, setIsLogged } = useContext(SessionContext);
+  const { setUser, setToken, setIsLogged } = useContext(SessionContext);
   const router = useRouter();
 
   const handleLogin = async () => {
@@ -44,10 +45,10 @@ export default function loginAccount() {
 
       await axiosApi
         .post("https://api-gocami-test.gocami.com/api/login", RequestBody)
-        .then((response) => {
+        .then(async (response) => {
           if (response.data.status) {
-            setUser(response.data.data.user);
-            setToken(response.data.data.token);
+            storage.set("user", JSON.stringify(response.data.data.user));
+            storage.set("token", response.data.data.token);
             setIsLogged(true);
             Toast.show({
               type: "success",

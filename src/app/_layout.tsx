@@ -8,17 +8,13 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 interface SessionContextType {
   sessionId: string;
-  token: string;
-  isLogged: boolean;
-  user: UserContext | null;
-  setUser: React.Dispatch<React.SetStateAction<UserContext | null>>;
-  setToken: React.Dispatch<React.SetStateAction<UserContext | null>>;
+  isLogged: UserContext | null;
   setIsLogged: React.Dispatch<React.SetStateAction<UserContext | null>>;
 }
 
 export const SessionContext = createContext<SessionContextType | null>(null);
 
-interface UserContext {
+export interface UserContext {
   id: number;
   first_name: string;
   last_name: string;
@@ -33,9 +29,7 @@ interface UserContext {
 
 export default function RootLayout() {
   const [sessionId, setSession] = useState<string | null>(null);
-  const [user, setUser] = useState<UserContext | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLogged, setIsLogged] = useState<boolean>(false);
+  const [isLogged, setIsLogged] = useState<UserContext | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -44,7 +38,6 @@ export default function RootLayout() {
         setSession(id);
       } catch (error) {
         console.error("Error getting session ID:", error);
-        // Handle error (e.g., show error message)
       }
     })();
   }, []);
@@ -62,10 +55,6 @@ export default function RootLayout() {
       <SessionContext.Provider
         value={{
           sessionId,
-          user,
-          setUser,
-          token,
-          setToken,
           isLogged,
           setIsLogged,
         }}

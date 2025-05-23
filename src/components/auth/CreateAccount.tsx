@@ -9,7 +9,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
 } from "react-native";
-import { useState } from "react";
+import { SetStateAction, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AuthHeader from "./AuthHeader";
 import { CREATE_INPUTS } from "@/constants/createInputs";
@@ -24,7 +24,7 @@ const passwordRegex: RegExp =
   /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
 
 export default function CreateAccount() {
-  const [mode, setMode] = useState("date");
+  const [mode, setMode] = useState<"date" | "time">("date");
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
@@ -98,48 +98,7 @@ export default function CreateAccount() {
     });
   };
 
-  // const createAccount = async () => {
-  //   const validationResult = validateSignUp();
-  // if (validationResult !== "Success") {
-  //   Toast.show({
-  //     type: "error",
-  //     text1: "Sign Up Failed",
-  //     text2: validationResult,
-  //     position: "top",
-  //     autoHide: false,
-  //     topOffset: 60,
-  //   });
-  // }
-
-  //   setLoading(true);
-  //   await axios
-  //     .post(`${process.env.BACKEND_BASE_URL}/register`, {
-  //       first_name: firstName,
-  //       last_name: lastName,
-  //       email,
-  //       password,
-  //       gender_id: selectedGender,
-  //       terms: 1,
-  //       date_of_birth: date,
-  //     })
-  //     .then((response) => {
-  //       if (response.data.status) {
-  //         Toast.show({
-  //           type: "success",
-  //           text1: "",
-  //           text2: validationResult,
-  //           position: "top",
-  //           autoHide: false,
-  //           topOffset: 60,
-  //         });
-  //       }
-  //     })
-  //     .finally(() => {
-  //       setLoading(false);
-  //     });
-  // };
-
-  const onChange = (event, selectedDate) => {
+  const onChange = (_event: any, selectedDate: any) => {
     const currentDate = selectedDate;
     setShow(false);
     setDate(currentDate);
@@ -207,7 +166,7 @@ export default function CreateAccount() {
                   <View className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden w-full">
                     <Picker
                       selectedValue={selectedGender}
-                      onValueChange={(itemValue) =>
+                      onValueChange={(itemValue: SetStateAction<number>) =>
                         setSelectedGender(itemValue)
                       }
                       mode={Platform.OS === "android" ? "dropdown" : "dialog"}

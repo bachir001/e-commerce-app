@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import axiosApi from "@/apis/axiosApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SessionContext } from "../_layout";
+import { storage } from "@/Services/mmkv";
 
 export default function Verification() {
   const router = useRouter();
@@ -124,9 +125,10 @@ export default function Verification() {
             .post("https://api-gocami-test.gocami.com/api/login", RequestBody)
             .then(async (response) => {
               if (response.data.status) {
-                // const userJSON = JSON.stringify(response.data.data.user);
-                setUser(response.data.data.user);
-                setToken(response.data.data.token);
+                // setUser(response.data.data.user);
+                // setToken(response.data.data.token);
+                storage.set("user", JSON.stringify(response.data.data.user));
+                storage.set("token", response.data.data.token);
                 setIsLogged(true);
                 router.replace("/(tabs)/home");
               }
