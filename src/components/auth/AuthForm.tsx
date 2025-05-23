@@ -1,11 +1,6 @@
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  Pressable,
-  Dimensions,
-} from "react-native";
+"use client";
+
+import { View, Text, TextInput, Pressable, Dimensions } from "react-native";
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AuthHeader from "./AuthHeader";
@@ -30,7 +25,7 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
 
   return (
     <SafeAreaView
-      className="bg-white flex-1 pt-20 "
+      className="bg-white flex-1 pt-16"
       style={{
         paddingHorizontal: _paddingHorizontal,
       }}
@@ -38,37 +33,47 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
       <AuthHeader />
 
       <View className="mt-8">
-        <Text className="text-3xl font-bold text-center">
-          {authType === "sign-up" ? "Sign Up for GoCami" : "Sign In to GoCami"}
+        <Text className="text-3xl font-bold text-gray-800 text-center">
+          {authType === "sign-up" ? "Create Account" : "Welcome Back"}
+        </Text>
+        <Text className="text-gray-500 text-center mt-2">
+          {authType === "sign-up"
+            ? "Join GoCami and discover amazing products"
+            : "Sign in to continue your shopping experience"}
         </Text>
       </View>
 
       {authType === "sign-up" && (
         <>
           <View className="flex flex-col gap-5 mt-10">
-            <View className="flex flex-row px-5 py-2 bg-gray-200 items-center">
-              <Text className="text-sm font-bold mr-3">+961</Text>
+            <View className="flex flex-row bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 items-center shadow-sm">
+              <Text className="text-sm font-medium text-gray-700 mr-3">
+                +961
+              </Text>
               <View
                 style={{
                   width: 1,
                   height: "60%",
-                  backgroundColor: "black",
-                  marginRight: 6,
+                  backgroundColor: "#E5E7EB",
+                  marginRight: 10,
                 }}
               />
               <TextInput
                 keyboardType="phone-pad"
                 placeholder="Phone number"
-                className="w-full"
+                className="w-full text-gray-700"
+                placeholderTextColor="#9CA3AF"
               />
             </View>
-            <Pressable className="py-4 bg-[#5856d6] rounded-lg">
-              <Text className="text-center text-white">Continue</Text>
+            <Pressable className="py-4 bg-indigo-600 rounded-xl shadow-sm">
+              <Text className="text-center text-white font-semibold">
+                Continue
+              </Text>
             </Pressable>
           </View>
 
           <View
-            className="flex flex-row mt-5 mb-5 w-full items-center"
+            className="flex flex-row my-8 w-full items-center"
             style={{
               gap: separatorGap,
             }}
@@ -77,11 +82,11 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
               style={{
                 width: linesWidth,
                 height: 1,
-                backgroundColor: "black",
+                backgroundColor: "#E5E7EB",
               }}
             />
             <Text
-              className="text-gray-400 text-center"
+              className="text-gray-400 text-center font-medium"
               style={{
                 fontSize: OR_WIDTH,
               }}
@@ -92,7 +97,7 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
               style={{
                 width: linesWidth,
                 height: 1,
-                backgroundColor: "black",
+                backgroundColor: "#E5E7EB",
               }}
             />
           </View>
@@ -101,40 +106,40 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
 
       {authType === "sign-in" && <View className="mt-10" />}
 
-      <View className="flex flex-col gap-10">
+      <View className="flex flex-col gap-6">
         <AuthButton
-          text="Continue with Email"
+          text={authType === "sign-up" ? "Continue with Email" : "Phone/Email"}
           icon="mail-outline"
-          iconColor="black"
+          iconColor="#4B5563"
           href={
             authType === "sign-up"
               ? "/auth/createAccount"
               : "/auth/signInAccount"
           }
         />
-        <AuthButton text="Sign In with Facebook" icon="logo-google" />
-        <AuthButton text="Sign In with Google" icon="logo-facebook" />
+        <AuthButton text="Sign In with Google" icon="logo-google" />
+        <AuthButton text="Sign In with Facebook" icon="logo-facebook" />
       </View>
 
-      <View className="bg-gray-100 flex flex-row items-center justify-center absolute bottom-0 left-0 right-0 h-40">
+      <View className="bg-gray-50 flex flex-row items-center justify-center absolute bottom-0 left-0 right-0 h-32 border-t border-gray-100">
         {authType === "sign-up" ? (
-          <Text>
+          <Text className="text-gray-600">
             Already have an account?{" "}
             <Link
               href="/auth/signIn"
               replace
-              className="text-[#5856d6] font-bold"
+              className="text-indigo-600 font-semibold"
             >
               Log In
             </Link>
           </Text>
         ) : (
-          <Text>
+          <Text className="text-gray-600">
             Don't have an account?{" "}
             <Link
               href="/auth/signUp"
               replace
-              className="text-[#5856d6] font-bold"
+              className="text-indigo-600 font-semibold"
             >
               Sign Up
             </Link>

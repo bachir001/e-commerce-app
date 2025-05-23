@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -13,10 +13,13 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import axiosApi from "@/apis/axiosApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SessionContext } from "../_layout";
 
 export default function Verification() {
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
+
+  const { user, setUser, setToken, setIsLogged } = useContext(SessionContext);
 
   const {
     firstName,
@@ -25,6 +28,7 @@ export default function Verification() {
     selectedGender,
     date,
     verification_method,
+    password,
   } = useLocalSearchParams();
 
   const inputRefs = useRef<Array<TextInput | null>>([
@@ -105,9 +109,27 @@ export default function Verification() {
         .then(async (response) => {
           console.log(response.status);
           if (response.status === 200) {
-            router.push("/(tabs)/home");
             await AsyncStorage.removeItem("signUpToken");
           }
+        })
+        .then(async () => {
+          //automatic login by taking his information
+          //pass email and body
+          const RequestBody = {
+            email,
+            password,
+          };
+          await axiosApi
+            .post("https://api-gocami-test.gocami.com/api/login", RequestBody)
+            .then(async (response) => {
+              if (response.data.status) {
+                // const userJSON = JSON.stringify(response.data.data.user);
+                setUser(response.data.data.user);
+                setToken(response.data.data.token);
+                setIsLogged(true);
+                router.replace("/(tabs)/home");
+              }
+            });
         })
         .finally(() => {
           setLoading(false);

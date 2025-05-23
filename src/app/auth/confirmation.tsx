@@ -79,6 +79,7 @@ export default function Confirmation() {
           selectedGender,
           date: formattedDate,
           verification_method: verificationType,
+          password,
         },
       });
     } catch (err) {

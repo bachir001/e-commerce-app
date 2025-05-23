@@ -5,10 +5,36 @@ import React, { createContext, useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
 import "../../global.css";
 
-export const SessionContext = createContext<string | null>(null);
+interface SessionContextType {
+  sessionId: string;
+  token: string;
+  isLogged: boolean;
+  user: UserContext | null;
+  setUser: React.Dispatch<React.SetStateAction<UserContext | null>>;
+  setToken: React.Dispatch<React.SetStateAction<UserContext | null>>;
+  setIsLogged: React.Dispatch<React.SetStateAction<UserContext | null>>;
+}
+
+export const SessionContext = createContext<SessionContextType | null>(null);
+
+interface UserContext {
+  id: number;
+  first_name: string;
+  last_name: string;
+  mobile: string | null;
+  gender_id: number | null;
+  gender: string;
+  date_of_birth: string | null;
+  email: string | null;
+  email_verified: boolean;
+  mobile_verified: boolean;
+}
 
 export default function RootLayout() {
   const [sessionId, setSession] = useState<string | null>(null);
+  const [user, setUser] = useState<UserContext | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLogged, setIsLogged] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -32,7 +58,17 @@ export default function RootLayout() {
 
   return (
     <>
-      <SessionContext.Provider value={sessionId}>
+      <SessionContext.Provider
+        value={{
+          sessionId,
+          user,
+          setUser,
+          token,
+          setToken,
+          isLogged,
+          setIsLogged,
+        }}
+      >
         <Stack
           screenOptions={{ headerShown: false, animation: "fade_from_bottom" }}
         >
