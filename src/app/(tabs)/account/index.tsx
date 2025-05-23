@@ -1,12 +1,10 @@
-"use client";
-
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Linking, // Make sure to import Linking for phone/email if you use them
 } from "react-native";
 import { useRouter } from "expo-router";
 import Header from "@/components/account/AccountHeader";
@@ -15,8 +13,9 @@ import Footer from "@/components/account/Footer";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SessionContext } from "@/app/_layout";
 import { FontAwesome5 } from "@expo/vector-icons";
+import Modal from "react-native-modal";
+import ContactModal from "@/components/account/ContactModal";
 
-// Helper: generate Unicode flag emoji from ISO country code
 function getFlagEmoji(countryCode: string): string {
   return countryCode
     .toUpperCase()
@@ -31,16 +30,21 @@ export default function AccountScreen() {
   const { token, setToken, isLogged, setIsLogged, user, setUser } =
     useContext(SessionContext);
 
-  // Memoize language options so we don't recreate on every render
+  const [isContactModalVisible, setContactModalVisible] = useState(false);
+
+  const openContactSheet = () => {
+    setContactModalVisible(true);
+  };
+
+  const closeContactModal = () => {
+    setContactModalVisible(false);
+  };
+
   const languages = useMemo(
-    () => [
-      { code: "en", flag: getFlagEmoji("US") },
-      // { code: 'fr', flag: getFlagEmoji('FR') },
-    ],
+    () => [{ code: "en", flag: getFlagEmoji("US") }],
     []
   );
 
-  // Items for non-logged in users
   const contactItems: IconGridItem[] = useMemo(
     () => [
       {
@@ -56,15 +60,12 @@ export default function AccountScreen() {
       {
         icon: "phone",
         label: "Contact",
-        onPress: () => {
-          /* TODO */
-        },
+        onPress: openContactSheet,
       },
     ],
     [router]
   );
 
-  // My Products items for logged in users
   const productItems: IconGridItem[] = useMemo(
     () => [
       {
@@ -78,7 +79,7 @@ export default function AccountScreen() {
         onPress: () => router.push("/brands"),
       },
       {
-        icon: "shopping-cart", //font awesome
+        icon: "shopping-cart",
         label: "Cart",
         onPress: () => router.push("/(tabs)/cart"),
       },
@@ -86,7 +87,6 @@ export default function AccountScreen() {
     [router]
   );
 
-  // My Orders items for logged in users
   const orderItems: IconGridItem[] = useMemo(
     () => [
       {
@@ -108,7 +108,6 @@ export default function AccountScreen() {
     [router]
   );
 
-  // Help Center items
   const helpItems: IconGridItem[] = useMemo(
     () => [
       {
@@ -137,8 +136,6 @@ export default function AccountScreen() {
   );
 
   const handleSignOut = () => {
-    //remove user from context (null)
-    //remove token (null)
     setUser(null);
     setToken(null);
     setIsLogged(false);
@@ -236,7 +233,11 @@ export default function AccountScreen() {
                 url: "https://www.facebook.com/GoCamiShop/",
                 brand: true,
               },
-              { icon: "tiktok", url: "https://tiktok.com", brand: true },
+              {
+                icon: "tiktok",
+                url: "https://www.tiktok.com/@gocami.shop?_t=ZS-8wafQeRo9up&_r=1",
+                brand: true,
+              },
               {
                 icon: "linkedin",
                 url: "https://www.linkedin.com/company/gocami/posts/?feedView=all",
@@ -253,27 +254,11 @@ export default function AccountScreen() {
           />
         </View>
       </ScrollView>
+
+      <ContactModal
+        isVisible={isContactModalVisible}
+        onClose={closeContactModal}
+      />
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  inner: {
-    paddingHorizontal: 16,
-    backgroundColor: "#FFF",
-  },
-  gridSection: {
-    paddingHorizontal: 16,
-    marginTop: 24,
-  },
-  sectionTitle: {
-    marginTop: 32,
-    marginBottom: 12,
-    marginHorizontal: 16,
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  spacer: {
-    flex: 1,
-  },
-});

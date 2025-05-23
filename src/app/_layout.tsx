@@ -4,6 +4,7 @@ import { View, ActivityIndicator } from "react-native";
 import React, { createContext, useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
 import "../../global.css";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 interface SessionContextType {
   sessionId: string;
