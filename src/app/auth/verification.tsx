@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Clipboard,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -244,7 +245,11 @@ export default function Verification() {
           onPress={handleSubmit}
           disabled={verificationCode.join("").length !== 6 || isExpired}
         >
-          <Text className="text-base font-semibold text-white">Verify</Text>
+          {loading ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Text className="text-base font-semibold text-white">Verify</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
