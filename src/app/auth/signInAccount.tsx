@@ -47,6 +47,7 @@ export default function loginAccount() {
       await axiosApi
         .post("https://api-gocami-test.gocami.com/api/login", RequestBody)
         .then(async (response) => {
+          console.log("HELLO USER FROM LOGIN\n\n", response.data.data.user);
           if (response.data.status) {
             await Promise.all([
               AsyncStorage.setItem("token", response.data.data.token),

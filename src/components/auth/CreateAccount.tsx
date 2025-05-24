@@ -34,7 +34,7 @@ export default function CreateAccount() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [selectedGender, setSelectedGender] = useState(1);
+  const [selectedGender, setSelectedGender] = useState<1 | 2>(1);
   const [termAccepted, setTermAccepted] = useState(true);
   const [date, setDate] = useState(new Date());
   const [mobile, setMobile] = useState("");
@@ -83,6 +83,8 @@ export default function CreateAccount() {
 
       return;
     }
+
+    console.log("SELECTED GENDERRR: ", selectedGender);
 
     router.push({
       pathname: "/auth/confirmation",

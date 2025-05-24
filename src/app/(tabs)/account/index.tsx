@@ -175,7 +175,7 @@ export default function AccountScreen() {
                     Account Details
                   </Text>
                   <TouchableOpacity
-                    onPress={() => router.push("/profile/edit")}
+                    onPress={() => router.push("/(tabs)/account/profile/edit")}
                     className="bg-gray-100 px-3 py-1.5 rounded-full"
                   >
                     <Text className="text-sm font-medium text-indigo-600">

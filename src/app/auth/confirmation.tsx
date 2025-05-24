@@ -28,9 +28,7 @@ export default function Confirmation() {
   const handleContinue = async () => {
     try {
       setLoading(true);
-      console.log(
-        `${email}\n\n${firstName}\n${lastName}\n${password}\n${selectedGender}\n${date}`
-      );
+      console.log("SELECTED GENDER FROM CONFIRM: ", selectedGender);
 
       const formattedDate =
         typeof date === "string"
@@ -42,21 +40,47 @@ export default function Confirmation() {
         last_name: lastName,
         email,
         password,
-        gender_id: selectedGender,
+        gender_id: "1",
         terms: 1,
         date_of_birth: formattedDate,
         verification_method: verificationType,
       };
 
+      console.log(RequestBody);
+
       await axiosApi
         .post(`https://api-gocami-test.gocami.com/api/register`, RequestBody)
         .then(async (response) => {
+          console.log("HELLO FROM SIGN UP", response.data.data.user);
           if (response.data.status) {
             await AsyncStorage.setItem("signUpToken", response.data.data.token);
             Toast.show({
               type: "success",
               text1: "Register Successful",
               text2: "Please enter verification code",
+              position: "top",
+              autoHide: true,
+              topOffset: 60,
+            });
+
+            console.log(selectedGender);
+            router.push({
+              pathname: "/auth/verification",
+              params: {
+                firstName,
+                lastName,
+                email,
+                selectedGender,
+                date: formattedDate,
+                verification_method: verificationType,
+                password,
+              },
+            });
+          } else {
+            Toast.show({
+              type: "error",
+              text1: "Register Failed",
+              text2: "Account Already Exists",
               position: "top",
               autoHide: false,
               topOffset: 60,
@@ -69,19 +93,6 @@ export default function Confirmation() {
         .finally(() => {
           setLoading(false);
         });
-
-      router.push({
-        pathname: "/auth/verification",
-        params: {
-          firstName,
-          lastName,
-          email,
-          selectedGender,
-          date: formattedDate,
-          verification_method: verificationType,
-          password,
-        },
-      });
     } catch (err) {
       Toast.show({
         type: "error",

@@ -125,6 +125,10 @@ export default function Verification() {
             .post("https://api-gocami-test.gocami.com/api/login", RequestBody)
             .then(async (response) => {
               if (response.data.status) {
+                console.log(
+                  "HELLO USER FROM LOGIN:\n\n",
+                  response.data.data.user
+                );
                 await Promise.all([
                   AsyncStorage.setItem("token", response.data.data.token),
                   AsyncStorage.setItem(
