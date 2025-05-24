@@ -197,6 +197,28 @@ export default function AccountScreen() {
                     </Text>
                   </View>
                 </View>
+
+                <TouchableOpacity
+                  onPress={() => router.push("/(tabs)/account/addresses")}
+                >
+                  <View
+                    className="flex-row items-center py-2 bg-indigo-600 px-3 rounded-lg mt-5"
+                    style={{
+                      transform: [{ translateX: -10 }],
+                    }}
+                  >
+                    <View className="w-10 h-10 bg-white rounded-full items-center justify-center mr-3">
+                      <FontAwesome5
+                        name="map-marker-alt"
+                        size={16}
+                        color="#6366F1"
+                      />
+                    </View>
+                    <View>
+                      <Text className="font-medium text-white">Addresses</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
               </View>
 
               <View className="mt-4 mx-4 bg-white rounded-2xl shadow-sm overflow-hidden">

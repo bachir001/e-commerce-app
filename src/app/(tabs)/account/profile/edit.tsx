@@ -121,7 +121,7 @@ export default function EditProfile() {
                   JSON.stringify(updatedUserData)
                 );
 
-                router.push("/(tabs)/account");
+                router.replace("/(tabs)/account");
               }
             })
             .finally(() => {

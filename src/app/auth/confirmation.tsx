@@ -126,12 +126,16 @@ export default function Confirmation() {
         </Text>
 
         <View className="flex-row w-full justify-between gap-3">
-          <TouchableOpacity
-            className="flex-1 py-4 bg-gray-100 border border-gray-200 rounded-xl items-center justify-center"
-            onPress={handleBack}
-          >
-            <Text className="text-base font-semibold text-gray-700">Back</Text>
-          </TouchableOpacity>
+          {!loading && (
+            <TouchableOpacity
+              className="flex-1 py-4 bg-gray-100 border border-gray-200 rounded-xl items-center justify-center"
+              onPress={handleBack}
+            >
+              <Text className="text-base font-semibold text-gray-700">
+                Back
+              </Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             className="flex-1 py-4 bg-indigo-600 rounded-xl items-center justify-center"
