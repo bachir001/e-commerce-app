@@ -29,7 +29,9 @@ export interface UserContext {
 
 export default function RootLayout() {
   const [sessionId, setSession] = useState<string | null>(null);
-  const [isLogged, setIsLogged] = useState<UserContext | null>(null);
+  const [isLogged, setIsLogged] = useState<boolean>(false);
+  const [user, setUser] = useState<UserContext | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -57,6 +59,10 @@ export default function RootLayout() {
           sessionId,
           isLogged,
           setIsLogged,
+          user,
+          setUser,
+          token,
+          setToken,
         }}
       >
         <Stack

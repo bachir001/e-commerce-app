@@ -16,6 +16,7 @@ import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
 import { SessionContext } from "../_layout";
 import { storage } from "@/Services/mmkv";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface LoginBody {
   email?: string;
@@ -47,8 +48,13 @@ export default function loginAccount() {
         .post("https://api-gocami-test.gocami.com/api/login", RequestBody)
         .then(async (response) => {
           if (response.data.status) {
-            storage.set("user", JSON.stringify(response.data.data.user));
-            storage.set("token", response.data.data.token);
+            await Promise.all([
+              AsyncStorage.setItem("token", response.data.data.token),
+              AsyncStorage.setItem(
+                "user",
+                JSON.stringify(response.data.data.user)
+              ),
+            ]);
             setIsLogged(true);
             Toast.show({
               type: "success",

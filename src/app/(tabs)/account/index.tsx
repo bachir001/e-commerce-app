@@ -13,10 +13,8 @@ import Footer from "@/components/account/Footer";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SessionContext, UserContext } from "@/app/_layout";
 import { FontAwesome5 } from "@expo/vector-icons";
-import Modal from "react-native-modal";
 import ContactModal from "@/components/account/ContactModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { storage } from "@/Services/mmkv";
 
 function getFlagEmoji(countryCode: string): string {
   return countryCode
@@ -29,10 +27,9 @@ function getFlagEmoji(countryCode: string): string {
 
 export default function AccountScreen() {
   const router = useRouter();
-  const { isLogged, setIsLogged } = useContext(SessionContext);
+  const { isLogged, setIsLogged, user } = useContext(SessionContext);
 
   const [isContactModalVisible, setContactModalVisible] = useState(false);
-  const [user, setUser] = useState<UserContext | null>(null);
 
   // let user;
   // if (storage.getString("user") !== null) {
@@ -143,27 +140,14 @@ export default function AccountScreen() {
   );
 
   const handleSignOut = async () => {
+    await Promise.all([
+      AsyncStorage.removeItem("token"),
+      AsyncStorage.removeItem("user"),
+    ]);
     // setUser(null);
     // setToken(null);
     setIsLogged(false);
-    storage.clearAll();
   };
-
-  useEffect(() => {
-    if (isLogged) {
-      const userDataString = storage.getString("user");
-      if (userDataString) {
-        try {
-          setUser(JSON.parse(userDataString));
-        } catch (err) {
-          console.error("Failed to parse user data from MMKV:", err);
-          setUser(null);
-        }
-      }
-    } else {
-      setUser(null);
-    }
-  }, [isLogged]);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">

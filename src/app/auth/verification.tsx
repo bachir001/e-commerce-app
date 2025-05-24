@@ -125,10 +125,13 @@ export default function Verification() {
             .post("https://api-gocami-test.gocami.com/api/login", RequestBody)
             .then(async (response) => {
               if (response.data.status) {
-                // setUser(response.data.data.user);
-                // setToken(response.data.data.token);
-                storage.set("user", JSON.stringify(response.data.data.user));
-                storage.set("token", response.data.data.token);
+                await Promise.all([
+                  AsyncStorage.setItem("token", response.data.data.token),
+                  AsyncStorage.setItem(
+                    "user",
+                    JSON.stringify(response.data.data.user)
+                  ),
+                ]);
                 setIsLogged(true);
                 router.replace("/(tabs)/home");
               }

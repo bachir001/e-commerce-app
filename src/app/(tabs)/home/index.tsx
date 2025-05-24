@@ -9,13 +9,13 @@ import ProductsList from "@/components/ProductList";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SessionContext } from "@/app/_layout";
-import { storage } from "@/Services/mmkv";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function HomeScreen() {
   // const rawScheme = useColorScheme();
   // const scheme = rawScheme === "dark" ? "dark" : "light";
 
-  const { setIsLogged } = useContext(SessionContext);
+  const { setIsLogged, setUser, setToken } = useContext(SessionContext);
 
   const sections = useMemo(
     () => [
@@ -37,10 +37,8 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const checkForToken = async () => {
-      const token_ = storage.getString("token");
-      const userJSON = storage.getString("user");
-
-      console.log(userJSON);
+      const token_ = await AsyncStorage.getItem("token");
+      const userJSON = await AsyncStorage.getItem("user");
 
       let parsedUser;
       if (typeof userJSON === "string") {
@@ -49,8 +47,8 @@ export default function HomeScreen() {
 
       if (token_ !== null && typeof token_ === "string") {
         setIsLogged(true);
-        // setToken(token_);
-        // setUser(parsedUser);
+        setToken(token_);
+        setUser(parsedUser);
       }
     };
 
