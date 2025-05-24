@@ -7,17 +7,15 @@ import { ThemedText } from "@/components/common/ThemedText";
 import { IconSymbol } from "@/components/common/IconSymbol";
 import ProductsList from "@/components/ProductList";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SessionContext } from "@/app/_layout";
 import { storage } from "@/Services/mmkv";
 
 export default function HomeScreen() {
-  const rawScheme = useColorScheme();
-  const scheme = rawScheme === "dark" ? "dark" : "light";
+  // const rawScheme = useColorScheme();
+  // const scheme = rawScheme === "dark" ? "dark" : "light";
 
-  const { setIsLogged, setToken, token, setUser } = useContext(SessionContext);
+  const { setIsLogged } = useContext(SessionContext);
 
   const sections = useMemo(
     () => [
