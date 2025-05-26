@@ -4,6 +4,7 @@ import { View, ActivityIndicator } from "react-native";
 import React, { createContext, useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
 import "../../global.css";
+import { initOneSignal } from "@/Services/oneSignal"; 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 interface SessionContextType {
@@ -43,6 +44,10 @@ export default function RootLayout() {
       }
     })();
   }, []);
+
+  useEffect(()=>{
+    initOneSignal();
+  },[])
 
   if (!sessionId) {
     return (

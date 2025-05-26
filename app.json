@@ -4,8 +4,12 @@
     "slug": "my-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme":"myapp",    
-    "platforms": ["ios", "android", "web"],
+    "scheme": "myapp",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "icon": "./src/assets/images/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -15,20 +19,37 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.gocami.gocami",
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"] 
+      },
+      "entitlements": {
+        "aps-environment": "development", 
+        "com.apple.security.application-groups": [
+          "group.${ios.bundleIdentifier}.onesignal" 
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.gocami.gocami"
     },
     "web": {
       "favicon": "./src/assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "onesignal-expo-plugin",
+        {
+            "mode": "development"
+        }
+      ]
     ]
   }
 }
