@@ -1,26 +1,26 @@
-import { ReactElement } from 'react';
+import { ReactElement } from "react";
 import {
   StyleSheet,
   FlatList,
   ListRenderItem,
   FlatListProps,
-} from 'react-native';
+} from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedScrollHandler,
   ScrollHandlerProcessed,
-} from 'react-native-reanimated';
+} from "react-native-reanimated";
 
-import { ThemedView } from '@/components/common/ThemedView';
-import { useBottomTabOverflow } from '@/components/ui/TabBarBackground';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { ThemedView } from "@/components/common/ThemedView";
+import { useBottomTabOverflow } from "@/components/ui/TabBarBackground";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 const HEADER_HEIGHT = 0;
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
 type ParallaxFlatListProps<ItemT> = Omit<
   FlatListProps<ItemT>,
-  'ListHeaderComponent' | 'onScroll'
+  "ListHeaderComponent" | "onScroll"
 > & {
   headerImage: ReactElement;
   headerBackgroundColor: { dark: string; light: string };
@@ -36,18 +36,18 @@ export function ParallaxFlatList<ItemT>({
   headerBackgroundColor,
   ...flatListProps
 }: ParallaxFlatListProps<ItemT>) {
-  const colorScheme = useColorScheme() ?? 'light';
+  const colorScheme = useColorScheme() ?? "light";
   const bottom = useBottomTabOverflow();
 
   const scrollY = useSharedValue(0);
-  const scrollHandler = useAnimatedScrollHandler(e => {
+  const scrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
   });
 
   return (
     <ThemedView style={styles.container}>
       <AnimatedFlatList
-        {...(flatListProps as any)}           // avoid TS error on other props
+        {...(flatListProps as any)} // avoid TS error on other props
         data={data}
         renderItem={renderItem as ListRenderItem<any>}
         // robust keyExtractor: user‑supplied → item.key → index
@@ -63,7 +63,9 @@ export function ParallaxFlatList<ItemT>({
             ? (d, i) => propGetItemLayout(d as ArrayLike<ItemT>, i)
             : undefined
         }
-        onScroll={scrollHandler as ScrollHandlerProcessed<Record<string, unknown>>}
+        onScroll={
+          scrollHandler as ScrollHandlerProcessed<Record<string, unknown>>
+        }
         scrollEventThrottle={16}
         contentContainerStyle={[
           flatListProps.contentContainerStyle,

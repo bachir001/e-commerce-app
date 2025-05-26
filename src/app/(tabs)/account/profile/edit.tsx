@@ -8,13 +8,15 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { useContext, useEffect, useState } from "react";
-import { SessionContext, UserContext } from "@/app/_layout";
+import { useContext, useState } from "react";
+import { SessionContext } from "@/app/_layout";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Colors } from "@/constants/Colors";
 
+import ChangePasswordModal from "@/components/account/ChangePasswordModal";
 interface UpdateBody {
   first_name?: string;
   last_name?: string;
@@ -35,12 +37,62 @@ export default function EditProfile() {
   const [dateOfBirth, setDateOfBirth] = useState<string | null>(
     user?.date_of_birth
   );
-  const [showGenderPicker, setShowGenderPicker] = useState(false);
+  // const [showGenderPicker, setShowGenderPicker] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [passLoading, setPassLoading] = useState<boolean>(false);
 
   // const [canSave, setCanSave] = useState<boolean>(false);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+
+  const [currentPassword, setCurrentPassword] = useState<string>("");
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState<string>("");
+
+  const [isCurrentPasswordValid, setIsCurrentPasswordValid] =
+    useState<boolean>(false);
 
   const router = useRouter();
+
+  const handlePasswordChange = async () => {
+    if (newPassword !== confirmNewPassword) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Passwords do not match",
+      });
+      return;
+    }
+
+    try {
+      setPassLoading(true);
+
+      const response = await axiosApi.post(
+        "https://api-gocami-test.gocami.com/api/users-data/update",
+        { password: newPassword },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.status) {
+        Toast.show({
+          type: "success",
+          text1: "Password Updated",
+          text2: "Your password has been changed successfully.",
+        });
+        setIsModalVisible(false);
+      }
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Update Failed",
+        text2: "Failed to update password",
+      });
+    } finally {
+      setPassLoading(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    }
+  };
 
   const handleEdit = async () => {
     try {
@@ -148,6 +200,10 @@ export default function EditProfile() {
     }
   };
 
+  const onCloseModal = () => {
+    setIsModalVisible(false);
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <View className="flex-row items-center justify-between p-4 bg-white border-b border-gray-200">
@@ -161,7 +217,8 @@ export default function EditProfile() {
           Edit Profile
         </Text>
         <TouchableOpacity
-          className="bg-indigo-600 px-4 py-2 rounded-lg"
+          style={{ backgroundColor: Colors.PRIMARY }}
+          className={`px-4 py-2 rounded-lg`}
           onPress={() => {
             handleEdit();
           }}
@@ -176,15 +233,6 @@ export default function EditProfile() {
 
       <ScrollView className="flex-1 p-4">
         <View className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
-          {/* <View className="items-center mb-6">
-            <View className="w-24 h-24 bg-indigo-100 rounded-full items-center justify-center mb-3">
-              <FontAwesome5 name="user" size={32} color="#6366F1" />
-            </View>
-            <TouchableOpacity>
-              <Text className="text-indigo-600 font-medium">Change Photo</Text>
-            </TouchableOpacity>
-          </View> */}
-
           <View className="space-y-4">
             <View>
               <Text className="text-sm font-medium text-gray-700 mb-2">
@@ -235,41 +283,6 @@ export default function EditProfile() {
               />
             </View>
 
-            {/* <View>
-              <Text className="text-sm font-medium text-gray-700 mb-2 mt-5">
-                Gender
-              </Text>
-              <TouchableOpacity
-                onPress={() => setShowGenderPicker(!showGenderPicker)}
-                className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex-row items-center justify-between"
-              >
-                <Text className="text-gray-800">{gender}</Text>
-                <FontAwesome5 name="chevron-down" size={14} color="#6B7280" />
-              </TouchableOpacity>
-              {showGenderPicker && (
-                <View className="mt-2 bg-white border border-gray-200 rounded-xl overflow-hidden">
-                  <TouchableOpacity
-                    onPress={() => {
-                      setGender("Male");
-                      setShowGenderPicker(false);
-                    }}
-                    className="px-4 py-3 border-b border-gray-100"
-                  >
-                    <Text className="text-gray-800">Male</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setGender("Female");
-                      setShowGenderPicker(false);
-                    }}
-                    className="px-4 py-3"
-                  >
-                    <Text className="text-gray-800">Female</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View> */}
-
             <View>
               <Text className="text-sm font-medium text-gray-700 mb-2 mt-5">
                 Date of Birth
@@ -287,7 +300,12 @@ export default function EditProfile() {
             Account Actions
           </Text>
 
-          <TouchableOpacity className="flex-row items-center py-3 border-b border-gray-100">
+          <TouchableOpacity
+            className="flex-row items-center py-3 border-b border-gray-100"
+            onPress={() => {
+              setIsModalVisible(true);
+            }}
+          >
             <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center mr-3">
               <FontAwesome5 name="key" size={16} color="#3B82F6" />
             </View>
@@ -312,6 +330,19 @@ export default function EditProfile() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <ChangePasswordModal
+        isVisible={isModalVisible}
+        onClose={onCloseModal}
+        currentPassword={currentPassword}
+        setCurrentPassword={setCurrentPassword}
+        newPassword={newPassword}
+        setNewPassword={setNewPassword}
+        confirmNewPassword={confirmNewPassword}
+        setConfirmNewPassword={setConfirmNewPassword}
+        onSave={handlePasswordChange}
+        loading={passLoading}
+      />
     </SafeAreaView>
   );
 }

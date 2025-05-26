@@ -19,6 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import Checkbox from "expo-checkbox";
 import Toast from "react-native-toast-message";
+import { Colors } from "@/constants/Colors";
 
 const passwordRegex: RegExp =
   /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
@@ -169,7 +170,7 @@ export default function CreateAccount() {
                     <Picker
                       selectedValue={selectedGender}
                       onValueChange={(itemValue: SetStateAction<number>) =>
-                        setSelectedGender(itemValue)
+                        setSelectedGender(itemValue as 1 | 2)
                       }
                       mode={Platform.OS === "android" ? "dropdown" : "dialog"}
                       className="w-full h-full text-gray-700"
@@ -261,7 +262,13 @@ export default function CreateAccount() {
             <View className="flex flex-row justify-between items-center gap-2 mb-6">
               <Text className="text-sm text-gray-600">
                 Agree to{" "}
-                <Link href="" className="text-indigo-600 font-medium">
+                <Link
+                  href=""
+                  style={{
+                    color: Colors.PRIMARY,
+                  }}
+                  className={`font-medium`}
+                >
                   Terms and Conditions
                 </Link>
               </Text>
@@ -275,7 +282,10 @@ export default function CreateAccount() {
 
             {termAccepted && (
               <TouchableOpacity
-                className="py-4 text-center mt-2 bg-indigo-600 rounded-xl shadow-md"
+                style={{
+                  backgroundColor: Colors.PRIMARY,
+                }}
+                className={`py-4 text-center mt-2 rounded-xl shadow-md`}
                 onPress={() => {
                   goToConfirmation();
                 }}
@@ -291,7 +301,12 @@ export default function CreateAccount() {
                 Already have an account?{" "}
               </Text>
               <Pressable onPress={() => router.back()}>
-                <Text className="font-medium text-indigo-600 text-sm">
+                <Text
+                  style={{
+                    color: Colors.PRIMARY,
+                  }}
+                  className={`font-medium text-sm`}
+                >
                   Sign In
                 </Text>
               </Pressable>

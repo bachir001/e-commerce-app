@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AuthHeader from "./AuthHeader";
 import AuthButton from "./AuthButton";
 import { Link } from "expo-router";
+import { Colors } from "@/constants/Colors";
 
 interface AuthParams {
   authType: string;
@@ -65,7 +66,12 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
                 placeholderTextColor="#9CA3AF"
               />
             </View>
-            <Pressable className="py-4 bg-indigo-600 rounded-xl shadow-sm">
+            <Pressable
+              style={{
+                backgroundColor: Colors.PRIMARY,
+              }}
+              className={`py-4 rounded-xl shadow-sm`}
+            >
               <Text className="text-center text-white font-semibold">
                 Continue
               </Text>
@@ -128,7 +134,10 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
             <Link
               href="/auth/signIn"
               replace
-              className="text-indigo-600 font-semibold"
+              style={{
+                color: Colors.PRIMARY,
+              }}
+              className={`font-semibold`}
             >
               Log In
             </Link>
@@ -139,7 +148,10 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
             <Link
               href="/auth/signUp"
               replace
-              className="text-indigo-600 font-semibold"
+              style={{
+                color: Colors.PRIMARY,
+              }}
+              className={` font-semibold`}
             >
               Sign Up
             </Link>
