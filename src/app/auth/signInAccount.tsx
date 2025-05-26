@@ -15,8 +15,8 @@ import { Link, Stack, useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
 import { SessionContext } from "../_layout";
-import { storage } from "@/Services/mmkv";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Colors } from "@/constants/Colors";
 
 interface LoginBody {
   email?: string;
@@ -181,7 +181,10 @@ export default function loginAccount() {
 
             {password.length >= 1 && (
               <TouchableOpacity
-                className="mt-5 bg-indigo-600 py-4 rounded-lg shadow-sm"
+                style={{
+                  backgroundColor: Colors.PRIMARY,
+                }}
+                className={`mt-5 py-4 rounded-lg shadow-sm`}
                 onPress={handleLogin}
               >
                 {loading ? (
@@ -200,7 +203,10 @@ export default function loginAccount() {
             <Link
               href="/auth/signUp"
               replace
-              className="text-indigo-600 font-semibold"
+              style={{
+                color: Colors.PRIMARY,
+              }}
+              className="font-semibold"
             >
               Sign Up
             </Link>

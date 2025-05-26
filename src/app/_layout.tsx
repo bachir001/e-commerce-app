@@ -4,13 +4,13 @@ import { View, ActivityIndicator } from "react-native";
 import React, { createContext, useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
 import "../../global.css";
-import { initOneSignal } from "@/Services/oneSignal"; 
+import { initOneSignal } from "@/Services/oneSignal";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 interface SessionContextType {
   sessionId: string;
   isLogged: UserContext | null;
-  setIsLogged: React.Dispatch<React.SetStateAction<UserContext | null>>;
+  setIsLogged: React.Dispatch<React.SetStateAction<boolean | null>>;
 }
 
 export const SessionContext = createContext<SessionContextType | null>(null);
@@ -45,9 +45,9 @@ export default function RootLayout() {
     })();
   }, []);
 
-  useEffect(()=>{
+  useEffect(() => {
     initOneSignal();
-  },[])
+  }, []);
 
   if (!sessionId) {
     return (
@@ -58,29 +58,27 @@ export default function RootLayout() {
   }
 
   return (
-    <>
-      <SessionContext.Provider
-        value={{
-          sessionId,
-          isLogged,
-          setIsLogged,
-          user,
-          setUser,
-          token,
-          setToken,
-        }}
+    <SessionContext.Provider
+      value={{
+        sessionId,
+        isLogged,
+        setIsLogged,
+        user,
+        setUser,
+        token,
+        setToken,
+      }}
+    >
+      <Stack
+        screenOptions={{ headerShown: false, animation: "fade_from_bottom" }}
       >
-        <Stack
-          screenOptions={{ headerShown: false, animation: "fade_from_bottom" }}
-        >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="auth/signInAccount"
-            options={{ headerShown: true, title: "Sign In" }}
-          />
-        </Stack>
-      </SessionContext.Provider>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="auth/signInAccount"
+          options={{ headerShown: true, title: "Sign In" }}
+        />
+      </Stack>
       <Toast />
-    </>
+    </SessionContext.Provider>
   );
 }

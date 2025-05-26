@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import axiosApi from "@/apis/axiosApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SessionContext } from "../_layout";
-import { storage } from "@/Services/mmkv";
+import { Colors } from "@/constants/Colors";
 
 export default function Verification() {
   const router = useRouter();
@@ -23,15 +23,7 @@ export default function Verification() {
 
   const { user, setUser, setToken, setIsLogged } = useContext(SessionContext);
 
-  const {
-    firstName,
-    lastName,
-    email,
-    selectedGender,
-    date,
-    verification_method,
-    password,
-  } = useLocalSearchParams();
+  const { email, password } = useLocalSearchParams();
 
   const inputRefs = useRef<Array<TextInput | null>>([
     null,
@@ -199,7 +191,9 @@ export default function Verification() {
 
         <Text className="text-base text-gray-500 text-center mb-8 leading-6">
           We've sent a verification code to{" "}
-          <Text className="font-semibold text-indigo-600">{email}</Text>
+          <Text className={`font-semibold`} style={{ color: Colors.PRIMARY }}>
+            {email}
+          </Text>
         </Text>
 
         {/* Verification code inputs */}
@@ -221,7 +215,7 @@ export default function Verification() {
                   handlePaste(index);
                 }
               }}
-              onPaste={() => handlePaste(index)}
+              // onPaste={() => handlePaste(index)}
             />
           ))}
         </View>
@@ -230,14 +224,24 @@ export default function Verification() {
         <View className="mb-8 items-center">
           {isExpired ? (
             <TouchableOpacity onPress={requestNewCode}>
-              <Text className="text-indigo-600 font-semibold">
+              <Text
+                className={`font-semibold`}
+                style={{
+                  color: Colors.PRIMARY,
+                }}
+              >
                 Request New Code
               </Text>
             </TouchableOpacity>
           ) : (
             <View className="items-center">
               <Text className="text-gray-500 mb-1">Code expires in</Text>
-              <Text className="text-xl font-semibold text-indigo-600">
+              <Text
+                style={{
+                  color: Colors.PRIMARY,
+                }}
+                className={`text-xl font-semibold`}
+              >
                 {formatTime(timeLeft)}
               </Text>
             </View>
@@ -248,7 +252,7 @@ export default function Verification() {
         <TouchableOpacity
           className={`w-full py-4 rounded-xl items-center justify-center ${
             verificationCode.join("").length === 6 && !isExpired
-              ? "bg-indigo-600"
+              ? `bg-[#5e3ebd]`
               : "bg-gray-300"
           }`}
           onPress={handleSubmit}

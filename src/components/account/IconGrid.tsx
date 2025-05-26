@@ -36,7 +36,7 @@ const IconGrid: React.FC<IconGridProps> = React.memo(({ items }) => {
             <FontAwesome5
               name={it.icon}
               size={22}
-              color="#6366F1"
+              color="#5e3ebd"
               {...(it.brand ? { brand: true } : {})}
             />
           </View>

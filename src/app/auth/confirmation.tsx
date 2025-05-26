@@ -7,6 +7,7 @@ import Toast from "react-native-toast-message";
 import { useState } from "react";
 import axiosApi from "@/apis/axiosApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Colors } from "@/constants/Colors";
 
 export default function Confirmation() {
   const router = useRouter();
@@ -116,7 +117,10 @@ export default function Confirmation() {
           Confirm Your Email
         </Text>
 
-        <Text className="text-lg font-semibold text-indigo-600 mb-4 text-center">
+        <Text
+          style={{ backgroundColor: Colors.PRIMARY }}
+          className={`text-lg font-semibold mb-4 text-center`}
+        >
           {email}
         </Text>
 
@@ -138,7 +142,10 @@ export default function Confirmation() {
           )}
 
           <TouchableOpacity
-            className="flex-1 py-4 bg-indigo-600 rounded-xl items-center justify-center"
+            style={{
+              backgroundColor: Colors.PRIMARY,
+            }}
+            className={`flex-1 py-4 rounded-xl items-center justify-center`}
             onPress={handleContinue}
           >
             {loading ? (
