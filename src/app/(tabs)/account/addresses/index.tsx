@@ -13,6 +13,7 @@ import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
 import { SessionContext } from "@/app/_layout";
 import { Colors } from "@/constants/Colors";
+import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 
 export interface Address {
   id: number;
@@ -35,10 +36,13 @@ export interface Address {
 export default function AddressPage() {
   const router = useRouter();
 
-  const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
 
-  const { token } = useContext(SessionContext);
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+
+  const { token, addresses, setAddresses } = useContext(SessionContext);
 
   // const addresses: Address[] = [
   //   {
@@ -86,21 +90,68 @@ export default function AddressPage() {
     router.push("/(tabs)/account/addresses/addAddress");
   };
 
+  const handleDelete = async (address: Address) => {
+    try {
+      setDeleteLoading(true);
+
+      const HeaderData = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+
+      console.log(token);
+      const response = await axiosApi.post(
+        `addresses/remove/${address.id}}?_method=DELETE`,
+        {},
+        HeaderData
+      );
+      console.log(response.data);
+      if (response.data.status) {
+        Toast.show({
+          type: "success",
+          text1: "Success",
+          text2: "Address deleted successfully",
+          autoHide: true,
+          visibilityTime: 2000,
+          topOffset: 60,
+        });
+
+        setAddresses(
+          addresses.filter((address_: Address) => address_.id !== address.id)
+        );
+      }
+
+      setDeleteLoading(false);
+    } catch (err) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Something went wrong",
+        autoHide: true,
+        visibilityTime: 2000,
+        topOffset: 60,
+      });
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchUserAddresses = async () => {
       try {
         setLoading(true);
-        const response = await axiosApi.get(
-          "https://api-gocami-test.gocami.com/api/addresses",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await axiosApi.get("addresses", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (response.data.status) {
-          setAddresses(response.data.data);
+          const sortedDefault = [...response.data.data].sort(
+            (a, b) => b.is_default - a.is_default
+          );
+
+          setAddresses(sortedDefault);
         }
 
         setLoading(false);
@@ -142,8 +193,8 @@ export default function AddressPage() {
           className="flex-1 px-4 py-4"
           showsVerticalScrollIndicator={false}
         >
-          {addresses.length > 0 ? (
-            addresses.map((address) => (
+          {addresses.length > 0 && addresses != null ? (
+            addresses.map((address: Address) => (
               <View
                 key={address.id}
                 className="bg-white rounded-2xl shadow-sm mb-4 overflow-hidden"
@@ -166,14 +217,27 @@ export default function AddressPage() {
                         {address.name}
                       </Text>
                     </View>
-                    <TouchableOpacity
-                      onPress={() => handleEdit(address)}
-                      className="bg-gray-100 px-3 py-1.5 rounded-full"
-                    >
-                      <Text className="text-sm font-medium text-gray-600">
-                        Edit
-                      </Text>
-                    </TouchableOpacity>
+                    <View className="flex flex-row gap-3">
+                      <TouchableOpacity
+                        onPress={() => handleEdit(address)}
+                        className="bg-gray-100 px-3 py-1.5 rounded-full"
+                      >
+                        <Text className="text-sm font-medium text-gray-600">
+                          Edit
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        className="bg-red-100 px-3 py-1.5 rounded-full"
+                        onPress={() => {
+                          setSelectedAddress(address);
+                          setDeleteModalVisible(true);
+                        }}
+                      >
+                        <Text className="text-sm font-medium text-gray-600">
+                          Delete
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
 
                   {/* Address Details */}
@@ -246,6 +310,25 @@ export default function AddressPage() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <ConfirmationModal
+        isVisible={deleteModalVisible}
+        onCancel={() => {
+          setDeleteModalVisible(false);
+        }}
+        onConfirm={() => {
+          if (selectedAddress != null) {
+            handleDelete(selectedAddress);
+          }
+        }}
+        confirmButtonColor="red"
+        cancelButtonText="Cancel"
+        confirmButtonText="Delete"
+        description="Are you sure you want to delete this address?"
+        title="Delete Address"
+        icon="trash-alt"
+        loading={deleteLoading}
+      />
     </SafeAreaView>
   );
 }

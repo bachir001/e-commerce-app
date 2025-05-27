@@ -95,7 +95,7 @@ export default function Verification() {
       const signUpToken = await AsyncStorage.getItem("signUpToken");
 
       await axiosApi
-        .post("https://api-gocami-test.gocami.com/api/verify", RequestBody, {
+        .post("verify", RequestBody, {
           headers: {
             Authorization: `Bearer ${signUpToken}`,
           },

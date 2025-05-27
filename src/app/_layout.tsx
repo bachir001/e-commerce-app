@@ -6,6 +6,8 @@ import Toast from "react-native-toast-message";
 import "../../global.css";
 import { initOneSignal } from "@/Services/oneSignal";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import AddressContext from "@/contexts/AddressContext";
+import { Address } from "./(tabs)/account/addresses";
 
 interface SessionContextType {
   sessionId: string;
@@ -33,6 +35,12 @@ export default function RootLayout() {
   const [isLogged, setIsLogged] = useState<boolean>(false);
   const [user, setUser] = useState<UserContext | null>(null);
   const [token, setToken] = useState<string | null>(null);
+
+  const [addresses, setAddresses] = useState<Address[]>([]);
+
+  const addAddress = (address: Address) => {
+    setAddresses([...addresses, address]);
+  };
 
   useEffect(() => {
     (async () => {
@@ -67,6 +75,9 @@ export default function RootLayout() {
         setUser,
         token,
         setToken,
+        addresses,
+        setAddresses,
+        addAddress,
       }}
     >
       <Stack
