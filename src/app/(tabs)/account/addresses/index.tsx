@@ -199,6 +199,13 @@ export default function AddressPage() {
                 key={address.id}
                 className="bg-white rounded-2xl shadow-sm mb-4 overflow-hidden"
               >
+                {address.is_default === 1 ? (
+                  <View className="bg-green-100 p-3">
+                    <Text className="text-xs font-medium text-green-600">
+                      Default Address
+                    </Text>
+                  </View>
+                ) : null}
                 <View className="p-4">
                   {/* Address Header */}
                   <View className="flex-row items-center justify-between mb-3">

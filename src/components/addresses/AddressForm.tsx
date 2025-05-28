@@ -187,7 +187,20 @@ export default function AddressForm({
           bottomOffset: 40,
         });
 
-        setAddresses([...addresses, response.data.data]);
+        if (response.data.data?.is_default === 1) {
+          const removedDefault = [...addresses].map((address) => {
+            if (address.is_default === 1) {
+              address.is_default = 0;
+            }
+
+            return address;
+          });
+
+          const sortedWithNewDefault = [response.data.data, ...removedDefault];
+          setAddresses(sortedWithNewDefault);
+        } else {
+          setAddresses([...addresses, response.data.data]);
+        }
         router.back();
       } else {
         Toast.show({
