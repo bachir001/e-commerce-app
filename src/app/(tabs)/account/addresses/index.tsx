@@ -31,12 +31,15 @@ export interface Address {
   free_delivery: number;
   free_delivery_price: number;
   status: number;
+  governorate_code: string;
+  area_code: string;
+  city_code: string;
 }
 
 export default function AddressPage() {
   const router = useRouter();
 
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
 
@@ -44,31 +47,8 @@ export default function AddressPage() {
 
   const { token, addresses, setAddresses } = useContext(SessionContext);
 
-  // const addresses: Address[] = [
-  //   {
-  //     id: 1,
-  //     name: "Home",
-  //     street: "123 Main Street",
-  //     area: "Downtown",
-  //     city: "Beirut",
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Work",
-  //     street: "456 Business Ave",
-  //     area: "Business District",
-  //     city: "Beirut",
-  //   },
-  //   {
-  //     id: 3,
-  //     name: "Mom's House",
-  //     street: "789 Family Road",
-  //     area: "Residential Area",
-  //     city: "Jounieh",
-  //   },
-  // ];
-
   const handleEdit = (address: Address) => {
+    console.log("Address: ", address);
     router.push({
       pathname: "/(tabs)/account/addresses/editAddress",
       params: {
@@ -100,13 +80,11 @@ export default function AddressPage() {
         },
       };
 
-      console.log(token);
       const response = await axiosApi.post(
         `addresses/remove/${address.id}}?_method=DELETE`,
         {},
         HeaderData
       );
-      console.log(response.data);
       if (response.data.status) {
         Toast.show({
           type: "success",
@@ -132,7 +110,7 @@ export default function AddressPage() {
         visibilityTime: 2000,
         topOffset: 60,
       });
-      setLoading(false);
+      setDeleteLoading(false);
     }
   };
 
@@ -168,8 +146,10 @@ export default function AddressPage() {
       }
     };
 
-    fetchUserAddresses();
-  }, []);
+    if (addresses.length === 0) {
+      fetchUserAddresses();
+    }
+  }, [addresses, token, loading]);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -193,7 +173,7 @@ export default function AddressPage() {
           className="flex-1 px-4 py-4"
           showsVerticalScrollIndicator={false}
         >
-          {addresses.length > 0 && addresses != null ? (
+          {addresses.length > 0 ? (
             addresses.map((address: Address) => (
               <View
                 key={address.id}

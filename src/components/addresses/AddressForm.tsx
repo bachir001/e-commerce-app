@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -20,7 +20,7 @@ import AddressInput from "./AddressInput";
 import { SessionContext } from "@/app/_layout";
 import Toast from "react-native-toast-message";
 
-interface Governorate {
+export interface Governorate {
   id: number;
   name: string;
   code: string;
@@ -68,7 +68,6 @@ export default function AddressForm({
   const [selectedArea, setSelectedArea] = useState<Area | undefined>();
 
   // Location data
-  const [governorates, setGovernorates] = useState<Governorate[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
 
@@ -78,11 +77,6 @@ export default function AddressForm({
   const [showCityModal, setShowCityModal] = useState<boolean>(false);
   const [showAreaModal, setShowAreaModal] = useState<boolean>(false);
 
-  // Error states
-  const [governoratesError, setGovernoratesError] = useState<string>("");
-  const [citiesError, setCitiesError] = useState<string>("");
-  const [areasError, setAreasError] = useState<string>("");
-
   //Loading States
   const [governorateLoading, setGovernorateLoading] = useState<boolean>(false);
   const [cityLoading, setCityLoading] = useState<boolean>(false);
@@ -90,7 +84,8 @@ export default function AddressForm({
 
   const [loading, setLoading] = useState<boolean>(false);
 
-  const { token, setAddresses, addresses } = useContext(SessionContext);
+  const { token, setAddresses, addresses, governorates, setGovernorates } =
+    useContext(SessionContext);
 
   const handleCancel = () => {
     router.back();
@@ -104,21 +99,7 @@ export default function AddressForm({
     setCities([]);
     setAreas([]);
 
-    try {
-      setCityLoading(true);
-      const response = await axiosApi.get(`/cities/${governorate.code}`);
-      if (response.data.status) {
-        setCities(response.data.data);
-      } else {
-        setCitiesError(response.data.message);
-      }
-
-      setCityLoading(false);
-    } catch (err) {
-      console.error("Error fetching cities: ", err);
-      setCitiesError("Error fetching cities");
-      setCityLoading(false);
-    }
+    fetchCities(governorate.code);
   };
 
   const handleCitySelect = async (city: City) => {
@@ -126,25 +107,7 @@ export default function AddressForm({
     setSelectedArea(undefined);
     setAreas([]);
 
-    try {
-      setAreaLoading(true);
-      const response = await axiosApi.get(`/areas/${city.code}`);
-      if (response.data.status) {
-        setAreas(response.data.data);
-      } else {
-        setAreasError(response.data.message);
-      }
-
-      setAreaLoading(false);
-    } catch (err) {
-      console.error("Error fetching areas: ", err);
-      setAreasError("Error fetching areas");
-      setAreaLoading(false);
-    }
-  };
-
-  const handleAreaSelect = (area: Area) => {
-    setSelectedArea(area);
+    fetchAreas(city.code);
   };
 
   const handleCreateAddress = async () => {
@@ -162,8 +125,7 @@ export default function AddressForm({
         country_id: 1,
         status: status ? 1 : 0,
       };
-      console.log(addressData);
-      console.log(token);
+
       const HeaderData = {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -175,7 +137,7 @@ export default function AddressForm({
         addressData,
         HeaderData
       );
-      console.log(response.data);
+
       if (response.data.status) {
         Toast.show({
           type: "success",
@@ -190,17 +152,14 @@ export default function AddressForm({
         if (response.data.data?.is_default === 1) {
           const removedDefault = [...addresses].map((address) => {
             if (address.is_default === 1) {
-              address.is_default = 0;
+              return { ...address, is_default: 0 };
             }
-
-            return address;
           });
-
-          const sortedWithNewDefault = [response.data.data, ...removedDefault];
-          setAddresses(sortedWithNewDefault);
+          setAddresses([response.data.data, ...removedDefault]);
         } else {
           setAddresses([...addresses, response.data.data]);
         }
+
         router.back();
       } else {
         Toast.show({
@@ -230,28 +189,72 @@ export default function AddressForm({
     }
   };
 
+  //FETCHING
+
+  const fetchGovernorates = async () => {
+    try {
+      setGovernorateLoading(true);
+      const response = await axiosApi.get("governorates");
+      if (response.data.status) {
+        setGovernorates(response.data.data);
+      }
+
+      setGovernorateLoading(false);
+    } catch (err) {
+      console.error("Error fetching governorates: ", err);
+      setGovernorateLoading(false);
+    }
+  };
+
+  const fetchCities = async (code: string) => {
+    try {
+      setCityLoading(true);
+      const response = await axiosApi.get(`cities/${code}`);
+
+      console.log("CITIESSS:", response.data.data);
+
+      if (response.data.status) {
+        setCities(response.data.data);
+      }
+
+      setCityLoading(false);
+    } catch (err) {
+      console.error("Error fetching cities: ", err);
+      setCityLoading(false);
+    }
+  };
+
+  const fetchAreas = async (code: string) => {
+    try {
+      setAreaLoading(true);
+      const response = await axiosApi.get(`/areas/${code}`);
+      if (response.data.status) {
+        setAreas(response.data.data);
+      }
+
+      setAreaLoading(false);
+    } catch (err) {
+      console.error("Error fetching areas: ", err);
+      setAreaLoading(false);
+    }
+  };
+
   const handleUpdateAddress = async () => {};
 
   useEffect(() => {
-    const fetchGovernorates = async () => {
-      try {
-        setGovernorateLoading(true);
-        const response = await axiosApi.get("governorates");
-        if (response.data.status) {
-          setGovernorates(response.data.data);
-        } else {
-          setGovernoratesError(response.data.message);
-        }
+    if (governorates.length === 0) {
+      fetchGovernorates();
+    }
 
-        setGovernorateLoading(false);
-      } catch (err) {
-        console.error("Error fetching governorates: ", err);
-        setGovernoratesError("Error fetching governorates");
-        setGovernorateLoading(false);
+    if (type === "edit") {
+      if (addressParsed?.governorate_code) {
+        console.log("HELLO HEREE");
+        Promise.all([
+          fetchCities(addressParsed?.governorate_code),
+          fetchAreas(addressParsed?.city_code),
+        ]);
       }
-    };
-
-    fetchGovernorates();
+    }
   }, []);
 
   return (
@@ -351,7 +354,9 @@ export default function AddressForm({
               {/* Location Pickers */}
               <CustomPicker
                 label="Governorate"
-                value={selectedGovernorate?.name || ""}
+                value={
+                  selectedGovernorate?.name || addressParsed?.governorate || ""
+                }
                 placeholder="Select a governorate"
                 onPress={() => setShowGovernorateModal(true)}
                 loading={governorateLoading}
@@ -359,19 +364,43 @@ export default function AddressForm({
 
               <CustomPicker
                 label="City"
-                value={selectedCity?.name || ""}
+                // value={
+                //   (!selectedGovernorate?.name
+                //     ? addressParsed?.city
+                //     : selectedCity?.name) || ""
+                // }
+                value={
+                  selectedCity?.name ||
+                  (!selectedGovernorate ? addressParsed?.city : "") ||
+                  ""
+                }
                 placeholder="Select a city"
                 onPress={() => setShowCityModal(true)}
-                disabled={!selectedGovernorate || cityLoading}
+                disabled={
+                  !addressParsed?.city && (!selectedGovernorate || cityLoading)
+                }
                 loading={cityLoading}
               />
 
               <CustomPicker
                 label="Area"
-                value={selectedArea?.name || ""}
+                // value={
+                //   (!selectedGovernorate?.name
+                //     ? addressParsed?.area
+                //     : selectedArea?.name) || ""
+                // }
+                value={
+                  selectedArea?.name ||
+                  (!selectedCity && !selectedGovernorate
+                    ? addressParsed?.area
+                    : "") ||
+                  ""
+                }
                 placeholder="Select an area"
                 onPress={() => setShowAreaModal(true)}
-                disabled={!selectedCity || areaLoading}
+                disabled={
+                  !addressParsed?.area && (!selectedCity || areaLoading)
+                }
                 loading={areaLoading}
               />
 
@@ -405,21 +434,6 @@ export default function AddressForm({
                     ${selectedArea.price.toFixed(2)}
                   </Text>
                 </View>
-
-                {/* {selectedArea.user_free_delivery === 1 && (
-                  <View className="bg-green-50 p-3 rounded-xl">
-                    <View className="flex-row items-center">
-                      <FontAwesome5
-                        name="check-circle"
-                        size={16}
-                        color="#22C55E"
-                      />
-                      <Text className="text-green-700 font-medium ml-2">
-                        Free Delivery Available
-                      </Text>
-                    </View>
-                  </View>
-                )} */}
               </View>
             </View>
           )}
@@ -479,7 +493,9 @@ export default function AddressForm({
         visible={showAreaModal}
         title="Select Area"
         items={areas}
-        onSelect={handleAreaSelect}
+        onSelect={(area: Area) => {
+          setSelectedArea(area);
+        }}
         onClose={() => setShowAreaModal(false)}
       />
     </SafeAreaView>

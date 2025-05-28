@@ -44,7 +44,6 @@ export default function EditProfile() {
 
   const handlePasswordChange = async () => {
     try {
-      console.log("ENTERED HERE:");
       setPassLoading(true);
 
       const response = await axiosApi.post(
@@ -52,8 +51,6 @@ export default function EditProfile() {
         { password: newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      console.log(response.data);
 
       if (response.data.status) {
         Toast.show({
@@ -97,9 +94,6 @@ export default function EditProfile() {
 
       const noChange = objectValues.every((input) => input === null);
 
-      console.log(updateBody);
-      console.log(noChange);
-
       if (noChange) {
         Toast.show({
           type: "error",
@@ -111,7 +105,7 @@ export default function EditProfile() {
       } else {
         try {
           setLoading(true);
-          console.log(updateBody);
+
           await axiosApi
             .post("users-data/update", updateBody, {
               headers: {
@@ -119,7 +113,6 @@ export default function EditProfile() {
               },
             })
             .then(async (response) => {
-              console.log(response);
               if (response.data.status) {
                 Toast.show({
                   type: "success",

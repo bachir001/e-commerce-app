@@ -171,7 +171,6 @@ export default function ChangePasswordModal({
                   value={confirmNewPassword}
                   onChangeText={(text: string) => {
                     setConfirmNewPassword(text);
-                    console.log(text);
                   }}
                   className={`bg-gray-50 border rounded-xl px-4 py-3.5 pr-12 text-gray-800 ${
                     confirmNewPassword.length > 0 &&

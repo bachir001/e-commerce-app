@@ -85,8 +85,6 @@ export default function CreateAccount() {
       return;
     }
 
-    console.log("SELECTED GENDERRR: ", selectedGender);
-
     router.push({
       pathname: "/auth/confirmation",
       params: {
