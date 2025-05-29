@@ -1,68 +1,75 @@
 import { Stack } from "expo-router";
 import { getOrCreateSessionId } from "@/lib/session";
-import { View, ActivityIndicator } from "react-native";
+import { ImageBackground, View } from "react-native";
 import React, { createContext, useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
 import "../../global.css";
 import { initOneSignal } from "@/Services/oneSignal";
-import { Address } from "./(tabs)/account/addresses";
-import { Governorate } from "@/components/addresses/AddressForm";
+import axiosApi from "@/apis/axiosApi";
+import {
+  Address,
+  Brand,
+  Governorate,
+  MegaCategories,
+  SessionContextValue,
+  Slider,
+  UserContextType,
+} from "@/types/contextTypes";
 
-interface SessionContextType {
-  sessionId: string;
-  isLogged: UserContext | null;
-  setIsLogged: React.Dispatch<React.SetStateAction<boolean | null>>;
-}
-
-export const SessionContext = createContext<SessionContextType | null>(null);
-
-export interface UserContext {
-  id: number;
-  first_name: string;
-  last_name: string;
-  mobile: string | null;
-  gender_id: number | null;
-  gender: string;
-  date_of_birth: string | null;
-  email: string | null;
-  email_verified: boolean;
-  mobile_verified: boolean;
-}
+export const SessionContext = createContext<SessionContextValue | null>(null);
 
 export default function RootLayout() {
-  const [sessionId, setSession] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLogged, setIsLogged] = useState<boolean>(false);
-  const [user, setUser] = useState<UserContext | null>(null);
+  const [user, setUser] = useState<UserContextType | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
+  //account page
   const [addresses, setAddresses] = useState<Address[]>([]);
-
   const [governorates, setGovernorates] = useState<Governorate[]>([]);
 
+  //home top section
+  const [appIsReady, setAppIsReady] = useState<boolean>(false);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [sliders, setSliders] = useState<Slider[]>([]);
+  const [megaCategories, setMegaCategories] = useState<MegaCategories[]>([]);
+
   const addAddress = (address: Address) => {
-    setAddresses([...addresses, address]);
+    setAddresses((prevAddresses) => [...prevAddresses, address]);
   };
 
   useEffect(() => {
-    (async () => {
+    async function performInitialLoad() {
       try {
-        const id = await getOrCreateSessionId();
-        setSession(id);
+        const [id, brands, sliders, megaCategories] = await Promise.all([
+          getOrCreateSessionId(),
+          axiosApi.get("get-brand-data"),
+          axiosApi.get("getSlider/home-slider"),
+          axiosApi.get("getMegaCategories"),
+        ]);
+
+        setSessionId(id);
+        initOneSignal();
+        setBrands(brands.data.data);
+        setSliders(sliders.data.data.slides);
+        setMegaCategories(megaCategories.data.data);
       } catch (error) {
-        console.error("Error getting session ID:", error);
+        console.error("Error during initial app load:", error);
+      } finally {
+        setAppIsReady(true);
       }
-    })();
+    }
+
+    performInitialLoad();
   }, []);
 
-  useEffect(() => {
-    initOneSignal();
-  }, []);
-
-  if (!sessionId) {
+  if (!appIsReady) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator />
-      </View>
+      <ImageBackground
+        source={require("@/assets/images/initialPageLoader.jpeg")}
+        className="flex-1 justify-center items-center"
+        resizeMode="cover"
+      />
     );
   }
 
@@ -81,6 +88,9 @@ export default function RootLayout() {
         addAddress,
         governorates,
         setGovernorates,
+        brands,
+        sliders,
+        megaCategories,
       }}
     >
       <Stack
