@@ -5,18 +5,9 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
-      ]
+      "@/*": ["src/*"]
     },
-    "types": [
-      "react-native"
-    ]
+    "types": ["react-native"]
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "**/*.d.ts",
-    "nativewind-env.d.ts"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts", "nativewind-env.d.ts"]
 }

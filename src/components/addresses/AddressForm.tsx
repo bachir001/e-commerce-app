@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -6,12 +6,41 @@ import {
   TouchableOpacity,
   ScrollView,
   Switch,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { Address } from "@/app/(tabs)/account/addresses";
+import type { Address } from "@/app/(tabs)/account/addresses";
 import { Colors } from "@/constants/Colors";
+import axiosApi from "@/apis/axiosApi";
+import { CustomPicker } from "./CustomPicker";
+import { PickerModal } from "./PickerModal";
+import AddressInput from "./AddressInput";
+import { SessionContext } from "@/app/_layout";
+import Toast from "react-native-toast-message";
+
+export interface Governorate {
+  id: number;
+  name: string;
+  code: string;
+}
+
+interface City {
+  id: number;
+  name: string;
+  code: string;
+  governorate_id: number;
+}
+
+interface Area {
+  id: number;
+  name: string;
+  code: string;
+  price: number;
+  city_id: number;
+  user_free_delivery: number;
+}
 
 export default function AddressForm({
   type,
@@ -19,6 +48,7 @@ export default function AddressForm({
 }: {
   type: "create" | "edit";
   addressParsed?: Address;
+  addAddressCallback?: (address: Address) => void;
 }) {
   const router = useRouter();
 
@@ -26,53 +56,206 @@ export default function AddressForm({
   const [name, setName] = useState(addressParsed?.name || "");
   const [street, setStreet] = useState(addressParsed?.street || "");
   const [street2, setStreet2] = useState(addressParsed?.street_2 || "");
-  const [postalCode, setPostalCode] = useState(
-    addressParsed?.postal_code?.toString() || ""
-  );
-  const [area, setArea] = useState(addressParsed?.area || "");
-  const [city, setCity] = useState(addressParsed?.city || "");
-  const [governorate, setGovernorate] = useState(
-    addressParsed?.governorate || ""
-  );
-  const [country, setCountry] = useState(addressParsed?.country || "");
-  const [deliveryPrice, setDeliveryPrice] = useState(
-    addressParsed?.delivery_price?.toString() || ""
-  );
-  const [freeDelivery, setFreeDelivery] = useState(
-    addressParsed?.free_delivery === 1
-  );
-  const [freeDeliveryPrice, setFreeDeliveryPrice] = useState(
-    addressParsed?.free_delivery_price?.toString() || ""
-  );
+
   const [isDefault, setIsDefault] = useState(addressParsed?.is_default === 1);
-  const [status, setStatus] = useState(addressParsed?.status === 1);
+  const [status, setStatus] = useState(true);
+
+  // Selected location states
+  const [selectedGovernorate, setSelectedGovernorate] = useState<
+    Governorate | undefined
+  >();
+  const [selectedCity, setSelectedCity] = useState<City | undefined>();
+  const [selectedArea, setSelectedArea] = useState<Area | undefined>();
+
+  // Location data
+  const [cities, setCities] = useState<City[]>([]);
+  const [areas, setAreas] = useState<Area[]>([]);
+
+  // Modal states
+  const [showGovernorateModal, setShowGovernorateModal] =
+    useState<boolean>(false);
+  const [showCityModal, setShowCityModal] = useState<boolean>(false);
+  const [showAreaModal, setShowAreaModal] = useState<boolean>(false);
+
+  //Loading States
+  const [governorateLoading, setGovernorateLoading] = useState<boolean>(false);
+  const [cityLoading, setCityLoading] = useState<boolean>(false);
+  const [areaLoading, setAreaLoading] = useState<boolean>(false);
+
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const { token, setAddresses, addresses, governorates, setGovernorates } =
+    useContext(SessionContext);
 
   const handleCancel = () => {
     router.back();
   };
 
-  //   const handleEdit = () => {
-  //     // Prepare the updated address object
-  //     const updatedAddress: Address = {
-  //       ...addressParsed,
-  //       name,
-  //       street,
-  //       street_2: street2,
-  //       postal_code: Number.parseInt(postalCode) || 0,
-  //       area,
-  //       city,
-  //       governorate,
-  //       country,
-  //       delivery_price: Number.parseFloat(deliveryPrice) || 0,
-  //       free_delivery: freeDelivery ? 1 : 0,
-  //       free_delivery_price: Number.parseFloat(freeDeliveryPrice) || 0,
-  //       is_default: isDefault ? 1 : 0,
-  //       status: status ? 1 : 0,
-  //     };
+  //SELECTION
+  const handleGovernorateSelect = async (governorate: Governorate) => {
+    setSelectedGovernorate(governorate);
+    // Reset
+    setSelectedCity(undefined);
+    setSelectedArea(undefined);
+    setCities([]);
+    setAreas([]);
 
-  //     // Here you would handle the API call
-  //     console.log("Updated address:", updatedAddress);
-  //   };
+    fetchCities(governorate.code);
+  };
+
+  const handleCitySelect = async (city: City) => {
+    setSelectedCity(city);
+    setSelectedArea(undefined);
+    setAreas([]);
+
+    fetchAreas(city.code);
+  };
+
+  //ACTIONS
+  const handleCreateAddress = async () => {
+    try {
+      setLoading(true);
+
+      const addressData = {
+        name,
+        street,
+        street_2: street2,
+        governorate_id: selectedGovernorate?.id,
+        city_id: selectedCity?.id,
+        area_id: selectedArea?.id,
+        is_default: isDefault ? 1 : 0,
+        country_id: 1,
+        status: status ? 1 : 0,
+      };
+
+      const HeaderData = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+
+      const response = await axiosApi.post(
+        "addresses/add",
+        addressData,
+        HeaderData
+      );
+
+      if (response.data.status) {
+        Toast.show({
+          type: "success",
+          text1: "Address created successfully",
+          text2: "Your address has been added successfully",
+          visibilityTime: 2000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
+
+        if (response.data.data?.is_default === 1) {
+          const removedDefault = [...addresses].map((address) => {
+            if (address.is_default === 1) {
+              return { ...address, is_default: 0 };
+            }
+          });
+          setAddresses([response.data.data, ...removedDefault]);
+        } else {
+          setAddresses([...addresses, response.data.data]);
+        }
+
+        router.back();
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Error creating address",
+          text2: response.data.message,
+          visibilityTime: 2000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
+      }
+
+      setLoading(false);
+    } catch (err) {
+      console.error("Error creating address: ", err);
+      Toast.show({
+        type: "error",
+        text1: "Error creating address",
+        text2: "Something went wrong",
+        visibilityTime: 2000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateAddress = async () => {};
+
+  //FETCHING
+  const fetchGovernorates = async () => {
+    try {
+      setGovernorateLoading(true);
+      const response = await axiosApi.get("governorates");
+      if (response.data.status) {
+        setGovernorates(response.data.data);
+      }
+
+      setGovernorateLoading(false);
+    } catch (err) {
+      console.error("Error fetching governorates: ", err);
+      setGovernorateLoading(false);
+    }
+  };
+
+  const fetchCities = async (code: string) => {
+    try {
+      setCityLoading(true);
+      const response = await axiosApi.get(`cities/${code}`);
+
+      console.log("CITIESSS:", response.data.data);
+
+      if (response.data.status) {
+        setCities(response.data.data);
+      }
+
+      setCityLoading(false);
+    } catch (err) {
+      console.error("Error fetching cities: ", err);
+      setCityLoading(false);
+    }
+  };
+
+  const fetchAreas = async (code: string) => {
+    try {
+      setAreaLoading(true);
+      const response = await axiosApi.get(`/areas/${code}`);
+      if (response.data.status) {
+        setAreas(response.data.data);
+      }
+
+      setAreaLoading(false);
+    } catch (err) {
+      console.error("Error fetching areas: ", err);
+      setAreaLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (governorates.length === 0) {
+      fetchGovernorates();
+    }
+
+    if (type === "edit") {
+      if (addressParsed?.governorate_code) {
+        Promise.all([
+          fetchCities(addressParsed?.governorate_code),
+          fetchAreas(addressParsed?.city_code),
+        ]);
+      }
+    }
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -85,7 +268,7 @@ export default function AddressForm({
           <FontAwesome5 name="times" size={18} color="#6B7280" />
         </TouchableOpacity>
         <Text className="text-lg font-semibold text-gray-800">
-          Edit Address
+          {type === "create" ? "Add Address" : "Edit Address"}
         </Text>
         <View className="w-10" />
       </View>
@@ -104,18 +287,12 @@ export default function AddressForm({
             </View>
 
             <View className="space-y-4">
-              <View>
-                <Text className="text-sm font-medium text-gray-700 mb-2">
-                  Address Name
-                </Text>
-                <TextInput
-                  value={name}
-                  onChangeText={setName}
-                  placeholder="e.g., Home, Office"
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800"
-                  placeholderTextColor="#9CA3AF"
-                />
-              </View>
+              <AddressInput
+                value={name}
+                onChangeText={setName}
+                placeholder="e.g., Home, Office"
+                headerName="Address Name"
+              />
 
               <View className="flex-row space-x-3">
                 <View className="flex-1">
@@ -160,179 +337,157 @@ export default function AddressForm({
             </View>
 
             <View className="space-y-4">
-              <View>
-                <Text className="text-sm font-medium text-gray-700 mb-2">
-                  Street Address
-                </Text>
-                <TextInput
-                  value={street}
-                  onChangeText={setStreet}
-                  placeholder="Enter street address"
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800"
-                  placeholderTextColor="#9CA3AF"
-                />
-              </View>
+              <AddressInput
+                value={street}
+                onChangeText={setStreet}
+                placeholder="Enter street address"
+                headerName="Street Address"
+              />
+
+              <AddressInput
+                value={street2}
+                onChangeText={setStreet2}
+                placeholder="Apartment, suite, etc."
+                headerName="Street Address 2 (Optional)"
+              />
+
+              {/* Location Pickers */}
+              <CustomPicker
+                label="Governorate"
+                value={
+                  selectedGovernorate?.name || addressParsed?.governorate || ""
+                }
+                placeholder="Select a governorate"
+                onPress={() => setShowGovernorateModal(true)}
+                loading={governorateLoading}
+              />
+
+              <CustomPicker
+                label="City"
+                value={
+                  selectedCity?.name ||
+                  (!selectedGovernorate ? addressParsed?.city : "") ||
+                  ""
+                }
+                placeholder="Select a city"
+                onPress={() => setShowCityModal(true)}
+                disabled={
+                  !addressParsed?.city && (!selectedGovernorate || cityLoading)
+                }
+                loading={cityLoading}
+              />
+
+              <CustomPicker
+                label="Area"
+                value={
+                  selectedArea?.name ||
+                  (!selectedCity && !selectedGovernorate
+                    ? addressParsed?.area
+                    : "") ||
+                  ""
+                }
+                placeholder="Select an area"
+                onPress={() => setShowAreaModal(true)}
+                disabled={
+                  !addressParsed?.area && (!selectedCity || areaLoading)
+                }
+                loading={areaLoading}
+              />
 
               <View>
-                <Text className="text-sm font-medium text-gray-700 mb-2 mt-2">
-                  Street Address 2 (Optional)
-                </Text>
-                <TextInput
-                  value={street2}
-                  onChangeText={setStreet2}
-                  placeholder="Apartment, suite, etc."
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800"
-                  placeholderTextColor="#9CA3AF"
-                />
-              </View>
-
-              <View className="flex-row space-x-3 mt-2">
-                <View className="flex-1">
-                  <Text className="text-sm font-medium text-gray-700 mb-2">
-                    Area
-                  </Text>
-                  <TextInput
-                    value={area}
-                    onChangeText={setArea}
-                    placeholder="Area"
-                    className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800"
-                    placeholderTextColor="#9CA3AF"
-                  />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-sm font-medium text-gray-700 mb-2">
-                    Postal Code
-                  </Text>
-                  <TextInput
-                    value={postalCode}
-                    onChangeText={setPostalCode}
-                    placeholder="12345"
-                    keyboardType="numeric"
-                    className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800"
-                    placeholderTextColor="#9CA3AF"
-                  />
-                </View>
-              </View>
-
-              <View className="flex-row space-x-3 mt-2">
-                <View className="flex-1">
-                  <Text className="text-sm font-medium text-gray-700 mb-2">
-                    City
-                  </Text>
-                  <TextInput
-                    value={city}
-                    onChangeText={setCity}
-                    placeholder="City"
-                    className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800"
-                    placeholderTextColor="#9CA3AF"
-                  />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-sm font-medium text-gray-700 mb-2">
-                    Governorate
-                  </Text>
-                  <TextInput
-                    value={governorate}
-                    onChangeText={setGovernorate}
-                    placeholder="Governorate"
-                    className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800"
-                    placeholderTextColor="#9CA3AF"
-                  />
-                </View>
-              </View>
-
-              <View className="mt-2">
                 <Text className="text-sm font-medium text-gray-700 mb-2">
                   Country
                 </Text>
-                <TextInput
-                  value={country}
-                  onChangeText={setCountry}
-                  placeholder="Country"
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800"
-                  placeholderTextColor="#9CA3AF"
-                />
+                <View className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800">
+                  <Text>Lebanon</Text>
+                </View>
               </View>
             </View>
           </View>
 
           {/* Delivery Settings */}
-          <View className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
-            <View className="flex-row items-center mb-4">
-              <View className="w-10 h-10 bg-green-100 rounded-full items-center justify-center mr-3">
-                <FontAwesome5 name="truck" size={16} color="#22C55E" />
-              </View>
-              <Text className="text-lg font-semibold text-gray-800">
-                Delivery Settings
-              </Text>
-            </View>
-
-            <View className="space-y-4">
-              <View>
-                <Text className="text-sm font-medium text-gray-700 mb-2">
-                  Delivery Price ($)
-                </Text>
-                <TextInput
-                  value={deliveryPrice}
-                  onChangeText={setDeliveryPrice}
-                  placeholder="0.00"
-                  keyboardType="decimal-pad"
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800"
-                  placeholderTextColor="#9CA3AF"
-                />
-              </View>
-
-              <View className="flex-row items-center justify-between">
-                <Text className="text-sm font-medium text-gray-700">
-                  Free Delivery Available
-                </Text>
-                <Switch
-                  value={freeDelivery}
-                  onValueChange={setFreeDelivery}
-                  trackColor={{ false: "#E5E7EB", true: "#BBF7D0" }}
-                  thumbColor={freeDelivery ? "#22C55E" : "#9CA3AF"}
-                />
-              </View>
-
-              {freeDelivery && (
-                <View>
-                  <Text className="text-sm font-medium text-gray-700 mb-2">
-                    Minimum Order for Free Delivery ($)
-                  </Text>
-                  <TextInput
-                    value={freeDeliveryPrice}
-                    onChangeText={setFreeDeliveryPrice}
-                    placeholder="0.00"
-                    keyboardType="decimal-pad"
-                    className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800"
-                    placeholderTextColor="#9CA3AF"
-                  />
+          {selectedArea && (
+            <View className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
+              <View className="flex-row items-center mb-4">
+                <View className="w-10 h-10 bg-green-100 rounded-full items-center justify-center mr-3">
+                  <FontAwesome5 name="truck" size={16} color="#22C55E" />
                 </View>
-              )}
+                <Text className="text-lg font-semibold text-gray-800">
+                  Delivery Information
+                </Text>
+              </View>
+
+              <View className="space-y-3">
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-gray-600">Delivery Price</Text>
+                  <Text className="text-gray-800 font-semibold">
+                    ${selectedArea.price.toFixed(2)}
+                  </Text>
+                </View>
+              </View>
             </View>
-          </View>
+          )}
 
           {/* Action Buttons */}
           <View className="flex-row space-x-3 mb-6">
-            <TouchableOpacity
-              onPress={handleCancel}
-              className="flex-1 bg-gray-100 py-4 px-6 rounded-2xl items-center justify-center"
-            >
-              <Text className="text-gray-700 font-semibold">Cancel</Text>
-            </TouchableOpacity>
+            {!loading && (
+              <TouchableOpacity
+                onPress={handleCancel}
+                className="flex-1 bg-gray-100 py-4 px-6 rounded-2xl items-center justify-center"
+              >
+                <Text className="text-gray-700 font-semibold">Cancel</Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
-              //   onPress={handleEdit}
-              style={{
-                backgroundColor: Colors.PRIMARY,
+              style={{ backgroundColor: Colors.PRIMARY }}
+              className="flex-1 py-4 px-6 rounded-2xl items-center justify-center shadow-sm"
+              onPress={() => {
+                if (type === "create") {
+                  handleCreateAddress();
+                } else {
+                  handleUpdateAddress();
+                }
               }}
-              className={`flex-1 py-4 px-6 rounded-2xl items-center justify-center shadow-sm`}
             >
-              <Text className="text-white font-semibold">Save Changes</Text>
+              {loading ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text className="text-white font-semibold">
+                  {type === "create" ? "Create Address" : "Update Address"}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
+
+      {/* Enhanced Picker Modals */}
+      <PickerModal
+        visible={showGovernorateModal}
+        title="Select Governorate"
+        items={governorates}
+        onSelect={handleGovernorateSelect}
+        onClose={() => setShowGovernorateModal(false)}
+      />
+
+      <PickerModal
+        visible={showCityModal}
+        title="Select City"
+        items={cities}
+        onSelect={handleCitySelect}
+        onClose={() => setShowCityModal(false)}
+      />
+
+      <PickerModal
+        visible={showAreaModal}
+        title="Select Area"
+        items={areas}
+        onSelect={(area: Area) => {
+          setSelectedArea(area);
+        }}
+        onClose={() => setShowAreaModal(false)}
+      />
     </SafeAreaView>
   );
 }

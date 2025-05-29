@@ -39,7 +39,6 @@ export default function HomeScreen() {
     const checkForToken = async () => {
       const token_ = await AsyncStorage.getItem("token");
       const userJSON = await AsyncStorage.getItem("user");
-      console.log("HELLO USER\n\n", userJSON);
       let parsedUser;
       if (typeof userJSON === "string") {
         parsedUser = JSON.parse(userJSON);

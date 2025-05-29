@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import Modal from "react-native-modal";
 import { FontAwesome5 } from "@expo/vector-icons";
+import { Colors } from "@/constants/Colors";
 
 interface ChangePasswordModalProps {
   isVisible: boolean;
@@ -63,7 +64,7 @@ export default function ChangePasswordModal({
           <View className="flex-row items-center justify-between mb-6">
             <View className="flex-row items-center">
               <View className="w-12 h-12 bg-indigo-100 rounded-full items-center justify-center mr-3">
-                <FontAwesome5 name="lock" size={18} color="#6366F1" />
+                <FontAwesome5 name="lock" size={18} color="#5e3ebd" />
               </View>
               <View>
                 <Text className="text-xl font-bold text-gray-800">
@@ -170,7 +171,6 @@ export default function ChangePasswordModal({
                   value={confirmNewPassword}
                   onChangeText={(text: string) => {
                     setConfirmNewPassword(text);
-                    console.log(text);
                   }}
                   className={`bg-gray-50 border rounded-xl px-4 py-3.5 pr-12 text-gray-800 ${
                     confirmNewPassword.length > 0 &&
@@ -225,30 +225,32 @@ export default function ChangePasswordModal({
 
           {/* Action Buttons */}
           <View className="flex-row space-x-3 mt-6">
-            <TouchableOpacity
-              onPress={onClose}
-              className="flex-1 bg-gray-100 py-4 px-6 rounded-2xl items-center justify-center"
-              disabled={loading}
-            >
-              <Text className="text-gray-700 font-semibold">Cancel</Text>
-            </TouchableOpacity>
+            {!loading && (
+              <TouchableOpacity
+                onPress={onClose}
+                className="flex-1 bg-gray-100 py-4 px-6 rounded-2xl items-center justify-center"
+                disabled={loading}
+              >
+                <Text className="text-gray-700 font-semibold">Cancel</Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               onPress={() => {
-                onSave();
+                if (isFormValid && newPassword === confirmNewPassword) {
+                  onSave();
+                }
               }}
               disabled={
                 !isFormValid || loading || newPassword !== confirmNewPassword
               }
-              className={`flex-1 py-4 px-6 rounded-2xl items-center justify-center ${
-                isFormValid && !loading && newPassword === confirmNewPassword
-                  ? "bg-indigo-600 shadow-sm"
-                  : "bg-gray-300"
-              }`}
+              style={{
+                backgroundColor: Colors.PRIMARY,
+              }}
+              className={`flex-1 py-4 px-6 rounded-2xl items-center justify-center`}
             >
               {loading ? (
                 <View className="flex-row items-center">
-                  <FontAwesome5 name="spinner" size={16} color="white" />
                   <ActivityIndicator size="small" color="white" />
                 </View>
               ) : (

@@ -1,5 +1,5 @@
 // src/app/tabs/cart.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   SafeAreaView,
   View,
@@ -10,14 +10,14 @@ import {
   Pressable,
   Dimensions,
   StyleSheet,
-} from 'react-native';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
-import { useRouter } from 'expo-router';
-import { useCartStore, CartItem } from '@/store/cartStore';
-import axios, { AxiosResponse } from 'axios';
-import { MaterialIcons } from '@expo/vector-icons';
-import { getOrCreateSessionId } from '@/lib/session';
+} from "react-native";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
+import { useRouter } from "expo-router";
+import { useCartStore, CartItem } from "@/store/cartStore";
+import axios, { AxiosResponse } from "axios";
+import { MaterialIcons } from "@expo/vector-icons";
+import { getOrCreateSessionId } from "@/lib/session";
 
 // -----------------------
 // Best‑Sellers API types
@@ -54,7 +54,8 @@ export default function CartScreen(): React.ReactElement {
   // 1. Theme setup
   const router = useRouter();
   const rawColorScheme = useColorScheme();
-  const colorScheme: 'light' | 'dark' = rawColorScheme === 'dark' ? 'dark' : 'light';
+  const colorScheme: "light" | "dark" =
+    rawColorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(colorScheme);
 
   // 2. Zustand state & actions
@@ -72,7 +73,9 @@ export default function CartScreen(): React.ReactElement {
   // 4. Best‑sellers state (only when cart is empty)
   const [bestSellerItems, setBestSellerItems] = useState<BestSellerItem[]>([]);
   const [isBestSellersLoading, setIsBestSellersLoading] = useState(false);
-  const [bestSellersErrorMessage, setBestSellersErrorMessage] = useState<string | null>(null);
+  const [bestSellersErrorMessage, setBestSellersErrorMessage] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     if (cartItems.length === 0) {
@@ -81,11 +84,13 @@ export default function CartScreen(): React.ReactElement {
 
       axios
         .get<BestSellersApiResponse>(
-          'https://api-gocami-test.gocami.com/api/best-sellers?page=1&per_page=20'
+          "https://api-gocami-test.gocami.com/api/best-sellers?page=1&per_page=20"
         )
         .then((response) => {
           if (!response.data.status) {
-            throw new Error(response.data.message || 'Failed to load best sellers');
+            throw new Error(
+              response.data.message || "Failed to load best sellers"
+            );
           }
           const mapped = response.data.data.results.map((raw) => ({
             id: raw.id.toString(),
@@ -96,7 +101,9 @@ export default function CartScreen(): React.ReactElement {
           setBestSellerItems(mapped);
         })
         .catch((err) => {
-          setBestSellersErrorMessage(err instanceof Error ? err.message : 'Unknown error');
+          setBestSellersErrorMessage(
+            err instanceof Error ? err.message : "Unknown error"
+          );
         })
         .finally(() => {
           setIsBestSellersLoading(false);
@@ -104,69 +111,71 @@ export default function CartScreen(): React.ReactElement {
     }
   }, [cartItems]);
 
-
   // 5. Remove handler
-  const handleRemove = async (cartItemId: string) => {    
+  const handleRemove = async (cartItemId: string) => {
     try {
       const sessionId = await getOrCreateSessionId();
       const formData = new FormData();
-      formData.append('cart_item_id', cartItemId);
-      formData.append('_method', 'DELETE'); // Add _method to body
+      formData.append("cart_item_id", cartItemId);
+      formData.append("_method", "DELETE"); // Add _method to body
 
       const remove = await axios.post(
-        'https://api-gocami-test.gocami.com/api/cart/remove', // Remove ?_method=DELETE from URL
+        "https://api-gocami-test.gocami.com/api/cart/remove", // Remove ?_method=DELETE from URL
         formData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
-            'x-session': sessionId, // Correct header key
+            "Content-Type": "multipart/form-data",
+            "x-session": sessionId, // Correct header key
           },
         }
       );
-      
+
       await fetchCart();
     } catch (err) {
-      console.error('Error removing item:', err);
+      console.error("Error removing item:", err);
     }
   };
 
-
   // 6. Render one cart row
   function renderCartRow({ item }: { item: CartItem }) {
-    
     return (
       <View style={styles.cartItemContainer}>
-        <Image source={{ uri: (item as any).imageUrl }} style={styles.productImage} />
+        <Image
+          source={{ uri: (item as any).imageUrl }}
+          style={styles.productImage}
+        />
         <View style={styles.details}>
-          <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+          <Text style={styles.productName} numberOfLines={2}>
+            {item.name}
+          </Text>
           <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
         </View>
         <View style={styles.quantityContainer}>
-          
           <Pressable
-              onPress={() =>
-                item.quantity > 1
-                  ? addToCart(item.productId, 1, 'decrease')
-                  : handleRemove(item.id)
-              }
-              disabled={item.quantity <= 1 || isCartLoading}
+            onPress={() =>
+              item.quantity > 1
+                ? addToCart(item.productId, 1, "decrease")
+                : handleRemove(item.id)
+            }
+            disabled={item.quantity <= 1 || isCartLoading}
+          >
+            <Text
+              style={[
+                styles.qtyButton,
+                (item.quantity <= 1 || isCartLoading) &&
+                  styles.qtyButtonDisabled,
+              ]}
             >
-                <Text
-                  style={[
-                    styles.qtyButton,
-                    (item.quantity <= 1 || isCartLoading) && styles.qtyButtonDisabled,
-                  ]}
-                >
-                  –
-                </Text>
+              –
+            </Text>
           </Pressable>
 
           {isCartLoading ? (
             <ActivityIndicator style={{ width: 24, marginHorizontal: 4 }} />
-                ) : (
+          ) : (
             <Text style={styles.qtyText}>{item.quantity}</Text>
-              )}
-          <Pressable onPress={() => addToCart(item.productId,  1,'increase')}>
+          )}
+          <Pressable onPress={() => addToCart(item.productId, 1, "increase")}>
             <Text style={styles.qtyButton}>+</Text>
           </Pressable>
         </View>
@@ -182,9 +191,14 @@ export default function CartScreen(): React.ReactElement {
     return (
       <View style={styles.bestSellerCard}>
         <Image source={{ uri: item.imageUrl }} style={styles.bestSellerImage} />
-        <Text style={styles.bestSellerName} numberOfLines={1}>{item.name}</Text>
+        <Text style={styles.bestSellerName} numberOfLines={1}>
+          {item.name}
+        </Text>
         <Text style={styles.bestSellerPrice}>${item.price.toFixed(2)}</Text>
-        <Pressable style={styles.bestSellerButton} onPress={() => addToCart(item.id, 1)}>
+        <Pressable
+          style={styles.bestSellerButton}
+          onPress={() => addToCart(item.id, 1)}
+        >
           <Text style={styles.bestSellerButtonText}>Add to Cart</Text>
         </Pressable>
       </View>
@@ -192,7 +206,10 @@ export default function CartScreen(): React.ReactElement {
   }
 
   // 8. Compute total cost
-  const totalCartCost = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const totalCartCost = cartItems.reduce(
+    (sum, i) => sum + i.price * i.quantity,
+    0
+  );
 
   // 9. Loading / error states
 
@@ -210,7 +227,7 @@ export default function CartScreen(): React.ReactElement {
       <SafeAreaView style={styles.mainContainer}>
         <View style={styles.centeredContainer}>
           <Image
-            source={require('@/assets/images/empty_basket.png')}
+            source={require("@/assets/images/empty_basket.png")}
             style={styles.emptyBasketImage}
             resizeMode="contain"
           />
@@ -218,25 +235,24 @@ export default function CartScreen(): React.ReactElement {
         </View>
 
         <View>
-
-        <Text style={styles.sectionTitle}>Check These Products</Text>
-        {isBestSellersLoading && <ActivityIndicator />}
-        {bestSellersErrorMessage && (
-          <Text style={styles.errorText}>Error: {bestSellersErrorMessage}</Text>
-        )}
-        {!isBestSellersLoading && !bestSellersErrorMessage && (
-          <FlatList
-            data={bestSellerItems}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id}
-            renderItem={renderBestSellerCard}
-            contentContainerStyle={styles.bestSellersListContainer}
-          />
-        )}
-
+          <Text style={styles.sectionTitle}>Check These Products</Text>
+          {isBestSellersLoading && <ActivityIndicator />}
+          {bestSellersErrorMessage && (
+            <Text style={styles.errorText}>
+              Error: {bestSellersErrorMessage}
+            </Text>
+          )}
+          {!isBestSellersLoading && !bestSellersErrorMessage && (
+            <FlatList
+              data={bestSellerItems}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id}
+              renderItem={renderBestSellerCard}
+              contentContainerStyle={styles.bestSellersListContainer}
+            />
+          )}
         </View>
-
       </SafeAreaView>
     );
   }
@@ -254,7 +270,9 @@ export default function CartScreen(): React.ReactElement {
           <View style={styles.footer}>
             <View style={styles.footerRow}>
               <Text style={styles.footerLabel}>Subtotal</Text>
-              <Text style={styles.footerValue}>${totalCartCost.toFixed(2)}</Text>
+              <Text style={styles.footerValue}>
+                ${totalCartCost.toFixed(2)}
+              </Text>
             </View>
             <View style={styles.footerRow}>
               <Text style={styles.footerLabel}>Shipping</Text>
@@ -269,11 +287,11 @@ export default function CartScreen(): React.ReactElement {
             </View>
 
             <Pressable
-                style={styles.checkoutButton}
-                onPress={() => router.push('/cart/checkout')}>
-                <Text style={styles.checkoutText}>Proceed to Checkout</Text>
+              style={styles.checkoutButton}
+              onPress={() => router.push("/cart/checkout")}
+            >
+              <Text style={styles.checkoutText}>Proceed to Checkout</Text>
             </Pressable>
-            
           </View>
         }
       />
@@ -281,16 +299,16 @@ export default function CartScreen(): React.ReactElement {
   );
 }
 
-const BRAND = '#5E3EBD';
-const screenWidth = Dimensions.get('window').width;
+const BRAND = "#5E3EBD";
+const screenWidth = Dimensions.get("window").width;
 
-export function createStyles(colorScheme: 'light' | 'dark') {
+export function createStyles(colorScheme: "light" | "dark") {
   const backgroundColor = Colors[colorScheme].background;
   const textColor = Colors[colorScheme].text;
 
   return StyleSheet.create({
     qtyButtonDisabled: {
-      color: '#CCC',
+      color: "#CCC",
     },
     mainContainer: {
       flex: 1,
@@ -299,20 +317,20 @@ export function createStyles(colorScheme: 'light' | 'dark') {
     },
     centeredContainer: {
       flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
       paddingHorizontal: 24,
       backgroundColor,
     },
     cartTitle: {
       fontSize: 24,
-      fontWeight: 'bold',
+      fontWeight: "bold",
       color: textColor,
       margin: 16,
     },
     cartItemContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       padding: 12,
       backgroundColor,
     },
@@ -327,20 +345,20 @@ export function createStyles(colorScheme: 'light' | 'dark') {
     },
     productName: {
       fontSize: 16,
-      fontWeight: '500',
+      fontWeight: "500",
       color: textColor,
       marginBottom: 4,
     },
     productPrice: {
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: "600",
       color: BRAND,
     },
     quantityContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       borderWidth: 1,
-      borderColor: '#CCC',
+      borderColor: "#CCC",
       borderRadius: 4,
       paddingHorizontal: 8,
       marginRight: 12,
@@ -348,26 +366,26 @@ export function createStyles(colorScheme: 'light' | 'dark') {
     qtyButton: {
       fontSize: 18,
       width: 24,
-      textAlign: 'center',
+      textAlign: "center",
       color: textColor,
     },
     qtyText: {
       fontSize: 16,
       width: 24,
-      textAlign: 'center',
+      textAlign: "center",
       color: textColor,
     },
     itemSeparator: {
       height: 1,
-      backgroundColor: '#EEE',
+      backgroundColor: "#EEE",
     },
     footer: {
       padding: 16,
       backgroundColor,
     },
     footerRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
+      flexDirection: "row",
+      justifyContent: "space-between",
       marginVertical: 4,
     },
     footerLabel: {
@@ -380,27 +398,27 @@ export function createStyles(colorScheme: 'light' | 'dark') {
     },
     divider: {
       height: 1,
-      backgroundColor: '#DDD',
+      backgroundColor: "#DDD",
       marginVertical: 12,
     },
     totalLabel: {
-      fontWeight: '700',
+      fontWeight: "700",
     },
     totalValue: {
       fontSize: 18,
-      fontWeight: '700',
+      fontWeight: "700",
     },
     checkoutButton: {
       marginTop: 16,
       backgroundColor: BRAND,
       borderRadius: 8,
       paddingVertical: 14,
-      alignItems: 'center',
+      alignItems: "center",
     },
     checkoutText: {
-      color: '#FFF',
+      color: "#FFF",
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     // Empty state
     emptyBasketImage: {
@@ -415,7 +433,7 @@ export function createStyles(colorScheme: 'light' | 'dark') {
     },
     sectionTitle: {
       fontSize: 22,
-      fontWeight: '600',
+      fontWeight: "600",
       color: textColor,
       marginLeft: 16,
       marginBottom: 12,
@@ -431,20 +449,20 @@ export function createStyles(colorScheme: 'light' | 'dark') {
       padding: 8,
     },
     bestSellerImage: {
-      width: '100%',
+      width: "100%",
       height: 80,
       borderRadius: 4,
       marginBottom: 8,
     },
     bestSellerName: {
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: "500",
       color: textColor,
       marginBottom: 4,
     },
     bestSellerPrice: {
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
       color: textColor,
       marginBottom: 8,
     },
@@ -454,13 +472,13 @@ export function createStyles(colorScheme: 'light' | 'dark') {
       paddingVertical: 6,
     },
     bestSellerButtonText: {
-      color: '#FFFFFF',
-      textAlign: 'center',
+      color: "#FFFFFF",
+      textAlign: "center",
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     errorText: {
-      color: 'red',
+      color: "red",
       fontSize: 16,
       marginTop: 8,
     },

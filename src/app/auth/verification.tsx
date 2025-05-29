@@ -86,7 +86,6 @@ export default function Verification() {
   const handleSubmit = async () => {
     const code = verificationCode.join("");
     if (code.length === 6) {
-      console.log("Submitting verification code:", code);
       setLoading(true);
       const RequestBody = {
         verification_code: code,
@@ -95,13 +94,12 @@ export default function Verification() {
       const signUpToken = await AsyncStorage.getItem("signUpToken");
 
       await axiosApi
-        .post("https://api-gocami-test.gocami.com/api/verify", RequestBody, {
+        .post("verify", RequestBody, {
           headers: {
             Authorization: `Bearer ${signUpToken}`,
           },
         })
         .then(async (response) => {
-          console.log(response.status);
           if (response.status === 200) {
             await AsyncStorage.removeItem("signUpToken");
           }
@@ -117,10 +115,6 @@ export default function Verification() {
             .post("https://api-gocami-test.gocami.com/api/login", RequestBody)
             .then(async (response) => {
               if (response.data.status) {
-                console.log(
-                  "HELLO USER FROM LOGIN:\n\n",
-                  response.data.data.user
-                );
                 await Promise.all([
                   AsyncStorage.setItem("token", response.data.data.token),
                   AsyncStorage.setItem(
@@ -137,7 +131,6 @@ export default function Verification() {
           setLoading(false);
         });
     } else {
-      // Show error if code is incomplete
       console.log("Please enter a complete verification code");
     }
   };
@@ -170,8 +163,6 @@ export default function Verification() {
     setTimeLeft(600);
     setIsExpired(false);
     setVerificationCode(["", "", "", "", "", ""]);
-    // Here you would typically call your API to request a new code
-    console.log("Requesting new verification code");
   };
 
   return (

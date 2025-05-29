@@ -21,7 +21,6 @@ interface UpdateBody {
   first_name?: string;
   last_name?: string;
   mobile?: string;
-  // gender_id: number | null;
   date_of_birth?: string;
 }
 
@@ -31,43 +30,24 @@ export default function EditProfile() {
   const [firstName, setFirstName] = useState<string>(user?.first_name);
   const [lastName, setLastName] = useState<string>(user?.last_name);
   const [mobile, setMobile] = useState<string | null>(user?.mobile);
-  // const [gender, setGender] = useState<string>(
-  //   user?.gender === 1 ? "Male" : "Female"
-  // );
   const [dateOfBirth, setDateOfBirth] = useState<string | null>(
     user?.date_of_birth
   );
-  // const [showGenderPicker, setShowGenderPicker] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [passLoading, setPassLoading] = useState<boolean>(false);
-
-  // const [canSave, setCanSave] = useState<boolean>(false);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-
   const [currentPassword, setCurrentPassword] = useState<string>("");
   const [newPassword, setNewPassword] = useState<string>("");
   const [confirmNewPassword, setConfirmNewPassword] = useState<string>("");
 
-  const [isCurrentPasswordValid, setIsCurrentPasswordValid] =
-    useState<boolean>(false);
-
   const router = useRouter();
 
   const handlePasswordChange = async () => {
-    if (newPassword !== confirmNewPassword) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Passwords do not match",
-      });
-      return;
-    }
-
     try {
       setPassLoading(true);
 
       const response = await axiosApi.post(
-        "https://api-gocami-test.gocami.com/api/users-data/update",
+        "users-data/update",
         { password: newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -114,9 +94,6 @@ export default function EditProfile() {
 
       const noChange = objectValues.every((input) => input === null);
 
-      console.log(updateBody);
-      console.log(noChange);
-
       if (noChange) {
         Toast.show({
           type: "error",
@@ -128,19 +105,14 @@ export default function EditProfile() {
       } else {
         try {
           setLoading(true);
-          console.log(updateBody);
+
           await axiosApi
-            .post(
-              "https://api-gocami-test.gocami.com/api/users-data/update",
-              updateBody,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            )
+            .post("users-data/update", updateBody, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            })
             .then(async (response) => {
-              console.log(response);
               if (response.data.status) {
                 Toast.show({
                   type: "success",

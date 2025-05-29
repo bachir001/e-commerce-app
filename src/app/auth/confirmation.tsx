@@ -29,7 +29,6 @@ export default function Confirmation() {
   const handleContinue = async () => {
     try {
       setLoading(true);
-      console.log("SELECTED GENDER FROM CONFIRM: ", selectedGender);
 
       const formattedDate =
         typeof date === "string"
@@ -47,12 +46,9 @@ export default function Confirmation() {
         verification_method: verificationType,
       };
 
-      console.log(RequestBody);
-
       await axiosApi
         .post(`https://api-gocami-test.gocami.com/api/register`, RequestBody)
         .then(async (response) => {
-          console.log("HELLO FROM SIGN UP", response.data.data.user);
           if (response.data.status) {
             await AsyncStorage.setItem("signUpToken", response.data.data.token);
             Toast.show({
@@ -64,7 +60,6 @@ export default function Confirmation() {
               topOffset: 60,
             });
 
-            console.log(selectedGender);
             router.push({
               pathname: "/auth/verification",
               params: {
