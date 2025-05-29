@@ -91,6 +91,7 @@ export default function AddressForm({
     router.back();
   };
 
+  //SELECTION
   const handleGovernorateSelect = async (governorate: Governorate) => {
     setSelectedGovernorate(governorate);
     // Reset
@@ -110,6 +111,7 @@ export default function AddressForm({
     fetchAreas(city.code);
   };
 
+  //ACTIONS
   const handleCreateAddress = async () => {
     try {
       setLoading(true);
@@ -189,8 +191,9 @@ export default function AddressForm({
     }
   };
 
-  //FETCHING
+  const handleUpdateAddress = async () => {};
 
+  //FETCHING
   const fetchGovernorates = async () => {
     try {
       setGovernorateLoading(true);
@@ -239,8 +242,6 @@ export default function AddressForm({
     }
   };
 
-  const handleUpdateAddress = async () => {};
-
   useEffect(() => {
     if (governorates.length === 0) {
       fetchGovernorates();
@@ -248,7 +249,6 @@ export default function AddressForm({
 
     if (type === "edit") {
       if (addressParsed?.governorate_code) {
-        console.log("HELLO HEREE");
         Promise.all([
           fetchCities(addressParsed?.governorate_code),
           fetchAreas(addressParsed?.city_code),
@@ -364,11 +364,6 @@ export default function AddressForm({
 
               <CustomPicker
                 label="City"
-                // value={
-                //   (!selectedGovernorate?.name
-                //     ? addressParsed?.city
-                //     : selectedCity?.name) || ""
-                // }
                 value={
                   selectedCity?.name ||
                   (!selectedGovernorate ? addressParsed?.city : "") ||
@@ -384,11 +379,6 @@ export default function AddressForm({
 
               <CustomPicker
                 label="Area"
-                // value={
-                //   (!selectedGovernorate?.name
-                //     ? addressParsed?.area
-                //     : selectedArea?.name) || ""
-                // }
                 value={
                   selectedArea?.name ||
                   (!selectedCity && !selectedGovernorate

@@ -4,11 +4,12 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
 import { SessionContext } from "@/app/_layout";
@@ -42,13 +43,13 @@ export default function AddressPage() {
   const [loading, setLoading] = useState<boolean>(false);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
 
   const { token, addresses, setAddresses } = useContext(SessionContext);
 
   const handleEdit = (address: Address) => {
-    console.log("Address: ", address);
     router.push({
       pathname: "/(tabs)/account/addresses/editAddress",
       params: {
@@ -81,7 +82,7 @@ export default function AddressPage() {
       };
 
       const response = await axiosApi.post(
-        `addresses/remove/${address.id}}?_method=DELETE`,
+        `addresses/remove/${address.id}?_method=DELETE`,
         {},
         HeaderData
       );
@@ -98,62 +99,87 @@ export default function AddressPage() {
         setAddresses(
           addresses.filter((address_: Address) => address_.id !== address.id)
         );
-      }
-
-      setDeleteLoading(false);
-    } catch (err) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Something went wrong",
-        autoHide: true,
-        visibilityTime: 2000,
-        topOffset: 60,
-      });
-      setDeleteLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const fetchUserAddresses = async () => {
-      try {
-        setLoading(true);
-        const response = await axiosApi.get("addresses", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.data.status) {
-          const sortedDefault = [...response.data.data].sort(
-            (a, b) => b.is_default - a.is_default
-          );
-
-          setAddresses(sortedDefault);
-        }
-
-        setLoading(false);
-      } catch (err) {
-        setLoading(false);
+      } else {
         Toast.show({
           type: "error",
           text1: "Error",
-          text2: "Something went wrong",
+          text2: response.data.message || "Failed to delete address",
           autoHide: true,
           visibilityTime: 2000,
           topOffset: 60,
         });
       }
-    };
 
-    if (addresses.length === 0) {
+      setDeleteLoading(false);
+      setDeleteModalVisible(false);
+    } catch (err) {
+      console.error("Error deleting address:", err);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Something went wrong while deleting the address",
+        autoHide: true,
+        visibilityTime: 2000,
+        topOffset: 60,
+      });
+      setDeleteLoading(false);
+      setDeleteModalVisible(false);
+    }
+  };
+
+  const fetchUserAddresses = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await axiosApi.get("addresses", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.status) {
+        const sortedDefault = [...response.data.data].sort(
+          (a, b) => b.is_default - a.is_default
+        );
+        setAddresses(sortedDefault);
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: response.data.message || "Failed to fetch addresses",
+          autoHide: true,
+          visibilityTime: 2000,
+          topOffset: 60,
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching user addresses:", err);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Something went wrong while fetching addresses",
+        autoHide: true,
+        visibilityTime: 2000,
+        topOffset: 60,
+      });
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [token, setAddresses]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchUserAddresses();
+  }, [fetchUserAddresses]);
+
+  useEffect(() => {
+    if (addresses.length === 0 && !loading && !refreshing) {
       fetchUserAddresses();
     }
-  }, [addresses, token, loading]);
+  }, [addresses.length, token, loading, refreshing, fetchUserAddresses]);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      {/* Header */}
       <View className="bg-white px-5 py-4 border-b border-gray-100">
         <View className="flex-row items-center">
           <TouchableOpacity onPress={() => router.back()} className="mr-4">
@@ -163,15 +189,21 @@ export default function AddressPage() {
         </View>
       </View>
 
-      {/* Address List */}
-      {loading ? (
+      {loading && addresses.length === 0 ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="5e3ebd" />
+          <ActivityIndicator size="large" color={Colors.PRIMARY} />
         </View>
       ) : (
         <ScrollView
           className="flex-1 px-4 py-4"
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors.PRIMARY}
+            />
+          }
         >
           {addresses.length > 0 ? (
             addresses.map((address: Address) => (
@@ -187,7 +219,6 @@ export default function AddressPage() {
                   </View>
                 ) : null}
                 <View className="p-4">
-                  {/* Address Header */}
                   <View className="flex-row items-center justify-between mb-3">
                     <View className="flex-row items-center">
                       <View
@@ -227,7 +258,6 @@ export default function AddressPage() {
                     </View>
                   </View>
 
-                  {/* Address Details */}
                   <View className="ml-13 mb-3">
                     <Text className="text-gray-700 mb-1">{address.street}</Text>
                     <Text className="text-gray-500 text-sm">
@@ -238,7 +268,6 @@ export default function AddressPage() {
                     </Text>
                   </View>
 
-                  {/* Show All Button, this is because the current page's component ony displays the necessary details */}
                   <View className="flex flex-row items-center justify-between">
                     <TouchableOpacity
                       onPress={() => handleShowAll(address)}
@@ -253,7 +282,7 @@ export default function AddressPage() {
                       <FontAwesome5
                         name="chevron-right"
                         size={12}
-                        color="#6366F1"
+                        color={Colors.PRIMARY}
                       />
                     </TouchableOpacity>
                     <View className="flex-row items-center">
@@ -268,7 +297,6 @@ export default function AddressPage() {
               </View>
             ))
           ) : (
-            // Empty State
             <View className="flex-1 justify-center items-center py-20">
               <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
                 <FontAwesome5 name="map-marker-alt" size={32} color="#9CA3AF" />
@@ -284,7 +312,6 @@ export default function AddressPage() {
         </ScrollView>
       )}
 
-      {/* Add Address Button */}
       <View className="px-4 pb-4 bg-white border-t border-gray-100">
         <TouchableOpacity
           onPress={handleAddAddress}
@@ -302,6 +329,7 @@ export default function AddressPage() {
         isVisible={deleteModalVisible}
         onCancel={() => {
           setDeleteModalVisible(false);
+          setSelectedAddress(null);
         }}
         onConfirm={() => {
           if (selectedAddress != null) {
