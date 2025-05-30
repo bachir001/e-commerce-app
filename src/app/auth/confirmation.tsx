@@ -7,6 +7,7 @@ import Toast from "react-native-toast-message";
 import { useState } from "react";
 import axiosApi from "@/apis/axiosApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Colors } from "@/constants/Colors";
 
 export default function Confirmation() {
   const router = useRouter();
@@ -28,7 +29,6 @@ export default function Confirmation() {
   const handleContinue = async () => {
     try {
       setLoading(true);
-      console.log("SELECTED GENDER FROM CONFIRM: ", selectedGender);
 
       const formattedDate =
         typeof date === "string"
@@ -46,12 +46,9 @@ export default function Confirmation() {
         verification_method: verificationType,
       };
 
-      console.log(RequestBody);
-
       await axiosApi
         .post(`https://api-gocami-test.gocami.com/api/register`, RequestBody)
         .then(async (response) => {
-          console.log("HELLO FROM SIGN UP", response.data.data.user);
           if (response.data.status) {
             await AsyncStorage.setItem("signUpToken", response.data.data.token);
             Toast.show({
@@ -63,7 +60,6 @@ export default function Confirmation() {
               topOffset: 60,
             });
 
-            console.log(selectedGender);
             router.push({
               pathname: "/auth/verification",
               params: {
@@ -116,7 +112,10 @@ export default function Confirmation() {
           Confirm Your Email
         </Text>
 
-        <Text className="text-lg font-semibold text-indigo-600 mb-4 text-center">
+        <Text
+          style={{ backgroundColor: Colors.PRIMARY }}
+          className={`text-lg font-semibold mb-4 text-center`}
+        >
           {email}
         </Text>
 
@@ -138,7 +137,10 @@ export default function Confirmation() {
           )}
 
           <TouchableOpacity
-            className="flex-1 py-4 bg-indigo-600 rounded-xl items-center justify-center"
+            style={{
+              backgroundColor: Colors.PRIMARY,
+            }}
+            className={`flex-1 py-4 rounded-xl items-center justify-center`}
             onPress={handleContinue}
           >
             {loading ? (

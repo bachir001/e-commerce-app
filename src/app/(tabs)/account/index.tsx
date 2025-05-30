@@ -15,6 +15,7 @@ import { SessionContext, UserContext } from "@/app/_layout";
 import { FontAwesome5 } from "@expo/vector-icons";
 import ContactModal from "@/components/account/ContactModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Colors } from "@/constants/Colors";
 
 function getFlagEmoji(countryCode: string): string {
   return countryCode
@@ -178,15 +179,20 @@ export default function AccountScreen() {
                     onPress={() => router.push("/(tabs)/account/profile/edit")}
                     className="bg-gray-100 px-3 py-1.5 rounded-full"
                   >
-                    <Text className="text-sm font-medium text-indigo-600">
+                    <Text
+                      className={`text-sm font-medium`}
+                      style={{ color: Colors.PRIMARY }}
+                    >
                       Edit Profile
                     </Text>
                   </TouchableOpacity>
                 </View>
 
                 <View className="flex-row items-center py-2">
-                  <View className="w-10 h-10 bg-indigo-100 rounded-full items-center justify-center mr-3">
-                    <FontAwesome5 name="user" size={16} color="#6366F1" />
+                  <View
+                    className={`w-10 h-10 rounded-full items-center justify-center mr-3`}
+                  >
+                    <FontAwesome5 name="user" size={16} color="#5e3ebd" />
                   </View>
                   <View>
                     <Text className="font-medium text-gray-800">
@@ -202,16 +208,17 @@ export default function AccountScreen() {
                   onPress={() => router.push("/(tabs)/account/addresses")}
                 >
                   <View
-                    className="flex-row items-center py-2 bg-indigo-600 px-3 rounded-lg mt-5"
+                    className={`flex-row items-center py-2 px-3 rounded-lg mt-5`}
                     style={{
                       transform: [{ translateX: -10 }],
+                      backgroundColor: Colors.PRIMARY,
                     }}
                   >
                     <View className="w-10 h-10 bg-white rounded-full items-center justify-center mr-3">
                       <FontAwesome5
                         name="map-marker-alt"
                         size={16}
-                        color="#6366F1"
+                        color="#5e3ebd"
                       />
                     </View>
                     <View>

@@ -1,86 +1,122 @@
-import { Stack } from "expo-router";
-import { getOrCreateSessionId } from "@/lib/session";
-import { View, ActivityIndicator } from "react-native";
-import React, { createContext, useEffect, useState } from "react";
-import Toast from "react-native-toast-message";
 import "../../global.css";
-import { initOneSignal } from "@/Services/oneSignal"; 
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createContext, useEffect, useState } from "react";
+import { getOrCreateSessionId } from "@/lib/session";
+import { initOneSignal } from "@/Services/oneSignal";
+import { Stack } from "expo-router";
+import Toast from "react-native-toast-message";
+import { ImageBackground } from "react-native";
+import {
+  Address,
+  Governorate,
+  SessionContextValue,
+  UserContextType,
+} from "@/types/globalTypes";
+import {
+  useBrands,
+  useMegaCategories,
+  useSliders,
+} from "@/hooks/home/topSection";
 
-interface SessionContextType {
-  sessionId: string;
-  isLogged: UserContext | null;
-  setIsLogged: React.Dispatch<React.SetStateAction<UserContext | null>>;
-}
+const queryClient = new QueryClient();
 
-export const SessionContext = createContext<SessionContextType | null>(null);
+export let SessionContext = createContext<SessionContextValue | null>(null);
 
-export interface UserContext {
-  id: number;
-  first_name: string;
-  last_name: string;
-  mobile: string | null;
-  gender_id: number | null;
-  gender: string;
-  date_of_birth: string | null;
-  email: string | null;
-  email_verified: boolean;
-  mobile_verified: boolean;
-}
+function AppWithProviders() {
+  const { data: brands, isLoading: loadingBrands } = useBrands();
+  const { data: sliders, isLoading: loadingSliders } = useSliders();
+  const { data: megaCategories, isLoading: loadingMega } = useMegaCategories();
 
-export default function RootLayout() {
-  const [sessionId, setSession] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLogged, setIsLogged] = useState<boolean>(false);
-  const [user, setUser] = useState<UserContext | null>(null);
+  const [user, setUser] = useState<UserContextType | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [governorates, setGovernorates] = useState<Governorate[]>([]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const id = await getOrCreateSessionId();
-        setSession(id);
-      } catch (error) {
-        console.error("Error getting session ID:", error);
-      }
-    })();
-  }, []);
+  const addAddress = (address: Address) => {
+    setAddresses((prevAddresses) => [...prevAddresses, address]);
+  };
 
-  useEffect(()=>{
-    initOneSignal();
-  },[])
+  const appNotReady = loadingBrands || loadingSliders || loadingMega;
 
-  if (!sessionId) {
+  if (appNotReady) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator />
-      </View>
+      <ImageBackground
+        source={require("@/assets/images/initialPageLoader.jpeg")}
+        className="flex-1 justify-center items-center"
+        resizeMode="cover"
+      />
     );
   }
 
   return (
-    <>
-      <SessionContext.Provider
-        value={{
-          sessionId,
-          isLogged,
-          setIsLogged,
-          user,
-          setUser,
-          token,
-          setToken,
+    <SessionContext.Provider
+      value={{
+        sessionId,
+        isLogged,
+        setIsLogged,
+        user,
+        setUser,
+        token,
+        setToken,
+        addresses,
+        setAddresses,
+        addAddress,
+        governorates,
+        setGovernorates,
+        brands,
+        sliders,
+        megaCategories,
+      }}
+    >
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "fade_from_bottom",
         }}
       >
-        <Stack
-          screenOptions={{ headerShown: false, animation: "fade_from_bottom" }}
-        >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="auth/signInAccount"
-            options={{ headerShown: true, title: "Sign In" }}
-          />
-        </Stack>
-      </SessionContext.Provider>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="auth/signInAccount"
+          options={{ headerShown: true, title: "Sign In" }}
+        />
+      </Stack>
       <Toast />
-    </>
+    </SessionContext.Provider>
+  );
+}
+
+export default function RootLayout() {
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function performInitialLoad() {
+      try {
+        const id = await getOrCreateSessionId();
+        setSessionId(id);
+        initOneSignal();
+      } catch (error) {
+        console.error("Error during initial app load:", error);
+      }
+    }
+
+    performInitialLoad();
+  }, []);
+
+  if (sessionId === null) {
+    return (
+      <ImageBackground
+        source={require("@/assets/images/initialPageLoader.jpeg")}
+        className="flex-1 justify-center items-center"
+        resizeMode="cover"
+      />
+    );
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppWithProviders />
+    </QueryClientProvider>
   );
 }
