@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "my-app",
-    "slug": "my-app",
+    "name": "Gocami",
+    "slug": "gocami",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "myapp",
@@ -18,7 +18,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.gocami.gocami",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       },
       "entitlements": {
         "aps-environment": "development",
@@ -46,6 +49,84 @@
           "mode": "development"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "OneSignalNotificationServiceExtension",
+                  "bundleIdentifier": "com.gocami.gocami.OneSignalNotificationServiceExtension",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.gocami.gocami.onesignal"
+                    ]
+                  }
+                },
+                {
+                  "targetName": "OneSignalNotificationServiceExtension",
+                  "bundleIdentifier": "com.gocami.gocami.OneSignalNotificationServiceExtension",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.gocami.gocami.onesignal"
+                    ]
+                  }
+                },
+                {
+                  "targetName": "OneSignalNotificationServiceExtension",
+                  "bundleIdentifier": "com.gocami.gocami.OneSignalNotificationServiceExtension",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.gocami.gocami.onesignal"
+                    ]
+                  }
+                },
+                {
+                  "targetName": "OneSignalNotificationServiceExtension",
+                  "bundleIdentifier": "com.gocami.gocami.OneSignalNotificationServiceExtension",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.gocami.gocami.onesignal"
+                    ]
+                  }
+                },
+                {
+                  "targetName": "OneSignalNotificationServiceExtension",
+                  "bundleIdentifier": "com.gocami.gocami.OneSignalNotificationServiceExtension",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.gocami.gocami.onesignal"
+                    ]
+                  }
+                },
+                {
+                  "targetName": "OneSignalNotificationServiceExtension",
+                  "bundleIdentifier": "com.gocami.gocami.OneSignalNotificationServiceExtension",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.gocami.gocami.onesignal"
+                    ]
+                  }
+                },
+                {
+                  "targetName": "OneSignalNotificationServiceExtension",
+                  "bundleIdentifier": "com.gocami.gocami.OneSignalNotificationServiceExtension",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.gocami.gocami.onesignal"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "dfee9fb6-a324-4872-bee5-010da993e350"
+      }
+    },
+    "owner": "gocami_company"
   }
 }
