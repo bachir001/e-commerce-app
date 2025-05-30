@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
-import type { MegaCategory } from "@/types/contextTypes";
+import type { MegaCategory } from "@/types/globalTypes";
 
 interface CircularCategoryProps {
   props: MegaCategory;
@@ -7,7 +7,7 @@ interface CircularCategoryProps {
 
 export default function CircularCategory({ props }: CircularCategoryProps) {
   return (
-    <TouchableOpacity style={styles.container}>
+    <TouchableOpacity>
       <View style={styles.circleContainer}>
         <Image
           source={{ uri: props.mega_mobile_bg }}
@@ -24,13 +24,9 @@ export default function CircularCategory({ props }: CircularCategoryProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    width: 70,
-  },
   circleContainer: {
-    width: 60,
-    height: 60,
+    width: 70,
+    height: 70,
     borderRadius: 30,
     backgroundColor: "white",
     alignItems: "center",
@@ -44,13 +40,13 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   image: {
-    width: 50,
-    height: 50,
+    width: 60,
+    height: 60,
     borderRadius: 25,
   },
   categoryName: {
     textAlign: "center",
-    fontWeight: "500",
+    fontWeight: "bold",
     color: "#1f2937",
     marginTop: 6,
     fontSize: 11,

@@ -1,5 +1,5 @@
 import { View, FlatList } from "react-native";
-import type { MegaCategory } from "@/types/contextTypes";
+import type { MegaCategory } from "@/types/globalTypes";
 import CircularCategory from "./CircularCategory";
 
 export default function CircularCategorylist({
@@ -20,14 +20,14 @@ export default function CircularCategorylist({
   const groupedData = chunkData(data);
 
   return (
-    <View className="px-4">
+    <View className="px-4 items-center mt-5">
       <FlatList
         data={groupedData}
         horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={(_, index) => index.toString()}
         // contentContainerStyle={{ paddingHorizontal: 8 }}
-        ItemSeparatorComponent={() => <View className="w-6" />}
+        ItemSeparatorComponent={() => <View className="w-20" />}
         renderItem={({ item }: { item: MegaCategory[] }) => (
           <View className="flex-col gap-6">
             {item.map((subItem) => (

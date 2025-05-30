@@ -1,9 +1,11 @@
+"use client";
+
 import { SessionContext } from "@/app/_layout";
-import { MegaCategory } from "@/types/contextTypes";
-import React, { useContext } from "react";
-import { Dimensions, FlatList, Image, View } from "react-native";
+import { useContext } from "react";
+import { Dimensions, Image, View } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import CircularCategorylist from "./CircularCategoryList";
+import CategoryHeader from "./CategoryHeader";
 
 interface Slider {
   id: string;
@@ -12,7 +14,7 @@ interface Slider {
 
 const { width: SCREEN_WIDTH } = Dimensions.get("screen");
 const ITEM_WIDTH = SCREEN_WIDTH;
-const ITEM_HEIGHT = ITEM_WIDTH * 0.6;
+const ITEM_HEIGHT = 200;
 
 interface SliderItemProps {
   item: Slider;
@@ -20,7 +22,7 @@ interface SliderItemProps {
 
 const SliderItem = ({ item }: SliderItemProps) => {
   return (
-    <View style={{ overflow: "hidden", width: SCREEN_WIDTH }}>
+    <View style={{ width: SCREEN_WIDTH, height: 200 }}>
       <Image
         source={{ uri: item.mobile_image }}
         style={{
@@ -39,7 +41,7 @@ interface SliderComponentProps {
 
 const SliderComponent = ({ sliders }: SliderComponentProps) => {
   return (
-    <View style={{ width: SCREEN_WIDTH }}>
+    <View style={{ width: SCREEN_WIDTH, height: 200 }}>
       <Carousel
         width={ITEM_WIDTH}
         height={ITEM_HEIGHT}
@@ -58,8 +60,13 @@ export default function App() {
   const { sliders, megaCategories } = useContext(SessionContext);
 
   return (
-    <View style={{ backgroundColor: "#FFF8E1", flex: 1 }}>
+    <View style={{ backgroundColor: "#FFF8E1" }} className="max-h-max pb-5">
       <SliderComponent sliders={sliders} />
+      <CategoryHeader
+        title="All Categories"
+        coloredTitle="Enjoy!"
+        variant="purple"
+      />
       <CircularCategorylist data={megaCategories} numberOfRows={2} />
     </View>
   );

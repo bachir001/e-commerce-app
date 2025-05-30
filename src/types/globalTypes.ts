@@ -71,3 +71,23 @@ export interface MegaCategory {
   mega_description: string;
   mega_description_color: string;
 }
+
+export interface Product {
+  id: number;
+  name: string;
+  description: string;
+  highlights: string;
+  discount: number;
+  quantity: number;
+  price: number;
+  special_price?: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  show_counter: boolean | null;
+  slug: string;
+  image: string;
+  gallery: string[] | null;
+  has_variants: boolean;
+  rating: number;
+  purchase_points: number | null;
+}

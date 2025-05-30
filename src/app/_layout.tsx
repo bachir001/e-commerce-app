@@ -14,7 +14,7 @@ import {
   SessionContextValue,
   Slider,
   UserContextType,
-} from "@/types/contextTypes";
+} from "@/types/globalTypes";
 
 export const SessionContext = createContext<SessionContextValue | null>(null);
 
