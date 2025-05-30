@@ -22,6 +22,7 @@
     "@react-native-picker/picker": "2.11.0",
     "@react-native-vector-icons/ionicons": "^7.4.0",
     "@react-navigation/native": "^7.1.6",
+    "@tanstack/react-query": "^5.79.0",
     "axios": "^1.9.0",
     "country-flag-icons": "^1.5.19",
     "expo": "~53.0.5",
@@ -29,6 +30,7 @@
     "expo-constants": "~17.1.5",
     "expo-crypto": "~14.1.4",
     "expo-haptics": "^14.1.4",
+    "expo-linear-gradient": "~14.1.4",
     "expo-linking": "~7.1.4",
     "expo-router": "~5.0.5",
     "expo-secure-store": "^14.2.3",
@@ -42,10 +44,12 @@
     "react-native-calendars": "^1.1312.0",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-get-random-values": "^1.11.0",
+    "react-native-maps": "1.20.1",
     "react-native-mmkv": "^2.12.0",
     "react-native-modal": "^14.0.0-rc.1",
     "react-native-onesignal": "^5.2.11",
     "react-native-reanimated": "~3.17.4",
+    "react-native-reanimated-carousel": "^4.0.2",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.10.0",
     "react-native-toast-message": "^2.3.0",
@@ -53,8 +57,7 @@
     "tailwind-rn": "^4.2.0",
     "uuid": "^11.1.0",
     "zod": "^3.24.4",
-    "zustand": "^5.0.4",
-    "react-native-maps": "1.20.1"
+    "zustand": "^5.0.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

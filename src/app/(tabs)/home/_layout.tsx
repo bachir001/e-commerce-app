@@ -1,5 +1,5 @@
-import React from 'react';
-import { Stack } from 'expo-router';
+import React from "react";
+import { Stack } from "expo-router";
 
 export default function HomeLayout() {
   return (
@@ -12,7 +12,7 @@ export default function HomeLayout() {
       <Stack.Screen
         name="SearchScreen"
         options={{
-          presentation: 'modal',
+          presentation: "modal",
         }}
       />
     </Stack>
