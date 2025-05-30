@@ -36,12 +36,6 @@ export default function ProductCard({
               >
                 {product.purchase_points}
               </Text>
-              <FontAwesome5
-                name="diamond"
-                size={8}
-                color={innerColor}
-                style={{ marginLeft: 2 }}
-              />
             </>
           )}
         </View>
@@ -63,7 +57,7 @@ export default function ProductCard({
       {/* Product Image */}
       <View className="items-center mb-3">
         <Image
-          source={{ uri: product?.image }}
+          source={{ uri: product?.image ? product?.image : "test" }}
           className="w-24 h-24"
           resizeMode="contain"
         />

@@ -1,69 +1,46 @@
-import { Stack } from "expo-router";
-import { getOrCreateSessionId } from "@/lib/session";
-import { ImageBackground, View } from "react-native";
-import React, { createContext, useEffect, useState } from "react";
-import Toast from "react-native-toast-message";
 import "../../global.css";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createContext, useEffect, useState } from "react";
+import { getOrCreateSessionId } from "@/lib/session";
 import { initOneSignal } from "@/Services/oneSignal";
-import axiosApi from "@/apis/axiosApi";
+import { Stack } from "expo-router";
+import Toast from "react-native-toast-message";
+import { ImageBackground } from "react-native";
 import {
   Address,
-  Brand,
   Governorate,
-  MegaCategories,
   SessionContextValue,
-  Slider,
   UserContextType,
 } from "@/types/globalTypes";
+import {
+  useBrands,
+  useMegaCategories,
+  useSliders,
+} from "@/hooks/home/topSection";
 
-export const SessionContext = createContext<SessionContextValue | null>(null);
+const queryClient = new QueryClient();
 
-export default function RootLayout() {
+export let SessionContext = createContext<SessionContextValue | null>(null);
+
+function AppWithProviders() {
+  const { data: brands, isLoading: loadingBrands } = useBrands();
+  const { data: sliders, isLoading: loadingSliders } = useSliders();
+  const { data: megaCategories, isLoading: loadingMega } = useMegaCategories();
+
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLogged, setIsLogged] = useState<boolean>(false);
   const [user, setUser] = useState<UserContextType | null>(null);
   const [token, setToken] = useState<string | null>(null);
-
-  //account page
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [governorates, setGovernorates] = useState<Governorate[]>([]);
-
-  //home top section
-  const [appIsReady, setAppIsReady] = useState<boolean>(false);
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [sliders, setSliders] = useState<Slider[]>([]);
-  const [megaCategories, setMegaCategories] = useState<MegaCategories[]>([]);
 
   const addAddress = (address: Address) => {
     setAddresses((prevAddresses) => [...prevAddresses, address]);
   };
 
-  useEffect(() => {
-    async function performInitialLoad() {
-      try {
-        const [id, brands, sliders, megaCategories] = await Promise.all([
-          getOrCreateSessionId(),
-          axiosApi.get("get-brand-data"),
-          axiosApi.get("getSlider/home-slider"),
-          axiosApi.get("getMegaCategories"),
-        ]);
+  const appNotReady = loadingBrands || loadingSliders || loadingMega;
 
-        setSessionId(id);
-        initOneSignal();
-        setBrands(brands.data.data);
-        setSliders(sliders.data.data.slides);
-        setMegaCategories(megaCategories.data.data);
-      } catch (error) {
-        console.error("Error during initial app load:", error);
-      } finally {
-        setAppIsReady(true);
-      }
-    }
-
-    performInitialLoad();
-  }, []);
-
-  if (!appIsReady) {
+  if (appNotReady) {
     return (
       <ImageBackground
         source={require("@/assets/images/initialPageLoader.jpeg")}
@@ -94,7 +71,10 @@ export default function RootLayout() {
       }}
     >
       <Stack
-        screenOptions={{ headerShown: false, animation: "fade_from_bottom" }}
+        screenOptions={{
+          headerShown: false,
+          animation: "fade_from_bottom",
+        }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
@@ -104,5 +84,39 @@ export default function RootLayout() {
       </Stack>
       <Toast />
     </SessionContext.Provider>
+  );
+}
+
+export default function RootLayout() {
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function performInitialLoad() {
+      try {
+        const id = await getOrCreateSessionId();
+        setSessionId(id);
+        initOneSignal();
+      } catch (error) {
+        console.error("Error during initial app load:", error);
+      }
+    }
+
+    performInitialLoad();
+  }, []);
+
+  if (sessionId === null) {
+    return (
+      <ImageBackground
+        source={require("@/assets/images/initialPageLoader.jpeg")}
+        className="flex-1 justify-center items-center"
+        resizeMode="cover"
+      />
+    );
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppWithProviders />
+    </QueryClientProvider>
   );
 }
