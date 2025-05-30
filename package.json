@@ -4,11 +4,18 @@
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "build:tailwind": "tailwindcss --input input.css --output tailwind.css --no-autoprefixer && tailwind-rn",
     "dev:tailwind": "concurrently \"tailwindcss --input input.css --output tailwind.css --no-autoprefixer --watch\" \"tailwind-rn --watch\""
+  },
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "listUnknownPackages": false
+      }
+    }
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
@@ -16,18 +23,19 @@
     "@hookform/resolvers": "^5.0.1",
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-native-community/blur": "^4.4.1",
-    "@react-native-community/checkbox": "^0.5.20",
     "@react-native-community/datetimepicker": "8.3.0",
-    "@react-native-community/slider": "^4.5.6",
+    "@react-native-community/slider": "4.5.6",
     "@react-native-picker/picker": "2.11.0",
     "@react-native-vector-icons/ionicons": "^7.4.0",
     "@react-navigation/native": "^7.1.6",
     "axios": "^1.9.0",
+    "check": "^1.0.0",
     "country-flag-icons": "^1.5.19",
     "expo": "~53.0.5",
-    "expo-checkbox": "^4.1.4",
+    "expo-checkbox": "~4.1.4",
     "expo-constants": "~17.1.5",
     "expo-crypto": "~14.1.4",
+    "expo-dev-client": "~5.1.8",
     "expo-haptics": "^14.1.4",
     "expo-linking": "~7.1.4",
     "expo-router": "~5.0.5",
@@ -53,8 +61,7 @@
     "tailwind-rn": "^4.2.0",
     "uuid": "^11.1.0",
     "zod": "^3.24.4",
-    "zustand": "^5.0.4",
-    "expo-dev-client": "~5.1.8"
+    "zustand": "^5.0.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
