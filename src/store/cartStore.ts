@@ -1,4 +1,4 @@
-// src/store/cartStore.ts
+// Optimized cartStore.ts
 import { create } from "zustand";
 import Toast from "react-native-toast-message";
 import { getOrCreateSessionId } from "@/lib/session";
@@ -42,6 +42,7 @@ interface CartState {
   items: CartItem[];
   loading: boolean;
   error: string | null;
+  lastFetch: number | null; // Performance: Track last fetch time
   fetchCart: () => Promise<void>;
   addToCart: (
     productId: string,
@@ -49,7 +50,12 @@ interface CartState {
     action?: "increase" | "decrease"
   ) => Promise<void>;
   clearCart: () => void;
+  // Performance: Add method to check if refresh is needed
+  needsRefresh: () => boolean;
 }
+
+// Performance: Cache duration (5 minutes)
+const CACHE_DURATION = 5 * 60 * 1000;
 
 export const useCartStore = create<CartState>()(
   persist(
@@ -57,17 +63,43 @@ export const useCartStore = create<CartState>()(
       items: [],
       loading: false,
       error: null,
+      lastFetch: null,
+
+      needsRefresh: () => {
+        const { lastFetch } = get();
+        if (!lastFetch) return true;
+        return Date.now() - lastFetch > CACHE_DURATION;
+      },
 
       fetchCart: async () => {
+        // Performance: Skip fetch if data is fresh
+        const state = get();
+        if (!state.needsRefresh() && state.items.length > 0) {
+          return;
+        }
+
         set({ loading: true, error: null });
         try {
           const sessionId = await getOrCreateSessionId();
+          const controller = new AbortController();
+
+          // Performance: Add timeout to prevent hanging requests
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+
           const res = await fetch(`${API_BASE}/cart`, {
             headers: {
               "Content-Type": "application/json",
               "x-session": sessionId,
             },
+            signal: controller.signal,
           });
+
+          clearTimeout(timeoutId);
+
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          }
+
           const json: FetchCartApiResponse = await res.json();
 
           if (!json.status) {
@@ -83,55 +115,84 @@ export const useCartStore = create<CartState>()(
             imageUrl: raw.product_image ?? "",
           }));
 
-          set({ items, loading: false });
+          set({
+            items,
+            loading: false,
+            lastFetch: Date.now(), // Performance: Update fetch timestamp
+          });
         } catch (err: any) {
+          if (err.name === "AbortError") {
+            console.log("Cart fetch aborted");
+            return;
+          }
+
           const msg = err.message || "Unknown error fetching cart";
           set({ loading: false, error: msg });
-          Toast.show({
-            type: "error",
-            text1: "Error Loading Cart",
-            text2: msg,
-            position: "bottom",
-          });
+
+          // Performance: Only show toast for user-initiated actions
+          if (get().items.length === 0) {
+            Toast.show({
+              type: "error",
+              text1: "Error Loading Cart",
+              text2: msg,
+              position: "bottom",
+            });
+          }
         }
       },
 
       addToCart: async (productId, quantity, action) => {
-        set((state) => {
-          const idx = state.items.findIndex((i) => i.productId === productId);
-          if (idx >= 0) {
-            const newItems = [...state.items];
-            newItems[idx] = {
-              ...newItems[idx],
-              quantity:
-                action === "increase"
-                  ? newItems[idx].quantity + quantity
-                  : action === "decrease"
-                  ? Math.max(0, newItems[idx].quantity - quantity)
-                  : quantity,
-              imageUrl: newItems[idx].imageUrl,
-            };
-            return { items: newItems, error: null, loading: true };
-          }
-          return {
-            items: [
-              ...state.items,
-              {
-                id: `temp-${productId}`,
-                productId,
-                name: "Loading…",
-                price: 0,
-                quantity,
-                imageUrl: "",
-              },
-            ],
-            error: null,
-            loading: true,
-          };
+        // Performance: Optimistic update with better state management
+        const currentState = get();
+        const existingItemIndex = currentState.items.findIndex(
+          (i) => i.productId === productId
+        );
+
+        // Create optimistic state
+        let optimisticItems: CartItem[];
+
+        if (existingItemIndex >= 0) {
+          optimisticItems = currentState.items
+            .map((item, index) => {
+              if (index === existingItemIndex) {
+                const newQuantity =
+                  action === "increase"
+                    ? item.quantity + quantity
+                    : action === "decrease"
+                    ? Math.max(0, item.quantity - quantity)
+                    : quantity;
+
+                return { ...item, quantity: newQuantity };
+              }
+              return item;
+            })
+            .filter((item) => item.quantity > 0); // Remove items with 0 quantity
+        } else {
+          optimisticItems = [
+            ...currentState.items,
+            {
+              id: `temp-${productId}-${Date.now()}`,
+              productId,
+              name: "Loading…",
+              price: 0,
+              quantity,
+              imageUrl: "",
+            },
+          ];
+        }
+
+        // Apply optimistic update
+        set({
+          items: optimisticItems,
+          error: null,
+          loading: true,
         });
 
         try {
           const sessionId = await getOrCreateSessionId();
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+
           const payload: any = {
             product_id: Number(productId),
             quantity,
@@ -147,10 +208,21 @@ export const useCartStore = create<CartState>()(
               "x-session": sessionId,
             },
             body: JSON.stringify(payload),
+            signal: controller.signal,
           });
+
+          clearTimeout(timeoutId);
+
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          }
+
           const json: AddToCartApiResponse = await res.json();
 
           if (!json.status) {
+            // Revert optimistic update on failure
+            set({ items: currentState.items, loading: false });
+
             const message =
               typeof json.message === "string"
                 ? json.message
@@ -158,16 +230,17 @@ export const useCartStore = create<CartState>()(
             const isStockErr = message.includes(
               "quantity exceeds available stock"
             );
+
             Toast.show({
-              type: isStockErr ? "error" : "error",
+              type: "error",
               text1: isStockErr ? "Out of Stock" : "Error Adding to Cart",
               text2: message,
               position: "bottom",
             });
-            set({ loading: false });
             return;
           }
 
+          // Success: fetch fresh data and show success message
           await get().fetchCart();
           Toast.show({
             type: "success",
@@ -176,8 +249,16 @@ export const useCartStore = create<CartState>()(
             position: "bottom",
           });
         } catch (err: any) {
+          if (err.name === "AbortError") {
+            console.log("Add to cart aborted");
+            return;
+          }
+
+          // Revert optimistic update on error
+          set({ items: currentState.items, loading: false });
+
           const msg = err.message || "Unknown error adding to cart";
-          set({ loading: false, error: msg });
+          set({ error: msg });
           Toast.show({
             type: "error",
             text1: "Error Adding to Cart",
@@ -188,14 +269,17 @@ export const useCartStore = create<CartState>()(
       },
 
       clearCart: () => {
-        set({ items: [], error: null });
+        set({ items: [], error: null, lastFetch: null });
       },
     }),
     {
       name: "cart-storage",
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({ items: state.items }),
-      version: 1,
+      partialize: (state) => ({
+        items: state.items,
+        lastFetch: state.lastFetch, // Performance: Persist cache timestamp
+      }),
+      version: 2, // Increment version due to schema change
     }
   )
 );

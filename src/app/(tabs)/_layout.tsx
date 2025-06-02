@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+// Optimized TabLayout with smart cart loading
+import React, { useEffect, useCallback, useMemo } from "react";
 import { Tabs } from "expo-router";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -9,21 +10,46 @@ import { useCartStore } from "@/store/cartStore";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme() ?? "light";
-  // const fetchCart = useCartStore((s) => s.fetchCart);
 
-  // const totalCartQuantity = useCartStore((state) =>
-  //   state.items.reduce((sum, item) => sum + item.quantity, 0)
-  // );
+  // Performance: Use selective subscriptions to prevent unnecessary re-renders
+  const items = useCartStore((state) => state.items);
+  const needsRefresh = useCartStore((state) => state.needsRefresh);
+  const fetchCart = useCartStore((state) => state.fetchCart);
 
-  // useEffect(() => {
-  //   fetchCart();
-  // }, [fetchCart]);
+  // Performance: Memoize total quantity calculation
+  const totalCartQuantity = useMemo(
+    () => items.reduce((sum, item) => sum + item.quantity, 0),
+    [items]
+  );
+
+  // Performance: Smart cart loading - only when needed
+  const loadCartIfNeeded = useCallback(async () => {
+    if (needsRefresh()) {
+      await fetchCart();
+    }
+  }, [needsRefresh, fetchCart]);
+
+  useEffect(() => {
+    // Load cart data on app startup, but don't block the UI
+    const timer = setTimeout(() => {
+      loadCartIfNeeded();
+    }, 100); // Small delay to let the UI render first
+
+    return () => clearTimeout(timer);
+  }, [loadCartIfNeeded]);
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme].tint,
-        lazy: true,
+        lazy: true, // Keep lazy loading enabled
+        // Performance: Optimize tab bar animations
+        tabBarStyle: {
+          // Reduce overdraw
+          backgroundColor: Colors[colorScheme].background,
+        },
+        // Performance: Disable unnecessary animations if they cause issues
+        animation: "fade", // or 'fade' for smoother transitions
       }}
     >
       <Tabs.Screen
@@ -57,7 +83,14 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <Entypo name="shopping-cart" size={24} color={color} />
           ),
-          // tabBarBadge: totalCartQuantity > 0 ? totalCartQuantity : undefined,
+          // Performance: Only show badge when there are items
+          tabBarBadge: totalCartQuantity > 0 ? totalCartQuantity : undefined,
+          tabBarBadgeStyle: {
+            minWidth: 20,
+            height: 20,
+            borderRadius: 10,
+            backgroundColor: "#FF6B6B",
+          },
         }}
       />
 
