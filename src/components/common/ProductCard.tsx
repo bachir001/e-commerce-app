@@ -31,51 +31,29 @@ const ProductCard = React.memo(
           borderWidth: 1,
         }}
       >
-        {/* Top Row */}
-        <View className="flex-row justify-between items-center mb-2">
-          <View className="flex-row items-center">
-            {hasPurchasePoints && (
-              <View className="flex-row items-center">
-                <Text
-                  style={{ color: innerColor, fontSize: 11, fontWeight: "600" }}
-                >
-                  {product.purchase_points}
-                </Text>
-                <FontAwesome5
-                  name="shopping-cart"
-                  size={8}
-                  color={innerColor}
-                  style={{ marginLeft: 2 }}
-                />
-              </View>
-            )}
-          </View>
-
-          <View className="flex-row items-center gap-2">
-            <View
-              className="px-2 py-1 rounded"
-              style={{ backgroundColor: innerColor }}
-            >
-              <Text className="text-white text-xs font-medium">
-                5 days left
-              </Text>
-            </View>
-
-            <TouchableOpacity>
-              <FontAwesome5 name="heart" size={14} color="#ccc" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Product Image */}
-        <View className="items-center mb-3 bg-gray-50 rounded-lg p-2">
+        {/* Product Image - Now at the top */}
+        <View className="items-center mb-3 relative">
           <Image
             source={{
               uri: product?.image || "https://via.placeholder.com/150",
             }}
-            className="w-24 h-24"
+            className="w-28 h-28"
             resizeMode="contain"
           />
+
+          {/* Heart icon positioned over the image */}
+          <TouchableOpacity
+            className="absolute top-0 right-0 w-7 h-7 bg-white rounded-full items-center justify-center"
+            style={{
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.1,
+              shadowRadius: 2,
+              elevation: 2,
+            }}
+          >
+            <FontAwesome5 name="heart" size={12} color="#ccc" />
+          </TouchableOpacity>
         </View>
 
         {/* Product Name */}
@@ -86,10 +64,28 @@ const ProductCard = React.memo(
           {product.name}
         </Text>
 
-        {/* Rating */}
-        <View className="flex-row items-center mb-3">
-          <FontAwesome5 name="star" size={12} color="#FFD700" />
-          <Text className="text-gray-600 text-xs ml-1">{product.rating}</Text>
+        {/* Rating and Purchase Points Row */}
+        <View className="flex-row justify-between items-center mb-3">
+          <View className="flex-row items-center">
+            <FontAwesome5 name="star" size={12} color="#FFD700" />
+            <Text className="text-gray-600 text-xs ml-1">{product.rating}</Text>
+          </View>
+
+          {hasPurchasePoints && (
+            <View className="flex-row items-center">
+              <Text
+                style={{ color: innerColor, fontSize: 10, fontWeight: "600" }}
+              >
+                {product.purchase_points}
+              </Text>
+              <FontAwesome5
+                name="shopping-cart"
+                size={7}
+                color={innerColor}
+                style={{ marginLeft: 2 }}
+              />
+            </View>
+          )}
         </View>
 
         {/* Price and Cart */}
