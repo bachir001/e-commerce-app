@@ -1,5 +1,5 @@
 // src/app/tabs/cart.tsx
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   SafeAreaView,
   View,
@@ -66,9 +66,13 @@ export default function CartScreen(): React.ReactElement {
   const addToCart = useCartStore((s) => s.addToCart);
 
   // 3. Fetch cart on mount
-  useEffect(() => {
+  const memoizedFetchCart = useCallback(() => {
     fetchCart();
   }, [fetchCart]);
+
+  useEffect(() => {
+    memoizedFetchCart();
+  }, [memoizedFetchCart]);
 
   // 4. Best‑sellers state (only when cart is empty)
   const [bestSellerItems, setBestSellerItems] = useState<BestSellerItem[]>([]);
@@ -112,29 +116,32 @@ export default function CartScreen(): React.ReactElement {
   }, [cartItems]);
 
   // 5. Remove handler
-  const handleRemove = async (cartItemId: string) => {
-    try {
-      const sessionId = await getOrCreateSessionId();
-      const formData = new FormData();
-      formData.append("cart_item_id", cartItemId);
-      formData.append("_method", "DELETE"); // Add _method to body
+  const handleRemove = useCallback(
+    async (cartItemId: string) => {
+      try {
+        const sessionId = await getOrCreateSessionId();
+        const formData = new FormData();
+        formData.append("cart_item_id", cartItemId);
+        formData.append("_method", "DELETE");
 
-      const remove = await axios.post(
-        "https://api-gocami-test.gocami.com/api/cart/remove", // Remove ?_method=DELETE from URL
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            "x-session": sessionId, // Correct header key
-          },
-        }
-      );
+        await axios.post(
+          "https://api-gocami-test.gocami.com/api/cart/remove",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              "x-session": sessionId,
+            },
+          }
+        );
 
-      await fetchCart();
-    } catch (err) {
-      console.error("Error removing item:", err);
-    }
-  };
+        await fetchCart();
+      } catch (err) {
+        console.error("Error removing item:", err);
+      }
+    },
+    [fetchCart]
+  );
 
   // 6. Render one cart row
   function renderCartRow({ item }: { item: CartItem }) {
@@ -206,9 +213,9 @@ export default function CartScreen(): React.ReactElement {
   }
 
   // 8. Compute total cost
-  const totalCartCost = cartItems.reduce(
-    (sum, i) => sum + i.price * i.quantity,
-    0
+  const totalCartCost = useMemo(
+    () => cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0),
+    [cartItems]
   );
 
   // 9. Loading / error states

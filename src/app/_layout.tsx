@@ -1,13 +1,12 @@
 import "../../global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useMemo, useState } from "react";
 import { getOrCreateSessionId } from "@/lib/session";
 import { initOneSignal } from "@/Services/oneSignal";
 import { Stack } from "expo-router";
 import Toast from "react-native-toast-message";
 import { ImageBackground } from "react-native";
 import {
-  Address,
   Governorate,
   SessionContextValue,
   UserContextType,
@@ -31,14 +30,50 @@ function AppWithProviders() {
   const [isLogged, setIsLogged] = useState<boolean>(false);
   const [user, setUser] = useState<UserContextType | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [addresses, setAddresses] = useState<Address[]>([]);
   const [governorates, setGovernorates] = useState<Governorate[]>([]);
 
-  const addAddress = (address: Address) => {
-    setAddresses((prevAddresses) => [...prevAddresses, address]);
-  };
+  useEffect(() => {
+    async function performInitialLoad() {
+      try {
+        const id = await getOrCreateSessionId();
+        setSessionId(id);
+        initOneSignal();
+      } catch (error) {
+        console.error("Error during initial app load:", error);
+      }
+    }
+
+    performInitialLoad();
+  }, []);
 
   const appNotReady = loadingBrands || loadingSliders || loadingMega;
+
+  const contextValue = useMemo(
+    () => ({
+      sessionId,
+      isLogged,
+      setIsLogged,
+      user,
+      setUser,
+      token,
+      setToken,
+      governorates,
+      setGovernorates,
+      brands,
+      sliders,
+      megaCategories,
+    }),
+    [
+      sessionId,
+      isLogged,
+      user,
+      token,
+      governorates,
+      brands,
+      sliders,
+      megaCategories,
+    ]
+  );
 
   if (appNotReady) {
     return (
@@ -51,25 +86,7 @@ function AppWithProviders() {
   }
 
   return (
-    <SessionContext.Provider
-      value={{
-        sessionId,
-        isLogged,
-        setIsLogged,
-        user,
-        setUser,
-        token,
-        setToken,
-        addresses,
-        setAddresses,
-        addAddress,
-        governorates,
-        setGovernorates,
-        brands,
-        sliders,
-        megaCategories,
-      }}
-    >
+    <SessionContext.Provider value={contextValue}>
       <Stack
         screenOptions={{
           headerShown: false,
@@ -88,32 +105,6 @@ function AppWithProviders() {
 }
 
 export default function RootLayout() {
-  const [sessionId, setSessionId] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function performInitialLoad() {
-      try {
-        const id = await getOrCreateSessionId();
-        setSessionId(id);
-        initOneSignal();
-      } catch (error) {
-        console.error("Error during initial app load:", error);
-      }
-    }
-
-    performInitialLoad();
-  }, []);
-
-  if (sessionId === null) {
-    return (
-      <ImageBackground
-        source={require("@/assets/images/initialPageLoader.jpeg")}
-        className="flex-1 justify-center items-center"
-        resizeMode="cover"
-      />
-    );
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
       <AppWithProviders />

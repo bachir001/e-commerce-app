@@ -1,6 +1,6 @@
 // src/app/search/SearchScreen.tsx
-import React, { useState, useCallback, useMemo } from 'react';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState, useCallback, useMemo } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import {
   View,
   StyleSheet,
@@ -10,13 +10,14 @@ import {
   Pressable,
   Image,
   ListRenderItemInfo,
-} from 'react-native';
-import { ThemedView } from '@/components/common/ThemedView';
-import { ThemedText } from '@/components/common/ThemedText';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
-import { debounce } from 'lodash';
-import { useRouter } from 'expo-router';
+} from "react-native";
+import { ThemedView } from "@/components/common/ThemedView";
+import { ThemedText } from "@/components/common/ThemedText";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
+import { debounce } from "lodash";
+import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface SearchResult {
   id: number;
@@ -24,16 +25,16 @@ interface SearchResult {
   image: string;
   price: number;
   slug: string;
-  type?: 'product' | 'category' | 'brand' | 'seller';
+  type?: "product" | "category" | "brand" | "seller";
   count?: number;
 }
 
 export default function SearchScreen() {
   const router = useRouter();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() ?? "light";
   const colors = Colors[scheme];
 
   // 1. Memoize debounced search
@@ -75,7 +76,10 @@ export default function SearchScreen() {
   // 3. Stable navigation handler
   const onPressItem = useCallback(
     (slug: string) => {
-      router.push({ pathname: '/(tabs)/home/ProductDetails', params: { productName: slug } });
+      router.push({
+        pathname: "/(tabs)/home/ProductDetails",
+        params: { productName: slug },
+      });
     },
     [router]
   );
@@ -85,10 +89,7 @@ export default function SearchScreen() {
     ({ item }: ListRenderItemInfo<SearchResult>) => (
       <Pressable
         onPress={() => onPressItem(item.slug)}
-        style={({ pressed }) => [
-          styles.resultItem,
-          pressed && styles.pressed,
-        ]}
+        style={({ pressed }) => [styles.resultItem, pressed && styles.pressed]}
         accessibilityRole="button"
         accessibilityLabel={`Go to ${item.name}`}
       >
@@ -107,7 +108,9 @@ export default function SearchScreen() {
               </View>
             )}
             {item.price > 0 && !isNaN(item.price) && (
-              <ThemedText style={styles.price}>${item.price.toFixed(2)}</ThemedText>
+              <ThemedText style={styles.price}>
+                ${item.price.toFixed(2)}
+              </ThemedText>
             )}
           </View>
         </View>
@@ -120,55 +123,67 @@ export default function SearchScreen() {
   const emptyComponent = useMemo(
     () => (
       <ThemedText style={styles.emptyText}>
-        {query ? 'No results found' : 'Start typing to search'}
+        {query ? "No results found" : "Start typing to search"}
       </ThemedText>
     ),
     [query]
   );
 
   return (
-    <ThemedView style={styles.container}>
-      <View style={[styles.header, { backgroundColor: colors.background }]}>
-        <Pressable onPress={() => router.back()} accessibilityRole="button">
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </Pressable>
+    <SafeAreaView style={styles.container}>
+      <ThemedView>
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
+          <Pressable onPress={() => router.back()} accessibilityRole="button">
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </Pressable>
 
-        <View style={[styles.inputWrapper, { backgroundColor: colors.tint + '20' }]}>
-          <TextInput
-            autoFocus
-            style={styles.input}
-            placeholder="Search..."
-            placeholderTextColor={colors.text + '80'}
-            value={query}
-            onChangeText={onChangeText}
-          />
+          <View
+            style={[
+              styles.inputWrapper,
+              { backgroundColor: colors.tint + "20" },
+            ]}
+          >
+            <TextInput
+              autoFocus
+              style={styles.input}
+              placeholder="Search..."
+              placeholderTextColor={colors.text + "80"}
+              value={query}
+              onChangeText={onChangeText}
+            />
+          </View>
         </View>
-      </View>
 
-      {loading ? (
-        <ActivityIndicator size="large" style={styles.loader} />
-      ) : (
-        <FlatList
-          data={results}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderItem}
-          ListEmptyComponent={emptyComponent}
-          contentContainerStyle={styles.list}
-          initialNumToRender={10}
-          windowSize={5}
-        />
-      )}
-    </ThemedView>
+        {loading ? (
+          <ActivityIndicator size="large" style={styles.loader} />
+        ) : (
+          <FlatList
+            data={results}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderItem}
+            ListEmptyComponent={emptyComponent}
+            contentContainerStyle={styles.list}
+            initialNumToRender={10}
+            windowSize={5}
+          />
+        )}
+      </ThemedView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF', paddingTop: 2 },
-  header: { flexDirection: 'row', alignItems: 'center', padding: 16, marginBottom: 8 },
+  container: { flex: 1, backgroundColor: "#FFF", paddingTop: 2 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    marginBottom: 8,
+  },
   inputWrapper: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderRadius: 8,
     paddingHorizontal: 12,
     height: 40,
@@ -177,16 +192,41 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontSize: 16, paddingVertical: 0 },
   loader: { marginTop: 20 },
   list: { paddingBottom: 20 },
-  resultItem: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },
+  resultItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+  },
   pressed: { opacity: 0.6 },
-  resultContent: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  image: { width: 80, height: 80, borderRadius: 8, backgroundColor: '#f5f5f5', marginRight: 12 },
+  resultContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  image: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: "#f5f5f5",
+    marginRight: 12,
+  },
   textContainer: { flex: 1 },
-  name: { fontSize: 16, fontWeight: '500', marginBottom: 4, color: '#333' },
-  typeRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-  type: { fontSize: 14, color: '#666' },
-  badge: { backgroundColor: '#e0e0e0', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 2, marginLeft: 8 },
-  count: { fontSize: 12, color: '#333' },
-  price: { fontSize: 16, fontWeight: '600', color: '#7b23cd' },
-  emptyText: { textAlign: 'center', marginTop: 20, opacity: 0.5, color: '#666' },
+  name: { fontSize: 16, fontWeight: "500", marginBottom: 4, color: "#333" },
+  typeRow: { flexDirection: "row", alignItems: "center", marginBottom: 4 },
+  type: { fontSize: 14, color: "#666" },
+  badge: {
+    backgroundColor: "#e0e0e0",
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 8,
+  },
+  count: { fontSize: 12, color: "#333" },
+  price: { fontSize: 16, fontWeight: "600", color: "#7b23cd" },
+  emptyText: {
+    textAlign: "center",
+    marginTop: 20,
+    opacity: 0.5,
+    color: "#666",
+  },
 });

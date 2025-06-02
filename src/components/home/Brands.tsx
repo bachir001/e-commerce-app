@@ -18,7 +18,7 @@ function BrandComponent({ name, image, slug, id }: Brand) {
       className="mx-2 bg-white rounded-xl overflow-hidden"
       style={{
         width: itemWidth,
-        height: 85,
+        height: 60,
         shadowColor: "#5e3ebd",
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.15,

@@ -1,10 +1,10 @@
-import { Stack } from 'expo-router'
+import { Stack } from "expo-router";
 
 export default function HomeLayout() {
   return (
-  <Stack>
-    <Stack.Screen name='index'  options={{ headerShown: false }}/>
-     <Stack.Screen
+    <Stack>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen
         name="checkout"
         options={{
           headerShown: false,
@@ -16,6 +16,6 @@ export default function HomeLayout() {
           headerShown: false,
         }}
       />
-  </Stack>
+    </Stack>
   );
 }

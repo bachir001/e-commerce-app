@@ -15,6 +15,7 @@ import axiosApi from "@/apis/axiosApi";
 import { SessionContext } from "@/app/_layout";
 import { Colors } from "@/constants/Colors";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
+import { useQuery } from "@tanstack/react-query";
 
 export interface Address {
   id: number;
@@ -46,8 +47,28 @@ export default function AddressPage() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const { token } = useContext(SessionContext);
 
-  const { token, addresses, setAddresses } = useContext(SessionContext);
+  const {
+    data: addresses = [],
+    isLoading: addressesLoading,
+    refetch: refetchAddresses,
+  } = useQuery({
+    queryKey: ["addresses"],
+    enabled: typeof token === "string" && token.length > 0,
+    queryFn: async () => {
+      const response = await axiosApi.get("addresses", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const sortedDefault = [...response.data.data].sort(
+        (a, b) => b.is_default - a.is_default
+      );
+      return sortedDefault;
+    },
+    staleTime: 1000 * 60 * 60 * 24,
+  });
 
   const handleEdit = (address: Address) => {
     router.push({
@@ -127,57 +148,6 @@ export default function AddressPage() {
     }
   };
 
-  const fetchUserAddresses = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await axiosApi.get("addresses", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.data.status) {
-        const sortedDefault = [...response.data.data].sort(
-          (a, b) => b.is_default - a.is_default
-        );
-        setAddresses(sortedDefault);
-      } else {
-        Toast.show({
-          type: "error",
-          text1: "Error",
-          text2: response.data.message || "Failed to fetch addresses",
-          autoHide: true,
-          visibilityTime: 2000,
-          topOffset: 60,
-        });
-      }
-    } catch (err) {
-      console.error("Error fetching user addresses:", err);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Something went wrong while fetching addresses",
-        autoHide: true,
-        visibilityTime: 2000,
-        topOffset: 60,
-      });
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [token, setAddresses]);
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchUserAddresses();
-  }, [fetchUserAddresses]);
-
-  useEffect(() => {
-    if (addresses.length === 0 && !loading && !refreshing) {
-      fetchUserAddresses();
-    }
-  }, [addresses.length, token, loading, refreshing, fetchUserAddresses]);
-
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <View className="bg-white px-5 py-4 border-b border-gray-100">
@@ -189,7 +159,7 @@ export default function AddressPage() {
         </View>
       </View>
 
-      {loading && addresses.length === 0 ? (
+      {addressesLoading && addresses.length === 0 ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color={Colors.PRIMARY} />
         </View>
@@ -200,12 +170,29 @@ export default function AddressPage() {
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={onRefresh}
+              onRefresh={() => {
+                setRefreshing(true);
+                refetchAddresses()
+                  .then(() => {
+                    setRefreshing(false);
+                  })
+                  .catch((err) => {
+                    Toast.show({
+                      type: "error",
+                      text1: "Error",
+                      text2: "Something went wrong while refreshing",
+                      autoHide: true,
+                      visibilityTime: 2000,
+                      topOffset: 60,
+                    });
+                    setRefreshing(false);
+                  });
+              }}
               tintColor={Colors.PRIMARY}
             />
           }
         >
-          {addresses.length > 0 ? (
+          {addresses && addresses.length > 0 ? (
             addresses.map((address: Address) => (
               <View
                 key={address.id}
