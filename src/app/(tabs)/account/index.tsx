@@ -28,8 +28,7 @@ function getFlagEmoji(countryCode: string): string {
 
 export default function AccountScreen() {
   const router = useRouter();
-  const { isLogged, setIsLogged, user } = useContext(SessionContext);
-
+  const {isLogged, setIsLogged, user} = useContext(SessionContext);
   const [isContactModalVisible, setContactModalVisible] = useState(false);
 
   // let user;
@@ -136,6 +135,17 @@ export default function AccountScreen() {
           /* TODO */
         },
       },
+    ],
+    []
+  );
+
+  const serviceItems: IconGridItem[] = useMemo(
+    () => [
+      {
+        icon: "bell",
+        label: "My Notifications",
+        onPress: () => router.push("/notifications"),
+      }
     ],
     []
   );
@@ -249,6 +259,13 @@ export default function AccountScreen() {
               Help Center
             </Text>
             <IconGrid items={helpItems} />
+          </View>
+
+          <View className="mt-4 mx-4 bg-white rounded-2xl shadow-sm overflow-hidden">
+            <Text className="font-semibold px-6 pt-4 text-gray-800 text-lg">
+              Services
+            </Text>
+            <IconGrid items={serviceItems} />
           </View>
 
           {isLogged && (
