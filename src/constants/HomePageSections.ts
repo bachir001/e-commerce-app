@@ -1,5 +1,5 @@
 export interface HomePageSectionProp {
-  id: number;
+  id?: number;
   type: string;
   title?: string;
   fetchParams?: {
@@ -8,53 +8,99 @@ export interface HomePageSectionProp {
     sort: string;
   };
   description?: string;
+  mega_mobile_bg?: string;
+  startFromLeft?: boolean;
 }
 
-export const HOMEPAGE_SECTIONS: HomePageSectionProp[] = [
-  { id: 1, type: "header" },
-  {
-    id: 2,
-    type: "all-categories",
-  },
-  {
-    id: 3,
-    title: "New Arrivals",
-    type: "new-arrivals", //used for fetching
-    description: "Check out our latest products",
-    fetchParams: {
-      per_page: 5,
-      page: 1,
-      sort: "price_high_low",
-    },
-  },
-  {
-    id: 4,
-    title: "Deals of the Day",
-    description: "Buy Now Before It's Gone",
-    type: "daily-deals",
-    fetchParams: {
-      per_page: 5,
-      page: 1,
-      sort: "price_high_low",
-    },
-  },
-  {
-    id: 5,
+export const HOMEPAGE_SECTIONS = {
+  bestSellers: {
+    description: "Check out our best sellers!",
     title: "Best Sellers",
-    type: "best-sellers",
-    description: "Check out our best selling products",
+    type: "best-sellers" as const,
     fetchParams: {
       per_page: 15,
+      sort: "price_high_low" as const,
       page: 1,
-      sort: "price_high_low",
     },
-  },
-
-  //   //Specific Categories
-  //   {
-  //     id: 6,
-  //     title: "Beauty & Health",
-  //     type: "beauty-health",
-
-  //   }
-];
+    startFromLeft: true,
+  } as HomePageSectionProp,
+  newArrivals: {
+    description: "Check out our latest products!",
+    title: "New Arrivals",
+    type: "new-arrivals" as const,
+    fetchParams: {
+      per_page: 15,
+      sort: "price_high_low" as const,
+      page: 1,
+    },
+    startFromLeft: false,
+  } as HomePageSectionProp,
+  beautyAndHealth: {
+    description: "Improve your skin health now!",
+    title: "Beauty & Health",
+    type: "beauty-health" as const,
+    fetchParams: {
+      per_page: 15,
+      sort: "price_high_low" as const,
+      page: 1,
+    },
+  } as HomePageSectionProp,
+  homeAndLiving: {
+    description: "Shop Home & Living",
+    title: "Home & Living",
+    type: "home-living" as const,
+    fetchParams: {
+      per_page: 15,
+      sort: "price_high_low" as const,
+      page: 1,
+    },
+  } as HomePageSectionProp,
+  medicalEquipment: {
+    description: "Trusted by experts, designed for care.",
+    title: "Medical Equipment",
+    type: "medical-equipment" as const,
+    fetchParams: {
+      per_page: 15,
+      sort: "price_high_low" as const,
+      page: 1,
+    },
+    // mega_mobile_bg:
+    //   "https://api-gocami-test.gocami.com/storage/8181/medical-mobile.webp",
+  } as HomePageSectionProp,
+  agriculture: {
+    description: "Tend Your Garden With Reliable Tools and Equipments",
+    title: "Agriculture Equipments",
+    type: "garden-tools" as const,
+    fetchParams: {
+      per_page: 15,
+      sort: "price_high_low" as const,
+      page: 1,
+    },
+    // mega_mobile_bg:
+    //   "https://api-gocami-test.gocami.com/storage/8219/Agriculture-mobile.webp",
+  } as HomePageSectionProp,
+  hardwareAndFasteners: {
+    description: "Strong Connections Start with Reliable Fasteners",
+    title: "Hardware & Fasteners",
+    type: "hardware-and-fasteners" as const,
+    fetchParams: {
+      per_page: 15,
+      sort: "price_high_low" as const,
+      page: 1,
+    },
+    // mega_mobile_bg:
+    //   "https://api-gocami-test.gocami.com/storage/12263/1.webp",
+  } as HomePageSectionProp,
+  sportsAndOutdoors: {
+    description: "Shop and Embrace the Great Outdoors!",
+    title: "Sports & Outdoors",
+    type: "sports-outdoor" as const,
+    fetchParams: {
+      per_page: 15,
+      sort: "price_high_low" as const,
+      page: 1,
+    },
+    // mega_mobile_bg:
+    //   "https://api-gocami-test.gocami.com/storage/12255/camping-mobile.webp",
+  } as HomePageSectionProp,
+};

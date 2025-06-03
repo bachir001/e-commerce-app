@@ -8,10 +8,10 @@ import {
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import Brands from "./Brands";
 
-export default function Header() {
+const Header = React.memo(() => {
   const router = useRouter();
   const searchBarAnimation = useRef(new Animated.Value(0)).current;
 
@@ -25,7 +25,7 @@ export default function Header() {
   }, []);
 
   const goToSearch = () => {
-    router.push("/search");
+    router.push("/(tabs)/home/SearchScreen");
   };
 
   return (
@@ -37,8 +37,6 @@ export default function Header() {
       }}
     >
       <View className="w-full flex flex-col pt-6 pb-2 bg-gradient-to-b from-white to-gray-50">
-        <Brands />
-
         <View className="px-4 mt-3">
           <Animated.View
             style={{
@@ -85,7 +83,10 @@ export default function Header() {
             </TouchableOpacity>
           </Animated.View>
         </View>
+        <Brands />
       </View>
     </ImageBackground>
   );
-}
+});
+
+export default Header;

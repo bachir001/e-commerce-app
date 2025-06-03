@@ -1,5 +1,11 @@
-// src/app/tabs/cart.tsx
-import React, { useEffect, useState } from "react";
+// Optimized cart.tsx - Key performance improvements
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from "react";
 import {
   SafeAreaView,
   View,
@@ -15,13 +21,11 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 import { useRouter } from "expo-router";
 import { useCartStore, CartItem } from "@/store/cartStore";
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getOrCreateSessionId } from "@/lib/session";
 
-// -----------------------
-// Best‑Sellers API types
-// -----------------------
+// Types remain the same...
 interface BestSellerRaw {
   id: number;
   name: string;
@@ -47,44 +51,52 @@ interface BestSellerItem {
   imageUrl: string;
 }
 
-// -----------------------
-// Cart Screen Component
-// -----------------------
 export default function CartScreen(): React.ReactElement {
-  // 1. Theme setup
   const router = useRouter();
   const rawColorScheme = useColorScheme();
   const colorScheme: "light" | "dark" =
     rawColorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(colorScheme);
 
-  // 2. Zustand state & actions
+  // Zustand state
   const cartItems = useCartStore((s) => s.items);
   const isCartLoading = useCartStore((s) => s.loading);
   const cartErrorMessage = useCartStore((s) => s.error);
   const fetchCart = useCartStore((s) => s.fetchCart);
   const addToCart = useCartStore((s) => s.addToCart);
 
-  // 3. Fetch cart on mount
+  // Performance improvement: Use ref to track if cart has been fetched
+  const hasFetchedCart = useRef(false);
+
+  // Performance improvement: Only fetch cart once per session
   useEffect(() => {
-    fetchCart();
+    if (!hasFetchedCart.current) {
+      fetchCart();
+      hasFetchedCart.current = true;
+    }
   }, [fetchCart]);
 
-  // 4. Best‑sellers state (only when cart is empty)
+  // Best-sellers state with improved caching
   const [bestSellerItems, setBestSellerItems] = useState<BestSellerItem[]>([]);
   const [isBestSellersLoading, setIsBestSellersLoading] = useState(false);
   const [bestSellersErrorMessage, setBestSellersErrorMessage] = useState<
     string | null
   >(null);
+  const bestSellersCache = useRef<BestSellerItem[] | null>(null);
 
+  // Performance improvement: Cache best-sellers and use AbortController
   useEffect(() => {
-    if (cartItems.length === 0) {
+    let abortController: AbortController | null = null;
+
+    if (cartItems.length === 0 && !bestSellersCache.current) {
       setIsBestSellersLoading(true);
       setBestSellersErrorMessage(null);
+      abortController = new AbortController();
 
       axios
         .get<BestSellersApiResponse>(
-          "https://api-gocami-test.gocami.com/api/best-sellers?page=1&per_page=20"
+          "https://api-gocami-test.gocami.com/api/best-sellers?page=1&per_page=20",
+          { signal: abortController.signal }
         )
         .then((response) => {
           if (!response.data.status) {
@@ -98,47 +110,64 @@ export default function CartScreen(): React.ReactElement {
             price: raw.price,
             imageUrl: raw.product_image ?? raw.image,
           }));
+
+          // Cache the results
+          bestSellersCache.current = mapped;
           setBestSellerItems(mapped);
         })
         .catch((err) => {
-          setBestSellersErrorMessage(
-            err instanceof Error ? err.message : "Unknown error"
-          );
+          if (!axios.isCancel(err)) {
+            setBestSellersErrorMessage(
+              err instanceof Error ? err.message : "Unknown error"
+            );
+          }
         })
         .finally(() => {
           setIsBestSellersLoading(false);
         });
+    } else if (cartItems.length === 0 && bestSellersCache.current) {
+      // Use cached data
+      setBestSellerItems(bestSellersCache.current);
     }
-  }, [cartItems]);
 
-  // 5. Remove handler
-  const handleRemove = async (cartItemId: string) => {
-    try {
-      const sessionId = await getOrCreateSessionId();
-      const formData = new FormData();
-      formData.append("cart_item_id", cartItemId);
-      formData.append("_method", "DELETE"); // Add _method to body
+    return () => {
+      if (abortController) {
+        abortController.abort();
+      }
+    };
+  }, [cartItems.length]); // Only depend on cart length, not the full array
 
-      const remove = await axios.post(
-        "https://api-gocami-test.gocami.com/api/cart/remove", // Remove ?_method=DELETE from URL
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            "x-session": sessionId, // Correct header key
-          },
-        }
-      );
+  // Performance improvement: Memoize handlers with proper dependencies
+  const handleRemove = useCallback(
+    async (cartItemId: string) => {
+      try {
+        const sessionId = await getOrCreateSessionId();
+        const formData = new FormData();
+        formData.append("cart_item_id", cartItemId);
+        formData.append("_method", "DELETE");
 
-      await fetchCart();
-    } catch (err) {
-      console.error("Error removing item:", err);
-    }
-  };
+        await axios.post(
+          "https://api-gocami-test.gocami.com/api/cart/remove",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              "x-session": sessionId,
+            },
+          }
+        );
 
-  // 6. Render one cart row
-  function renderCartRow({ item }: { item: CartItem }) {
-    return (
+        await fetchCart();
+      } catch (err) {
+        console.error("Error removing item:", err);
+      }
+    },
+    [fetchCart]
+  );
+
+  // Performance improvement: Memoize render functions
+  const renderCartRow = useCallback(
+    ({ item }: { item: CartItem }) => (
       <View style={styles.cartItemContainer}>
         <Image
           source={{ uri: (item as any).imageUrl }}
@@ -183,12 +212,12 @@ export default function CartScreen(): React.ReactElement {
           <MaterialIcons name="delete-outline" size={24} color="#E53935" />
         </Pressable>
       </View>
-    );
-  }
+    ),
+    [styles, addToCart, handleRemove, isCartLoading]
+  );
 
-  // 7. Render one best‑seller card
-  function renderBestSellerCard({ item }: { item: BestSellerItem }) {
-    return (
+  const renderBestSellerCard = useCallback(
+    ({ item }: { item: BestSellerItem }) => (
       <View style={styles.bestSellerCard}>
         <Image source={{ uri: item.imageUrl }} style={styles.bestSellerImage} />
         <Text style={styles.bestSellerName} numberOfLines={1}>
@@ -202,17 +231,30 @@ export default function CartScreen(): React.ReactElement {
           <Text style={styles.bestSellerButtonText}>Add to Cart</Text>
         </Pressable>
       </View>
-    );
-  }
-
-  // 8. Compute total cost
-  const totalCartCost = cartItems.reduce(
-    (sum, i) => sum + i.price * i.quantity,
-    0
+    ),
+    [styles, addToCart]
   );
 
-  // 9. Loading / error states
+  // Performance improvement: Optimize total calculation
+  const totalCartCost = useMemo(
+    () => cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0),
+    [cartItems]
+  );
 
+  // Performance improvement: Memoize key extractor
+  const cartKeyExtractor = useCallback((item: CartItem) => item.id, []);
+  const bestSellerKeyExtractor = useCallback(
+    (item: BestSellerItem) => item.id,
+    []
+  );
+
+  // Performance improvement: Memoize separator component
+  const ItemSeparator = useCallback(
+    () => <View style={styles.itemSeparator} />,
+    [styles]
+  );
+
+  // Rest of the component remains the same...
   if (cartErrorMessage) {
     return (
       <View style={styles.centeredContainer}>
@@ -221,7 +263,6 @@ export default function CartScreen(): React.ReactElement {
     );
   }
 
-  // 10. Empty cart view
   if (cartItems.length === 0) {
     return (
       <SafeAreaView style={styles.mainContainer}>
@@ -247,9 +288,19 @@ export default function CartScreen(): React.ReactElement {
               data={bestSellerItems}
               horizontal
               showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item.id}
+              keyExtractor={bestSellerKeyExtractor}
               renderItem={renderBestSellerCard}
               contentContainerStyle={styles.bestSellersListContainer}
+              // Performance improvements for FlatList
+              removeClippedSubviews={true}
+              maxToRenderPerBatch={5}
+              windowSize={10}
+              initialNumToRender={5}
+              getItemLayout={(data, index) => ({
+                length: 140,
+                offset: 140 * index,
+                index,
+              })}
             />
           )}
         </View>
@@ -257,14 +308,13 @@ export default function CartScreen(): React.ReactElement {
     );
   }
 
-  // 11. Populated cart view
   return (
     <SafeAreaView style={styles.mainContainer}>
       <FlatList
         data={cartItems}
-        keyExtractor={(item) => item.id}
+        keyExtractor={cartKeyExtractor}
         renderItem={renderCartRow}
-        ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+        ItemSeparatorComponent={ItemSeparator}
         ListHeaderComponent={<Text style={styles.cartTitle}>Your Cart</Text>}
         ListFooterComponent={
           <View style={styles.footer}>
@@ -294,11 +344,17 @@ export default function CartScreen(): React.ReactElement {
             </Pressable>
           </View>
         }
+        // Performance improvements for FlatList
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        initialNumToRender={10}
       />
     </SafeAreaView>
   );
 }
 
+// Styles remain the same...
 const BRAND = "#5E3EBD";
 const screenWidth = Dimensions.get("window").width;
 
@@ -307,14 +363,8 @@ export function createStyles(colorScheme: "light" | "dark") {
   const textColor = Colors[colorScheme].text;
 
   return StyleSheet.create({
-    qtyButtonDisabled: {
-      color: "#CCC",
-    },
-    mainContainer: {
-      flex: 1,
-      backgroundColor,
-      paddingTop: 16,
-    },
+    qtyButtonDisabled: { color: "#CCC" },
+    mainContainer: { flex: 1, backgroundColor, paddingTop: 16 },
     centeredContainer: {
       flex: 1,
       justifyContent: "center",
@@ -334,26 +384,15 @@ export function createStyles(colorScheme: "light" | "dark") {
       padding: 12,
       backgroundColor,
     },
-    productImage: {
-      width: 60,
-      height: 60,
-      borderRadius: 8,
-      marginRight: 12,
-    },
-    details: {
-      flex: 1,
-    },
+    productImage: { width: 60, height: 60, borderRadius: 8, marginRight: 12 },
+    details: { flex: 1 },
     productName: {
       fontSize: 16,
       fontWeight: "500",
       color: textColor,
       marginBottom: 4,
     },
-    productPrice: {
-      fontSize: 14,
-      fontWeight: "600",
-      color: BRAND,
-    },
+    productPrice: { fontSize: 14, fontWeight: "600", color: BRAND },
     quantityContainer: {
       flexDirection: "row",
       alignItems: "center",
@@ -369,45 +408,19 @@ export function createStyles(colorScheme: "light" | "dark") {
       textAlign: "center",
       color: textColor,
     },
-    qtyText: {
-      fontSize: 16,
-      width: 24,
-      textAlign: "center",
-      color: textColor,
-    },
-    itemSeparator: {
-      height: 1,
-      backgroundColor: "#EEE",
-    },
-    footer: {
-      padding: 16,
-      backgroundColor,
-    },
+    qtyText: { fontSize: 16, width: 24, textAlign: "center", color: textColor },
+    itemSeparator: { height: 1, backgroundColor: "#EEE" },
+    footer: { padding: 16, backgroundColor },
     footerRow: {
       flexDirection: "row",
       justifyContent: "space-between",
       marginVertical: 4,
     },
-    footerLabel: {
-      fontSize: 16,
-      color: textColor,
-    },
-    footerValue: {
-      fontSize: 16,
-      color: textColor,
-    },
-    divider: {
-      height: 1,
-      backgroundColor: "#DDD",
-      marginVertical: 12,
-    },
-    totalLabel: {
-      fontWeight: "700",
-    },
-    totalValue: {
-      fontSize: 18,
-      fontWeight: "700",
-    },
+    footerLabel: { fontSize: 16, color: textColor },
+    footerValue: { fontSize: 16, color: textColor },
+    divider: { height: 1, backgroundColor: "#DDD", marginVertical: 12 },
+    totalLabel: { fontWeight: "700" },
+    totalValue: { fontSize: 18, fontWeight: "700" },
     checkoutButton: {
       marginTop: 16,
       backgroundColor: BRAND,
@@ -415,22 +428,13 @@ export function createStyles(colorScheme: "light" | "dark") {
       paddingVertical: 14,
       alignItems: "center",
     },
-    checkoutText: {
-      color: "#FFF",
-      fontSize: 16,
-      fontWeight: "600",
-    },
-    // Empty state
+    checkoutText: { color: "#FFF", fontSize: 16, fontWeight: "600" },
     emptyBasketImage: {
       width: screenWidth * 0.6,
       height: screenWidth * 0.6,
       marginBottom: 24,
     },
-    emptyBasketText: {
-      fontSize: 20,
-      color: textColor,
-      marginBottom: 0,
-    },
+    emptyBasketText: { fontSize: 20, color: textColor, marginBottom: 0 },
     sectionTitle: {
       fontSize: 22,
       fontWeight: "600",
@@ -438,9 +442,7 @@ export function createStyles(colorScheme: "light" | "dark") {
       marginLeft: 16,
       marginBottom: 12,
     },
-    bestSellersListContainer: {
-      paddingHorizontal: 16,
-    },
+    bestSellersListContainer: { paddingHorizontal: 16 },
     bestSellerCard: {
       width: 140,
       backgroundColor,
@@ -477,10 +479,6 @@ export function createStyles(colorScheme: "light" | "dark") {
       fontSize: 14,
       fontWeight: "600",
     },
-    errorText: {
-      color: "red",
-      fontSize: 16,
-      marginTop: 8,
-    },
+    errorText: { color: "red", fontSize: 16, marginTop: 8 },
   });
 }

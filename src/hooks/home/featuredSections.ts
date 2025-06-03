@@ -4,10 +4,12 @@ import { Product } from "@/types/globalTypes";
 
 export function useFeaturedSection(
   type: string,
-  fetchParams?: Record<string, any>
+  fetchParams?: Record<string, any>,
+  shouldFetch?: boolean
 ) {
   return useQuery({
     queryKey: ["products", type, fetchParams],
+    enabled: shouldFetch,
     queryFn: async () => {
       const params = new URLSearchParams();
 

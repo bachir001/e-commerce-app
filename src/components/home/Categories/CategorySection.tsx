@@ -1,7 +1,7 @@
 "use client";
 
 import { SessionContext } from "@/app/_layout";
-import { useContext } from "react";
+import React, { useContext } from "react";
 import { Dimensions, Image, View } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import CircularCategorylist from "./CircularCategoryList";
@@ -56,7 +56,7 @@ const SliderComponent = ({ sliders }: SliderComponentProps) => {
   );
 };
 
-export default function App() {
+const CategorySection = React.memo(() => {
   const { sliders, megaCategories } = useContext(SessionContext);
 
   return (
@@ -70,4 +70,6 @@ export default function App() {
       <CircularCategorylist data={megaCategories} numberOfRows={2} />
     </View>
   );
-}
+});
+
+export default CategorySection;

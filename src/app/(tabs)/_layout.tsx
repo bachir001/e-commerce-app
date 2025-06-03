@@ -1,5 +1,5 @@
-// src/app/(tabs)/layout.tsx
-import React from "react";
+// Optimized TabLayout with smart cart loading
+import React, { useEffect, useCallback, useMemo } from "react";
 import { Tabs } from "expo-router";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -7,29 +7,60 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useCartStore } from "@/store/cartStore";
+import * as Haptics from "expo-haptics";
+import { Platform } from "react-native";
 
 export default function TabLayout() {
-  const fetchCart = useCartStore((s) => s.fetchCart);
-
-  React.useEffect(() => {
-    fetchCart();
-  }, [fetchCart]);
-
   const colorScheme = useColorScheme() ?? "light";
-  // Subscribe to the cart items array
-  const cartItems = useCartStore((state) => state.items);
 
-  // Compute total quantity (you could also do `cartItems.length` if
-  // you just want distinct line-item count)
-  const totalCartQuantity = cartItems.reduce(
-    (sum, item) => sum + item.quantity,
-    0
+  // Performance: Use selective subscriptions to prevent unnecessary re-renders
+  const items = useCartStore((state) => state.items);
+  const needsRefresh = useCartStore((state) => state.needsRefresh);
+  const fetchCart = useCartStore((state) => state.fetchCart);
+
+  // Performance: Memoize total quantity calculation
+  const totalCartQuantity = useMemo(
+    () => items.reduce((sum, item) => sum + item.quantity, 0),
+    [items]
   );
+
+  // Performance: Smart cart loading - only when needed
+  const loadCartIfNeeded = useCallback(async () => {
+    if (needsRefresh()) {
+      await fetchCart();
+    }
+  }, [needsRefresh, fetchCart]);
+
+  useEffect(() => {
+    // Load cart data on app startup, but don't block the UI
+    const timer = setTimeout(() => {
+      loadCartIfNeeded();
+    }, 100); // Small delay to let the UI render first
+
+    return () => clearTimeout(timer);
+  }, [loadCartIfNeeded]);
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme].tint,
+        lazy: true, // Keep lazy loading enabled
+        // Performance: Optimize tab bar animations
+        tabBarStyle: {
+          // Reduce overdraw
+          backgroundColor: Colors[colorScheme].background,
+        },
+        // Performance: Disable unnecessary animations if they cause issues
+        animation: "fade", // or 'fade' for smoother transitions
+      }}
+      screenListeners={{
+        tabPress: (e) => {
+          if (Platform.OS === "ios") {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          } else if (Platform.OS === "android") {
+            Haptics.selectionAsync();
+          }
+        },
       }}
     >
       <Tabs.Screen
@@ -63,8 +94,14 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <Entypo name="shopping-cart" size={24} color={color} />
           ),
-          // only show a badge when there's at least one item
+          // Performance: Only show badge when there are items
           tabBarBadge: totalCartQuantity > 0 ? totalCartQuantity : undefined,
+          tabBarBadgeStyle: {
+            minWidth: 20,
+            height: 20,
+            borderRadius: 10,
+            backgroundColor: "#FF6B6B",
+          },
         }}
       />
 

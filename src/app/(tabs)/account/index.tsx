@@ -11,7 +11,7 @@ import Header from "@/components/account/AccountHeader";
 import IconGrid, { type IconGridItem } from "@/components/account/IconGrid";
 import Footer from "@/components/account/Footer";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { SessionContext, UserContext } from "@/app/_layout";
+import { SessionContext } from "@/app/_layout";
 import { FontAwesome5 } from "@expo/vector-icons";
 import ContactModal from "@/components/account/ContactModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";

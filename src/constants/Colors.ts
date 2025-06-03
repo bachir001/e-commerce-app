@@ -24,4 +24,8 @@ export const Colors = {
     tabIconSelected: tintColorDark,
   },
   PRIMARY: "#5e3ebd",
+  BeautyAndHealth: "#d3bdb8",
+  MedicalEquipment: "#a5c3dd",
+  Agriculture: "#59ad55",
+  Hardware: "#9b8371",
 };

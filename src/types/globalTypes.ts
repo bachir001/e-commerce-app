@@ -72,6 +72,17 @@ export interface MegaCategory {
   mega_description_color: string;
 }
 
+export interface RelatedCategory {
+  id: number;
+  name: string;
+  description: string | null;
+  slug: string;
+  image: string | null;
+  main_image: string | null;
+  category_cover_image: string | null;
+  children: RelatedCategory[];
+}
+
 export interface Product {
   id: number;
   name: string;
