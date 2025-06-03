@@ -8,6 +8,7 @@ import { HomePageSectionProp } from "@/constants/HomePageSections";
 
 interface FeaturedSectionProps extends HomePageSectionProp {
   onViewMorePress?: () => void;
+  list?: any;
 }
 
 const MemoizedProductItem = React.memo(
@@ -32,8 +33,11 @@ const FeaturedSection = React.memo(
     type,
     startFromLeft = false,
     onViewMorePress,
+    list,
   }: FeaturedSectionProps) => {
-    const { data, isLoading } = useFeaturedSection(type, fetchParams);
+    const { data, isLoading } = list
+      ? { data: list, isLoading: false }
+      : useFeaturedSection(type, fetchParams);
 
     // Memoize the renderItem function
     const renderProductItem = useCallback(

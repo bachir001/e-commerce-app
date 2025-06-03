@@ -19,13 +19,13 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   LayoutChangeEvent,
+  Text,
 } from "react-native";
 import FeaturedSection from "@/components/home/Sections/FeaturedSection";
 import { HOMEPAGE_SECTIONS } from "@/constants/HomePageSections";
 import SpecificSection from "@/components/home/Sections/SpecificSection";
 import { Colors } from "@/constants/Colors";
-
-const { height: screenHeight } = Dimensions.get("window");
+import ProductInfiniteList from "@/components/common/ProductInfiniteList";
 
 // Types
 interface SectionLayout {
@@ -35,8 +35,8 @@ interface SectionLayout {
 
 interface SectionConfig {
   id: string;
-  component: "featured" | "specific";
-  props: any; // You can make this more specific based on your section props
+  component: "featured" | "specific" | "infinite";
+  props: any;
 }
 
 interface LazySectionProps {
@@ -45,13 +45,12 @@ interface LazySectionProps {
   onLayout: (event: LayoutChangeEvent) => void;
 }
 
-// Define all your sections with metadata
+const COMPONENT_HEIGHT_ESTIMATES = {
+  featured: 550,
+  specific: 550,
+};
+
 const SECTIONS_CONFIG: SectionConfig[] = [
-  {
-    id: "newArrivals",
-    component: "featured",
-    props: { ...HOMEPAGE_SECTIONS.newArrivals },
-  },
   {
     id: "beautyAndHealth",
     component: "specific",
@@ -105,36 +104,67 @@ const SECTIONS_CONFIG: SectionConfig[] = [
       color: Colors.Hardware,
     },
   },
+  {
+    id: "allProducts",
+    component: "infinite",
+    props: {
+      type: "categoryData",
+      url: "getCategoryData/beauty-health",
+    },
+  },
 ];
 
-// Lazy wrapper component for sections
 const LazySection: React.FC<LazySectionProps> = ({
   section,
   shouldLoad,
   onLayout,
 }) => {
+  const [actualHeight, setActualHeight] = useState<number | null>(null);
+
+  const handleLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const { height } = event.nativeEvent.layout;
+      setActualHeight(height);
+      onLayout(event);
+    },
+    [onLayout]
+  );
+
   if (!shouldLoad) {
+    const height =
+      actualHeight ||
+      (section.component === "infinite"
+        ? 0
+        : COMPONENT_HEIGHT_ESTIMATES[section.component]);
     return (
       <View
-        style={{ minHeight: 200 }} // Placeholder height
+        style={{
+          height: height,
+          backgroundColor: "transparent",
+        }}
         onLayout={onLayout}
       />
     );
   }
 
   if (section.component === "featured") {
-    return <FeaturedSection {...section.props} />;
+    return <FeaturedSection {...section.props} onLayout={handleLayout} />;
+  } else if (section.component === "specific") {
+    return <SpecificSection {...section.props} onLayout={handleLayout} />;
   } else {
-    return <SpecificSection {...section.props} />;
+    return <ProductInfiniteList {...section.props} />;
   }
 };
 
 export default function HomeScreen(): JSX.Element {
-  const { setIsLogged, setUser, setToken } = useContext(SessionContext);
+  const { setIsLogged, setUser, setToken, newArrivals } =
+    useContext(SessionContext);
   const [loadedSections, setLoadedSections] = useState<Set<string>>(
-    new Set(["newArrivals"])
-  ); // Load first section immediately
+    new Set() // Start with empty set since newArrivals is now in header
+  );
+  const [isLoadingNewSections, setIsLoadingNewSections] = useState(false);
   const sectionRefs = useRef<Record<string, SectionLayout>>({});
+  const flatListRef = useRef<FlatList>(null);
 
   const checkForToken = useCallback(async () => {
     const token_ = await AsyncStorage.getItem("token");
@@ -165,48 +195,96 @@ export default function HomeScreen(): JSX.Element {
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (isLoadingNewSections) return;
+
       const scrollY = event.nativeEvent.contentOffset.y;
       const viewportHeight = event.nativeEvent.layoutMeasurement.height;
 
-      // Load sections that are about to become visible (within 300px)
-      const loadThreshold = 100;
+      const loadThreshold = 50;
 
-      Object.entries(sectionRefs.current).forEach(([sectionId, layout]) => {
+      const sortedSections = Object.entries(sectionRefs.current).sort(
+        ([, a], [, b]) => a.y - b.y
+      );
+
+      let hasNewSectionsToLoad = false;
+      const sectionsToLoad = new Set<string>();
+
+      sortedSections.forEach(([sectionId, layout], index) => {
         if (!loadedSections.has(sectionId)) {
           const sectionTop = layout.y;
-          const sectionBottom = layout.y + layout.height;
+          const distanceToSection = sectionTop - (scrollY + viewportHeight);
 
-          // Check if section is about to be visible
-          if (sectionTop <= scrollY + viewportHeight + loadThreshold) {
-            setLoadedSections((prev) => new Set([...prev, sectionId]));
+          if (distanceToSection <= loadThreshold) {
+            hasNewSectionsToLoad = true;
+            sectionsToLoad.add(sectionId);
+
+            if (index + 1 < sortedSections.length) {
+              const nextSectionId = sortedSections[index + 1][0];
+              sectionsToLoad.add(nextSectionId);
+            }
           }
         }
       });
+
+      if (hasNewSectionsToLoad) {
+        setIsLoadingNewSections(true);
+
+        const currentScrollY = scrollY;
+
+        setTimeout(() => {
+          setLoadedSections((prev) => {
+            const newSet = new Set([...prev, ...sectionsToLoad]);
+            return newSet;
+          });
+
+          setTimeout(() => {
+            setIsLoadingNewSections(false);
+          }, 100);
+        }, 300);
+      }
     },
-    [loadedSections]
+    [loadedSections, isLoadingNewSections]
+  );
+
+  useEffect(() => {
+    if (SECTIONS_CONFIG.length > 0) {
+      setLoadedSections(new Set([SECTIONS_CONFIG[0].id]));
+    }
+  }, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: SectionConfig }) => (
+      <LazySection
+        key={item.id}
+        section={item}
+        shouldLoad={loadedSections.has(item.id)}
+        onLayout={handleSectionLayout(item.id)}
+      />
+    ),
+    [loadedSections, handleSectionLayout]
   );
 
   return (
     <SafeAreaView className="flex-1 bg-white">
       <FlatList
-        data={[{ key: "content" }]}
-        renderItem={() => (
-          <View>
+        ref={flatListRef}
+        data={SECTIONS_CONFIG}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={
+          <>
             <Header />
             <CategorySection />
-            {SECTIONS_CONFIG.map((section) => (
-              <LazySection
-                key={section.id}
-                section={section}
-                shouldLoad={loadedSections.has(section.id)}
-                onLayout={handleSectionLayout(section.id)}
-              />
-            ))}
-          </View>
-        )}
+            <FeaturedSection
+              {...HOMEPAGE_SECTIONS.newArrivals}
+              list={newArrivals}
+            />
+          </>
+        }
+        renderItem={renderItem}
         onScroll={handleScroll}
-        scrollEventThrottle={100}
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={true}
       />
     </SafeAreaView>
   );

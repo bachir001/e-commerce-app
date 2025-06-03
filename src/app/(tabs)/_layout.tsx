@@ -7,6 +7,8 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useCartStore } from "@/store/cartStore";
+import * as Haptics from "expo-haptics";
+import { Platform } from "react-native";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme() ?? "light";
@@ -50,6 +52,15 @@ export default function TabLayout() {
         },
         // Performance: Disable unnecessary animations if they cause issues
         animation: "fade", // or 'fade' for smoother transitions
+      }}
+      screenListeners={{
+        tabPress: (e) => {
+          if (Platform.OS === "ios") {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          } else if (Platform.OS === "android") {
+            Haptics.selectionAsync();
+          }
+        },
       }}
     >
       <Tabs.Screen
