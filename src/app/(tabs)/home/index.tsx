@@ -12,159 +12,62 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "@/components/home/Header";
 import CategorySection from "@/components/home/Categories/CategorySection";
 import {
-  ActivityIndicator,
   FlatList,
-  View,
   Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
   LayoutChangeEvent,
   Text,
+  View,
+  ActivityIndicator,
 } from "react-native";
-import FeaturedSection from "@/components/home/Sections/FeaturedSection";
-import { HOMEPAGE_SECTIONS } from "@/constants/HomePageSections";
 import SpecificSection from "@/components/home/Sections/SpecificSection";
+import { HOMEPAGE_SECTIONS } from "@/constants/HomePageSections";
 import { Colors } from "@/constants/Colors";
-import ProductInfiniteList from "@/components/common/ProductInfiniteList";
+import FeaturedSection from "@/components/home/Sections/FeaturedSection";
 
-// Types
-interface SectionLayout {
-  y: number;
-  height: number;
-}
-
-interface SectionConfig {
-  id: string;
-  component: "featured" | "specific" | "infinite";
-  props: any;
-}
-
-interface LazySectionProps {
-  section: SectionConfig;
-  shouldLoad: boolean;
-  onLayout: (event: LayoutChangeEvent) => void;
-}
-
-const COMPONENT_HEIGHT_ESTIMATES = {
-  featured: 550,
-  specific: 550,
-};
-
-const SECTIONS_CONFIG: SectionConfig[] = [
+//Data structure without the top sections and the initial section to render
+const HOME_SCREEN_DATA_STRUCTURE = [
   {
     id: "beautyAndHealth",
-    component: "specific",
-    props: {
-      ...HOMEPAGE_SECTIONS.beautyAndHealth,
-      color: Colors.BeautyAndHealth,
-    },
+    type: "specific",
   },
   {
     id: "medicalEquipment",
-    component: "specific",
-    props: {
-      ...HOMEPAGE_SECTIONS.medicalEquipment,
-      color: Colors.MedicalEquipment,
-    },
+    type: "specific",
   },
   {
     id: "bestSellers",
-    component: "featured",
-    props: { ...HOMEPAGE_SECTIONS.bestSellers },
+    type: "featured",
   },
   {
     id: "agriculture",
-    component: "specific",
-    props: {
-      ...HOMEPAGE_SECTIONS.agriculture,
-      color: Colors.Agriculture,
-    },
+    type: "specific",
   },
   {
     id: "hardwareAndFasteners",
-    component: "specific",
-    props: {
-      ...HOMEPAGE_SECTIONS.hardwareAndFasteners,
-      color: Colors.Hardware,
-    },
+    type: "specific",
   },
   {
     id: "homeAndLiving",
-    component: "specific",
-    props: {
-      ...HOMEPAGE_SECTIONS.homeAndLiving,
-      color: Colors.PRIMARY,
-    },
+    type: "specific",
   },
   {
     id: "sportsAndOutdoors",
-    component: "specific",
-    props: {
-      ...HOMEPAGE_SECTIONS.sportsAndOutdoors,
-      color: Colors.Hardware,
-    },
-  },
-  {
-    id: "allProducts",
-    component: "infinite",
-    props: {
-      type: "categoryData",
-      url: "getCategoryData/beauty-health",
-    },
+    type: "specific",
   },
 ];
 
-const LazySection: React.FC<LazySectionProps> = ({
-  section,
-  shouldLoad,
-  onLayout,
-}) => {
-  const [actualHeight, setActualHeight] = useState<number | null>(null);
-
-  const handleLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      const { height } = event.nativeEvent.layout;
-      setActualHeight(height);
-      onLayout(event);
-    },
-    [onLayout]
-  );
-
-  if (!shouldLoad) {
-    const height =
-      actualHeight ||
-      (section.component === "infinite"
-        ? 0
-        : COMPONENT_HEIGHT_ESTIMATES[section.component]);
-    return (
-      <View
-        style={{
-          height: height,
-          backgroundColor: "transparent",
-        }}
-        onLayout={onLayout}
-      />
-    );
-  }
-
-  if (section.component === "featured") {
-    return <FeaturedSection {...section.props} onLayout={handleLayout} />;
-  } else if (section.component === "specific") {
-    return <SpecificSection {...section.props} onLayout={handleLayout} />;
-  } else {
-    return <ProductInfiniteList {...section.props} />;
-  }
-};
-
 export default function HomeScreen(): JSX.Element {
-  const { setIsLogged, setUser, setToken, newArrivals } =
-    useContext(SessionContext);
-  const [loadedSections, setLoadedSections] = useState<Set<string>>(
-    new Set() // Start with empty set since newArrivals is now in header
+  const { setIsLogged, setUser, setToken } = useContext(SessionContext);
+  const [visibleSections, setVisibleSections] = useState(
+    HOME_SCREEN_DATA_STRUCTURE.slice(0, 2)
   );
-  const [isLoadingNewSections, setIsLoadingNewSections] = useState(false);
-  const sectionRefs = useRef<Record<string, SectionLayout>>({});
-  const flatListRef = useRef<FlatList>(null);
+
+  const [currentIndex, setCurrentIndex] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false); // Renamed for clarity
+
+  const isBusy = useRef(false);
 
   const checkForToken = useCallback(async () => {
     const token_ = await AsyncStorage.getItem("token");
@@ -185,106 +88,104 @@ export default function HomeScreen(): JSX.Element {
     checkForToken();
   }, [checkForToken]);
 
-  const handleSectionLayout = useCallback(
-    (sectionId: string) => (event: LayoutChangeEvent) => {
-      const { y, height } = event.nativeEvent.layout;
-      sectionRefs.current[sectionId] = { y, height };
+  const loadMore = useCallback(() => {
+    if (isBusy.current || loadingMore) return;
+
+    if (currentIndex >= HOME_SCREEN_DATA_STRUCTURE.length - 1) return;
+
+    isBusy.current = true;
+    setLoadingMore(true);
+
+    // Simulate loading delay to show indicator
+    setTimeout(() => {
+      const newSections = HOME_SCREEN_DATA_STRUCTURE.slice(
+        currentIndex + 1,
+        currentIndex + 2
+      );
+
+      setVisibleSections((prev) => [...prev, ...newSections]);
+      setCurrentIndex((prev) => prev + 1);
+      setLoadingMore(false);
+      isBusy.current = false;
+    }, 300); // Small delay to show loading indicator
+  }, [currentIndex, loadingMore]);
+
+  const renderItem = useCallback(
+    ({ item }: { item: (typeof HOME_SCREEN_DATA_STRUCTURE)[0] }) => {
+      const sectionData =
+        HOMEPAGE_SECTIONS[item.id as keyof typeof HOMEPAGE_SECTIONS];
+
+      if (!sectionData) {
+        return <Text>Section not found</Text>;
+      }
+
+      switch (item.type) {
+        case "featured":
+          return (
+            <FeaturedSection
+              {...sectionData}
+              setLoading={() => {}} // Remove individual loading management
+            />
+          );
+        case "specific":
+          return (
+            <SpecificSection
+              {...sectionData}
+              color={
+                Colors[item.id as keyof typeof HOMEPAGE_SECTIONS] ||
+                Colors.PRIMARY
+              }
+              setLoading={() => {}} // Remove individual loading management
+            />
+          );
+        default:
+          return <Text>Unknown section type</Text>;
+      }
     },
     []
   );
 
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      if (isLoadingNewSections) return;
+  const renderFooter = useCallback(() => {
+    if (!loadingMore) return null;
 
-      const scrollY = event.nativeEvent.contentOffset.y;
-      const viewportHeight = event.nativeEvent.layoutMeasurement.height;
-
-      const loadThreshold = 50;
-
-      const sortedSections = Object.entries(sectionRefs.current).sort(
-        ([, a], [, b]) => a.y - b.y
-      );
-
-      let hasNewSectionsToLoad = false;
-      const sectionsToLoad = new Set<string>();
-
-      sortedSections.forEach(([sectionId, layout], index) => {
-        if (!loadedSections.has(sectionId)) {
-          const sectionTop = layout.y;
-          const distanceToSection = sectionTop - (scrollY + viewportHeight);
-
-          if (distanceToSection <= loadThreshold) {
-            hasNewSectionsToLoad = true;
-            sectionsToLoad.add(sectionId);
-
-            if (index + 1 < sortedSections.length) {
-              const nextSectionId = sortedSections[index + 1][0];
-              sectionsToLoad.add(nextSectionId);
-            }
-          }
-        }
-      });
-
-      if (hasNewSectionsToLoad) {
-        setIsLoadingNewSections(true);
-
-        const currentScrollY = scrollY;
-
-        setTimeout(() => {
-          setLoadedSections((prev) => {
-            const newSet = new Set([...prev, ...sectionsToLoad]);
-            return newSet;
-          });
-
-          setTimeout(() => {
-            setIsLoadingNewSections(false);
-          }, 100);
-        }, 300);
-      }
-    },
-    [loadedSections, isLoadingNewSections]
-  );
-
-  useEffect(() => {
-    if (SECTIONS_CONFIG.length > 0) {
-      setLoadedSections(new Set([SECTIONS_CONFIG[0].id]));
-    }
-  }, []);
-
-  const renderItem = useCallback(
-    ({ item }: { item: SectionConfig }) => (
-      <LazySection
-        key={item.id}
-        section={item}
-        shouldLoad={loadedSections.has(item.id)}
-        onLayout={handleSectionLayout(item.id)}
-      />
-    ),
-    [loadedSections, handleSectionLayout]
-  );
+    return (
+      <View
+        style={{
+          paddingVertical: 20,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <ActivityIndicator size="large" color={Colors.PRIMARY} />
+      </View>
+    );
+  }, [loadingMore]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView>
       <FlatList
-        ref={flatListRef}
-        data={SECTIONS_CONFIG}
+        data={visibleSections}
+        renderItem={renderItem}
         keyExtractor={(item) => item.id}
+        onEndReached={loadMore}
         ListHeaderComponent={
           <>
             <Header />
             <CategorySection />
-            <FeaturedSection
-              {...HOMEPAGE_SECTIONS.newArrivals}
-              list={newArrivals}
-            />
           </>
         }
-        renderItem={renderItem}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        showsVerticalScrollIndicator={false}
-        nestedScrollEnabled={true}
+        ListFooterComponent={renderFooter}
+        initialNumToRender={2}
+        windowSize={10}
+        onEndReachedThreshold={0.1}
+        // Removed getItemLayout to prevent jumping
+        removeClippedSubviews={false}
+        scrollEnabled={!scrollDisabled}
+        // Add these props to improve performance and reduce jumping
+        maintainVisibleContentPosition={{
+          minIndexForVisible: 0,
+          autoscrollToTopThreshold: 10,
+        }}
       />
     </SafeAreaView>
   );

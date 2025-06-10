@@ -5,6 +5,7 @@ import {
   Image,
   TouchableOpacity,
   ImageBackground,
+  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useCallback, useMemo } from "react";
 import { Colors } from "@/constants/Colors";
@@ -36,6 +37,7 @@ interface SpecificSectionProps extends HomePageSectionProp {
   backgroundImage?: string;
   color: string;
   onViewMorePress?: () => void;
+  setLoading: (loading: boolean) => void;
 }
 
 const RelatedCategoryItem = React.memo(
@@ -107,12 +109,14 @@ const SpecificSection = React.memo(
     fetchParams,
     mega_mobile_bg,
     color,
+    setLoading,
   }: SpecificSectionProps) => {
     const { data: metaCategoryInfo, isLoading } = useQuery({
       queryKey: ["metaCategoryInfo", type],
-      queryFn: async () => {
+      queryFn: async ({ signal }) => {
         const response = await axiosApi.get<MegaCategoryInfo>(
-          `/getMegaCategory/${type}`
+          `/getMegaCategory/${type}`,
+          { signal }
         );
         return {
           relatedCategories: response.data.data.relatedCategories.slice(
@@ -169,73 +173,73 @@ const SpecificSection = React.memo(
       []
     );
 
+    useEffect(() => {
+      setLoading(isLoading);
+    }, [isLoading]);
+
+    // if (isLoading) {
+    //   return <ActivityIndicator size="small" />;
+    // }
+
+    if (isLoading) {
+      return (
+        <View
+          style={{ height: 550 }}
+          className="flex-1 items-center justify-center"
+        >
+          <ActivityIndicator
+            size="large"
+            color={color}
+            className="flex-1 items-center justify-center"
+          />
+        </View>
+      );
+    }
+
     return (
-      <View className="flex flex-col mb-6" style={{ height: 550 }}>
+      <View className="flex flex-col">
         {mega_mobile_bg ? (
           <ImageBackground
             source={{ uri: mega_mobile_bg }}
             resizeMode="stretch"
           >
-            {/* Categories Section with Skeleton Loading */}
-            {isLoading ? (
-              <FlatList
-                data={Array(3).fill({})} // Show 3 skeleton items
-                renderItem={renderCategorySkeleton}
-                keyExtractor={(_, index) => `category-skeleton-${index}`}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 16 }}
-              />
-            ) : (
-              <FlatList
-                data={metaCategoryInfo?.relatedCategories}
-                renderItem={renderCategoryItem}
-                keyExtractor={categoryKeyExtractor}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                initialNumToRender={2}
-                maxToRenderPerBatch={3}
-                windowSize={5}
-                removeClippedSubviews={true}
-                updateCellsBatchingPeriod={100}
-                getItemLayout={(data, index) => ({
-                  length: 144,
-                  offset: 144 * index,
-                  index,
-                })}
-              />
-            )}
+            <FlatList
+              data={metaCategoryInfo?.relatedCategories}
+              renderItem={renderCategoryItem}
+              keyExtractor={categoryKeyExtractor}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              initialNumToRender={2}
+              maxToRenderPerBatch={3}
+              windowSize={5}
+              removeClippedSubviews={true}
+              updateCellsBatchingPeriod={100}
+              getItemLayout={(data, index) => ({
+                length: 144,
+                offset: 144 * index,
+                index,
+              })}
+            />
           </ImageBackground>
         ) : (
           <View style={{ backgroundColor: color }} className="px-4 py-4">
-            {/* Categories Section with Skeleton Loading */}
-            {isLoading ? (
-              <FlatList
-                data={Array(3).fill({})} // Show 3 skeleton items
-                renderItem={renderCategorySkeleton}
-                keyExtractor={(_, index) => `category-skeleton-${index}`}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-              />
-            ) : (
-              <FlatList
-                data={metaCategoryInfo?.relatedCategories}
-                renderItem={renderCategoryItem}
-                keyExtractor={categoryKeyExtractor}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                initialNumToRender={2}
-                maxToRenderPerBatch={3}
-                windowSize={5}
-                removeClippedSubviews={true}
-                updateCellsBatchingPeriod={100}
-                getItemLayout={(data, index) => ({
-                  length: 144,
-                  offset: 144 * index,
-                  index,
-                })}
-              />
-            )}
+            <FlatList
+              data={metaCategoryInfo?.relatedCategories}
+              renderItem={renderCategoryItem}
+              keyExtractor={categoryKeyExtractor}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              initialNumToRender={2}
+              maxToRenderPerBatch={3}
+              windowSize={5}
+              removeClippedSubviews={true}
+              updateCellsBatchingPeriod={100}
+              getItemLayout={(data, index) => ({
+                length: 144,
+                offset: 144 * index,
+                index,
+              })}
+            />
           </View>
         )}
 
@@ -250,35 +254,23 @@ const SpecificSection = React.memo(
             </TouchableOpacity>
           </View>
 
-          {/* Products Section with Skeleton Loading */}
-          {isLoading ? (
-            <FlatList
-              data={Array(3).fill({})} // Show 3 skeleton items
-              renderItem={renderProductSkeleton}
-              keyExtractor={(_, index) => `product-skeleton-${index}`}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 0 }}
-            />
-          ) : (
-            <FlatList
-              data={metaCategoryInfo?.relatedProducts}
-              renderItem={renderProductItem}
-              keyExtractor={productKeyExtractor}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              initialNumToRender={2}
-              maxToRenderPerBatch={3}
-              windowSize={5}
-              removeClippedSubviews={true}
-              updateCellsBatchingPeriod={100}
-              getItemLayout={(data, index) => ({
-                length: 176,
-                offset: 176 * index,
-                index,
-              })}
-            />
-          )}
+          <FlatList
+            data={metaCategoryInfo?.relatedProducts}
+            renderItem={renderProductItem}
+            keyExtractor={productKeyExtractor}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            initialNumToRender={2}
+            maxToRenderPerBatch={3}
+            windowSize={5}
+            removeClippedSubviews={true}
+            updateCellsBatchingPeriod={100}
+            getItemLayout={(data, index) => ({
+              length: 176,
+              offset: 176 * index,
+              index,
+            })}
+          />
         </View>
       </View>
     );

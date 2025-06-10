@@ -17,8 +17,10 @@ import axiosApi from "@/apis/axiosApi";
 import { CustomPicker } from "./CustomPicker";
 import { PickerModal } from "./PickerModal";
 import AddressInput from "./AddressInput";
-import { SessionContext } from "@/app/_layout";
+import { queryClient, SessionContext } from "@/app/_layout";
 import Toast from "react-native-toast-message";
+import { QueryClient, useMutation } from "@tanstack/react-query";
+import useAddAddress from "@/hooks/addresses/addAddress";
 
 export interface Governorate {
   id: number;
@@ -84,8 +86,9 @@ export default function AddressForm({
 
   const [loading, setLoading] = useState<boolean>(false);
 
-  const { token, setAddresses, addresses, governorates, setGovernorates } =
-    useContext(SessionContext);
+  const { token, governorates, setGovernorates } = useContext(SessionContext);
+
+  const addAddressMutation = useAddAddress();
 
   const handleCancel = () => {
     router.back();
@@ -113,82 +116,43 @@ export default function AddressForm({
 
   //ACTIONS
   const handleCreateAddress = async () => {
-    try {
-      setLoading(true);
-
-      const addressData = {
-        name,
-        street,
-        street_2: street2,
-        governorate_id: selectedGovernorate?.id,
-        city_id: selectedCity?.id,
-        area_id: selectedArea?.id,
-        is_default: isDefault ? 1 : 0,
-        country_id: 1,
-        status: status ? 1 : 0,
-      };
-
-      const HeaderData = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      };
-
-      const response = await axiosApi.post(
-        "addresses/add",
-        addressData,
-        HeaderData
-      );
-
-      if (response.data.status) {
-        Toast.show({
-          type: "success",
-          text1: "Address created successfully",
-          text2: "Your address has been added successfully",
-          visibilityTime: 2000,
-          autoHide: true,
-          topOffset: 30,
-          bottomOffset: 40,
-        });
-
-        if (response.data.data?.is_default === 1) {
-          const removedDefault = [...addresses].map((address) => {
-            if (address.is_default === 1) {
-              return { ...address, is_default: 0 };
-            }
-          });
-          setAddresses([response.data.data, ...removedDefault]);
-        } else {
-          setAddresses([...addresses, response.data.data]);
-        }
-
-        router.back();
-      } else {
-        Toast.show({
-          type: "error",
-          text1: "Error creating address",
-          text2: response.data.message,
-          visibilityTime: 2000,
-          autoHide: true,
-          topOffset: 30,
-          bottomOffset: 40,
-        });
-      }
-
-      setLoading(false);
-    } catch (err) {
-      console.error("Error creating address: ", err);
+    if (
+      !name ||
+      !street ||
+      !selectedGovernorate ||
+      !selectedCity ||
+      !selectedArea
+    ) {
       Toast.show({
         type: "error",
-        text1: "Error creating address",
-        text2: "Something went wrong",
+        text1: "Validation Error",
+        text2: "Please fill all required fields.",
         visibilityTime: 2000,
         autoHide: true,
         topOffset: 30,
         bottomOffset: 40,
       });
-      setLoading(false);
+      return;
     }
+
+    const tempId = `temp-${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 9)}`;
+
+    const addressData = {
+      id: tempId,
+      name,
+      street,
+      street_2: street2,
+      governorate_id: selectedGovernorate?.id,
+      city_id: selectedCity?.id,
+      area_id: selectedArea?.id,
+      is_default: isDefault ? 1 : 0,
+      country_id: 1,
+      status: status ? 1 : 0,
+    };
+
+    await addAddressMutation.mutateAsync(addressData);
   };
 
   const handleUpdateAddress = async () => {};
@@ -430,7 +394,7 @@ export default function AddressForm({
 
           {/* Action Buttons */}
           <View className="flex-row space-x-3 mb-6">
-            {!loading && (
+            {!addAddressMutation.isPending && (
               <TouchableOpacity
                 onPress={handleCancel}
                 className="flex-1 bg-gray-100 py-4 px-6 rounded-2xl items-center justify-center"
@@ -450,7 +414,7 @@ export default function AddressForm({
                 }
               }}
             >
-              {loading ? (
+              {addAddressMutation.isPending ? (
                 <ActivityIndicator size="small" color="white" />
               ) : (
                 <Text className="text-white font-semibold">

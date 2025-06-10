@@ -3,12 +3,14 @@ import { LinearGradient } from "expo-linear-gradient";
 import ProductCard from "@/components/common/ProductCard";
 import ProductSkeleton from "@/components/common/ProductSkeleton";
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { HomePageSectionProp } from "@/constants/HomePageSections";
+import { set } from "lodash";
 
 interface FeaturedSectionProps extends HomePageSectionProp {
   onViewMorePress?: () => void;
   list?: any;
+  setLoading: (loading: boolean) => void;
 }
 
 const MemoizedProductItem = React.memo(
@@ -25,6 +27,9 @@ const MemoizedProductItem = React.memo(
   }
 );
 
+let controller = new AbortController();
+let signal = controller.signal;
+
 const FeaturedSection = React.memo(
   ({
     title,
@@ -34,6 +39,7 @@ const FeaturedSection = React.memo(
     startFromLeft = false,
     onViewMorePress,
     list,
+    setLoading,
   }: FeaturedSectionProps) => {
     const { data, isLoading } = list
       ? { data: list, isLoading: false }
@@ -58,6 +64,10 @@ const FeaturedSection = React.memo(
       () => <View className="w-2" />,
       []
     );
+
+    useEffect(() => {
+      setLoading(isLoading);
+    }, [isLoading]);
 
     return (
       <LinearGradient
@@ -88,40 +98,26 @@ const FeaturedSection = React.memo(
           </TouchableOpacity>
         </View>
 
-        {isLoading ? (
-          <View className="flex-row px-4">
-            {[...Array(3)].map(
-              (
-                _,
-                index // Reduced skeleton count
-              ) => (
-                <View key={index} className="mr-3">
-                  <ProductSkeleton />
-                </View>
-              )
-            )}
-          </View>
-        ) : (
-          <FlatList
-            data={data}
-            renderItem={renderProductItem}
-            keyExtractor={keyExtractor}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16 }}
-            ItemSeparatorComponent={ItemSeparatorComponent}
-            initialNumToRender={2} // Further reduced
-            maxToRenderPerBatch={3} // Reduced batch size
-            windowSize={5} // Reduced window size
-            removeClippedSubviews={true}
-            updateCellsBatchingPeriod={100} // Add batching
-            getItemLayout={(data, index) => ({
-              length: 176,
-              offset: 176 * index,
-              index,
-            })}
-          />
-        )}
+        <FlatList
+          data={data}
+          renderItem={renderProductItem}
+          keyExtractor={keyExtractor}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 16 }}
+          ItemSeparatorComponent={ItemSeparatorComponent}
+          initialNumToRender={2} // Further reduced
+          maxToRenderPerBatch={3} // Reduced batch size
+          windowSize={5} // Reduced window size
+          removeClippedSubviews={true}
+          updateCellsBatchingPeriod={100} // Add batching
+          getItemLayout={(data, index) => ({
+            length: 176,
+            offset: 176 * index,
+            index,
+          })}
+        />
+        {/* )} */}
       </LinearGradient>
     );
   },

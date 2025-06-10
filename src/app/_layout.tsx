@@ -25,7 +25,7 @@ import {
 } from "@/hooks/home/topSection";
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient();
 
 // Loading Context for managing section loading states
 interface LoadingContextType {
@@ -87,12 +87,12 @@ function AppWithProviders() {
   const { data: brands, isLoading: loadingBrands } = useBrands();
   const { data: sliders, isLoading: loadingSliders } = useSliders();
   const { data: megaCategories, isLoading: loadingMega } = useMegaCategories();
-  const { data: newArrivals, isLoading: loadingNewArrivals } =
-    useFeaturedSection("new-arrivals", {
-      per_page: 15,
-      sort: "price_high_low" as const,
-      page: 1,
-    });
+  // const { data: newArrivals, isLoading: loadingNewArrivals } =
+  //   useFeaturedSection("new-arrivals", {
+  //     per_page: 15,
+  //     sort: "price_high_low" as const,
+  //     page: 1,
+  //   });
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLogged, setIsLogged] = useState<boolean>(false);
@@ -115,7 +115,7 @@ function AppWithProviders() {
   }, []);
 
   const appNotReady =
-    loadingBrands || loadingSliders || loadingMega || loadingNewArrivals;
+    loadingBrands || loadingSliders || loadingMega;
 
   const contextValue = useMemo(
     () => ({
@@ -131,7 +131,7 @@ function AppWithProviders() {
       brands,
       sliders,
       megaCategories,
-      newArrivals,
+      // newArrivals,
     }),
     [
       sessionId,
@@ -142,7 +142,7 @@ function AppWithProviders() {
       brands,
       sliders,
       megaCategories,
-      newArrivals, // Added this to dependency array
+      // newArrivals, 
     ]
   );
 
