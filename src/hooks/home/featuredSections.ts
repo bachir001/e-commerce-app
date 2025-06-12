@@ -10,6 +10,7 @@ export function useFeaturedSection(
   return useQuery({
     queryKey: ["products", type, fetchParams],
     enabled: shouldFetch,
+    retry: type !== "new-arrivals",
     queryFn: async ({ signal }) => {
       const params = new URLSearchParams();
 
@@ -25,6 +26,11 @@ export function useFeaturedSection(
       const url = `${type}${queryString ? `?${queryString}` : ""}`;
 
       const response = await axiosApi.get(url, { signal });
+
+      if (response.status !== 200) {
+        console.log("HOME");
+        return [];
+      }
       return response.data.data.results as Product[];
     },
   });

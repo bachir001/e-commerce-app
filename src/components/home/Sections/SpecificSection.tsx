@@ -21,6 +21,7 @@ import type { HomePageSectionProp } from "@/constants/HomePageSections";
 import RelatedCategorySkeleton from "@/components/common/RelatedCategorySkeleton";
 import ProductSkeleton from "@/components/common/ProductSkeleton";
 import ProductCard from "@/components/common/ProductCard";
+import AnimatedLoader from "@/components/common/AnimatedLayout";
 
 interface MegaCategoryInfo {
   status: boolean;
@@ -28,7 +29,9 @@ interface MegaCategoryInfo {
   data: {
     categoryInfo: MegaCategory;
     relatedCategories: RelatedCategory[];
-    relatedProducts: Product[];
+    relatedProducts: {
+      results: Product[];
+    };
     relatedBrands: Brand[];
   };
 }
@@ -115,18 +118,18 @@ const SpecificSection = React.memo(
       queryKey: ["metaCategoryInfo", type],
       queryFn: async ({ signal }) => {
         const response = await axiosApi.get<MegaCategoryInfo>(
-          `/getMegaCategory/${type}`,
-          { signal }
+          `/getCategoryData/${type}`,
+          {
+            params: fetchParams,
+            signal: signal,
+          }
         );
         return {
           relatedCategories: response.data.data.relatedCategories.slice(
             0,
             fetchParams!.per_page + 1
           ),
-          relatedProducts: response.data.data.relatedProducts.slice(
-            0,
-            fetchParams!.per_page + 1
-          ),
+          relatedProducts: response.data.data.relatedProducts.results,
         };
       },
     });
@@ -154,45 +157,20 @@ const SpecificSection = React.memo(
       []
     );
 
-    // Skeleton rendering functions
-    const renderCategorySkeleton = useCallback(
-      ({ index }: { index: number }) => (
-        <View className="mr-4" key={`category-skeleton-${index}`}>
-          <RelatedCategorySkeleton />
-        </View>
-      ),
-      []
-    );
-
-    const renderProductSkeleton = useCallback(
-      ({ index }: { index: number }) => (
-        <View className="mr-3" key={`product-skeleton-${index}`}>
-          <ProductSkeleton />
-        </View>
-      ),
-      []
-    );
-
     useEffect(() => {
-      setLoading(isLoading);
-    }, [isLoading]);
+      const loadingState = isLoading;
+      setLoading?.(loadingState);
 
-    // if (isLoading) {
-    //   return <ActivityIndicator size="small" />;
-    // }
+      return () => {
+        if (loadingState) {
+          setLoading?.(false);
+        }
+      };
+    }, [isLoading, setLoading]);
 
     if (isLoading) {
       return (
-        <View
-          style={{ height: 550 }}
-          className="flex-1 items-center justify-center"
-        >
-          <ActivityIndicator
-            size="large"
-            color={color}
-            className="flex-1 items-center justify-center"
-          />
-        </View>
+        <AnimatedLoader color={color} text={`Loading ${title} Products`} />
       );
     }
 

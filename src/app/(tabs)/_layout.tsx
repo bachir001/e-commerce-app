@@ -44,7 +44,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme].tint,
-        lazy: true, // Keep lazy loading enabled
+        lazy: false, // Keep lazy loading enabled
         // Performance: Optimize tab bar animations
         tabBarStyle: {
           // Reduce overdraw
@@ -53,6 +53,7 @@ export default function TabLayout() {
         // Performance: Disable unnecessary animations if they cause issues
         animation: "fade", // or 'fade' for smoother transitions
       }}
+      initialRouteName="home"
       screenListeners={{
         tabPress: (e) => {
           if (Platform.OS === "ios") {

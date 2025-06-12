@@ -27,72 +27,18 @@ import { useFeaturedSection } from "@/hooks/home/featuredSections";
 
 export const queryClient = new QueryClient();
 
-// Loading Context for managing section loading states
-interface LoadingContextType {
-  loadingSections: Set<string>;
-  addLoadingSection: (sectionId: string) => void;
-  removeLoadingSection: (sectionId: string) => void;
-  isAnyLoading: boolean;
-}
-
-const LoadingContext = createContext<LoadingContextType | null>(null);
-
-export const useLoadingContext = () => {
-  const context = useContext(LoadingContext);
-  if (!context) {
-    throw new Error("useLoadingContext must be used within LoadingProvider");
-  }
-  return context;
-};
-
-const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [loadingSections, setLoadingSections] = useState<Set<string>>(
-    new Set()
-  );
-
-  const addLoadingSection = useCallback((sectionId: string) => {
-    setLoadingSections((prev) => new Set(prev).add(sectionId));
-  }, []);
-
-  const removeLoadingSection = useCallback((sectionId: string) => {
-    setLoadingSections((prev) => {
-      const newSet = new Set(prev);
-      newSet.delete(sectionId);
-      return newSet;
-    });
-  }, []);
-
-  const isAnyLoading = loadingSections.size > 0;
-
-  return (
-    <LoadingContext.Provider
-      value={{
-        loadingSections,
-        addLoadingSection,
-        removeLoadingSection,
-        isAnyLoading,
-      }}
-    >
-      {children}
-    </LoadingContext.Provider>
-  );
-};
-
-// Session Context (your existing context)
 export let SessionContext = createContext<SessionContextValue | null>(null);
 
 function AppWithProviders() {
   const { data: brands, isLoading: loadingBrands } = useBrands();
   const { data: sliders, isLoading: loadingSliders } = useSliders();
   const { data: megaCategories, isLoading: loadingMega } = useMegaCategories();
-  // const { data: newArrivals, isLoading: loadingNewArrivals } =
-  //   useFeaturedSection("new-arrivals", {
-  //     per_page: 15,
-  //     sort: "price_high_low" as const,
-  //     page: 1,
-  //   });
+  const { data: newArrivals, isLoading: loadingNewArrivals } =
+    useFeaturedSection("new-arrivals", {
+      per_page: 15,
+      sort: "price_high_low" as const,
+      page: 1,
+    });
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLogged, setIsLogged] = useState<boolean>(false);
@@ -115,7 +61,7 @@ function AppWithProviders() {
   }, []);
 
   const appNotReady =
-    loadingBrands || loadingSliders || loadingMega;
+    loadingBrands || loadingSliders || loadingMega || loadingNewArrivals;
 
   const contextValue = useMemo(
     () => ({
@@ -131,7 +77,7 @@ function AppWithProviders() {
       brands,
       sliders,
       megaCategories,
-      // newArrivals,
+      newArrivals,
     }),
     [
       sessionId,
@@ -142,7 +88,7 @@ function AppWithProviders() {
       brands,
       sliders,
       megaCategories,
-      // newArrivals, 
+      newArrivals,
     ]
   );
 
@@ -157,23 +103,21 @@ function AppWithProviders() {
   }
 
   return (
-    <LoadingProvider>
-      <SessionContext.Provider value={contextValue}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: "fade_from_bottom",
-          }}
-        >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="auth/signInAccount"
-            options={{ headerShown: true, title: "Sign In" }}
-          />
-        </Stack>
-        <Toast />
-      </SessionContext.Provider>
-    </LoadingProvider>
+    <SessionContext.Provider value={contextValue}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "fade_from_bottom",
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="auth/signInAccount"
+          options={{ headerShown: true, title: "Sign In" }}
+        />
+      </Stack>
+      <Toast />
+    </SessionContext.Provider>
   );
 }
 

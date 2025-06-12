@@ -25,6 +25,7 @@ import SpecificSection from "@/components/home/Sections/SpecificSection";
 import { HOMEPAGE_SECTIONS } from "@/constants/HomePageSections";
 import { Colors } from "@/constants/Colors";
 import FeaturedSection from "@/components/home/Sections/FeaturedSection";
+import ProductInfiniteList from "@/components/common/ProductInfiniteList";
 
 //Data structure without the top sections and the initial section to render
 const HOME_SCREEN_DATA_STRUCTURE = [
@@ -59,15 +60,22 @@ const HOME_SCREEN_DATA_STRUCTURE = [
 ];
 
 export default function HomeScreen(): JSX.Element {
-  const { setIsLogged, setUser, setToken } = useContext(SessionContext);
-  const [visibleSections, setVisibleSections] = useState(
-    HOME_SCREEN_DATA_STRUCTURE.slice(0, 2)
-  );
+  const session = useContext(SessionContext);
 
-  const [currentIndex, setCurrentIndex] = useState(1);
-  const [loadingMore, setLoadingMore] = useState(false); // Renamed for clarity
+  if (!session) {
+    throw new Error("SessionContext is null. Make sure the provider is set.");
+  }
 
+  const { setIsLogged, setUser, setToken, newArrivals } = session;
+  const [visibleSections, setVisibleSections] = useState([
+    HOME_SCREEN_DATA_STRUCTURE[0],
+  ]);
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [loadingSectionId, setLoadingSectionId] = useState<string | null>(null);
+  const [loadMoreProducts, setLoadMoreProducts] = useState(false);
   const isBusy = useRef(false);
+  const flatListRef = useRef<FlatList>(null);
 
   const checkForToken = useCallback(async () => {
     const token_ = await AsyncStorage.getItem("token");
@@ -88,27 +96,47 @@ export default function HomeScreen(): JSX.Element {
     checkForToken();
   }, [checkForToken]);
 
-  const loadMore = useCallback(() => {
-    if (isBusy.current || loadingMore) return;
+  const loadMoreSections = useCallback(() => {
+    // Prevent multiple simultaneous calls
+    if (isBusy.current) return;
 
-    if (currentIndex >= HOME_SCREEN_DATA_STRUCTURE.length - 1) return;
+    if (loadingSectionId !== null) return;
 
+    const nextSectionIndex = currentIndex + 1;
+    if (nextSectionIndex >= HOME_SCREEN_DATA_STRUCTURE.length) {
+      return; // No more sections to load
+    }
+
+    // Set busy flag immediately
     isBusy.current = true;
-    setLoadingMore(true);
 
-    // Simulate loading delay to show indicator
-    setTimeout(() => {
-      const newSections = HOME_SCREEN_DATA_STRUCTURE.slice(
-        currentIndex + 1,
-        currentIndex + 2
-      );
+    const newSection = HOME_SCREEN_DATA_STRUCTURE[nextSectionIndex];
+    setLoadingSectionId(newSection.id);
 
-      setVisibleSections((prev) => [...prev, ...newSections]);
-      setCurrentIndex((prev) => prev + 1);
-      setLoadingMore(false);
-      isBusy.current = false;
-    }, 300); // Small delay to show loading indicator
-  }, [currentIndex, loadingMore]);
+    setVisibleSections((prev) => [...prev, newSection]);
+
+    setCurrentIndex(nextSectionIndex);
+  }, [currentIndex, loadingSectionId]);
+
+  const handleLoadComplete = useCallback(() => {
+    setLoadMoreProducts(false);
+  }, []);
+
+  const handleSectionLoading = useCallback(
+    (sectionId: string, isLoading: boolean) => {
+      if (!isLoading) {
+        if (loadingSectionId === sectionId) {
+          setLoadingSectionId(null);
+          isBusy.current = false;
+        }
+      } else {
+        if (loadingSectionId === sectionId) {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }
+      }
+    },
+    [loadingSectionId]
+  );
 
   const renderItem = useCallback(
     ({ item }: { item: (typeof HOME_SCREEN_DATA_STRUCTURE)[0] }) => {
@@ -124,7 +152,9 @@ export default function HomeScreen(): JSX.Element {
           return (
             <FeaturedSection
               {...sectionData}
-              setLoading={() => {}} // Remove individual loading management
+              setLoading={(loading: boolean) => {
+                handleSectionLoading(item.id, loading);
+              }}
             />
           );
         case "specific":
@@ -135,57 +165,65 @@ export default function HomeScreen(): JSX.Element {
                 Colors[item.id as keyof typeof HOMEPAGE_SECTIONS] ||
                 Colors.PRIMARY
               }
-              setLoading={() => {}} // Remove individual loading management
+              setLoading={(loading: boolean) => {
+                handleSectionLoading(item.id, loading);
+              }}
             />
           );
         default:
           return <Text>Unknown section type</Text>;
       }
     },
-    []
+    [handleSectionLoading]
   );
-
-  const renderFooter = useCallback(() => {
-    if (!loadingMore) return null;
-
-    return (
-      <View
-        style={{
-          paddingVertical: 20,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <ActivityIndicator size="large" color={Colors.PRIMARY} />
-      </View>
-    );
-  }, [loadingMore]);
 
   return (
     <SafeAreaView>
       <FlatList
+        ref={flatListRef}
         data={visibleSections}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        onEndReached={loadMore}
+        onEndReached={() => {
+          if (currentIndex < HOME_SCREEN_DATA_STRUCTURE.length - 1) {
+            loadMoreSections();
+          } else {
+            setLoadMoreProducts(true);
+          }
+        }}
         ListHeaderComponent={
-          <>
+          <View style={{ flex: 1, width: "100%" }}>
             <Header />
             <CategorySection />
-          </>
+
+            {newArrivals !== undefined &&
+              newArrivals !== null &&
+              newArrivals.length > 0 && (
+                <FeaturedSection list={true} type="new-arrivals" />
+              )}
+          </View>
         }
-        ListFooterComponent={renderFooter}
-        initialNumToRender={2}
+        initialNumToRender={1}
         windowSize={10}
         onEndReachedThreshold={0.1}
-        // Removed getItemLayout to prevent jumping
         removeClippedSubviews={false}
-        scrollEnabled={!scrollDisabled}
-        // Add these props to improve performance and reduce jumping
         maintainVisibleContentPosition={{
           minIndexForVisible: 0,
           autoscrollToTopThreshold: 10,
         }}
+        ListFooterComponent={
+          currentIndex >= HOME_SCREEN_DATA_STRUCTURE.length - 1 &&
+          loadingSectionId === null ? (
+            <View className="w-full mt-4">
+              <ProductInfiniteList
+                type="categoryData"
+                url="getCategoryData/beauty-health"
+                loadMoreProducts={loadMoreProducts}
+                onLoadComplete={handleLoadComplete}
+              />
+            </View>
+          ) : null
+        }
       />
     </SafeAreaView>
   );

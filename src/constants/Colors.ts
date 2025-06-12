@@ -28,4 +28,6 @@ export const Colors = {
   medicalEquipment: "#a5c3dd",
   agriculture: "#59ad55",
   hardware: "#9b8371",
+  sportsAndOutdoors: "#f2c94c",
+  homeAndLiving: "#f2b5b5",
 };

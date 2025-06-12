@@ -10,17 +10,26 @@ interface Props {
   loading?: boolean;
 }
 
-// Use React.memo with deep comparison for better performance
 const ProductCard = React.memo(
   ({ product, containerColor = "white", innerColor = "#5e3ebd" }: Props) => {
     if (!product) {
       return null;
     }
 
-    // Pre-calculate values to avoid inline calculations
-    const hasSpecialPrice =
-      product?.special_price !== undefined && product.special_price !== null;
-    const hasPurchasePoints = typeof product?.purchase_points === "number";
+    // Safe property access with fallbacks
+    const productName = product.name || "Untitled Product";
+    const productImage = product.image || "https://via.placeholder.com/150";
+    const productRating = product.rating ? String(product.rating) : "0";
+    const purchasePoints = product.purchase_points
+      ? String(product.purchase_points)
+      : undefined;
+    const price = product.price ? String(product.price) : "0.00";
+    const specialPrice = product.special_price
+      ? String(product.special_price)
+      : undefined;
+
+    const hasSpecialPrice = specialPrice !== undefined;
+    const hasPurchasePoints = purchasePoints !== undefined;
 
     return (
       <TouchableOpacity
@@ -31,17 +40,15 @@ const ProductCard = React.memo(
           borderWidth: 1,
         }}
       >
-        {/* Product Image - Now at the top */}
+        {/* Product Image */}
         <View className="items-center mb-3 relative">
           <Image
-            source={{
-              uri: product?.image || "https://via.placeholder.com/150",
-            }}
+            source={{ uri: productImage }}
             className="w-28 h-28"
             resizeMode="contain"
           />
 
-          {/* Heart icon positioned over the image */}
+          {/* Heart icon */}
           <TouchableOpacity
             className="absolute top-0 right-0 w-7 h-7 bg-white rounded-full items-center justify-center"
             style={{
@@ -56,19 +63,19 @@ const ProductCard = React.memo(
           </TouchableOpacity>
         </View>
 
-        {/* Product Name */}
+        {/* Product Name - Always wrapped in Text */}
         <Text
           className="text-gray-800 text-sm font-semibold mb-2"
           numberOfLines={2}
         >
-          {product.name}
+          {productName}
         </Text>
 
         {/* Rating and Purchase Points Row */}
         <View className="flex-row justify-between items-center mb-3">
           <View className="flex-row items-center">
             <FontAwesome5 name="star" size={12} color="#FFD700" />
-            <Text className="text-gray-600 text-xs ml-1">{product.rating}</Text>
+            <Text className="text-gray-600 text-xs ml-1">{productRating}</Text>
           </View>
 
           {hasPurchasePoints && (
@@ -76,7 +83,7 @@ const ProductCard = React.memo(
               <Text
                 style={{ color: innerColor, fontSize: 10, fontWeight: "600" }}
               >
-                {product.purchase_points}
+                {purchasePoints}
               </Text>
               <FontAwesome5
                 name="shopping-cart"
@@ -93,13 +100,9 @@ const ProductCard = React.memo(
           <View>
             {hasSpecialPrice && (
               <Text
-                style={{
-                  color: innerColor,
-                  fontSize: 14,
-                  fontWeight: "bold",
-                }}
+                style={{ color: innerColor, fontSize: 14, fontWeight: "bold" }}
               >
-                ${product.special_price}
+                ${specialPrice}
               </Text>
             )}
 
@@ -111,7 +114,7 @@ const ProductCard = React.memo(
                 textDecorationLine: hasSpecialPrice ? "line-through" : "none",
               }}
             >
-              ${product.price}
+              ${price}
             </Text>
           </View>
 
@@ -120,10 +123,7 @@ const ProductCard = React.memo(
             style={{
               backgroundColor: innerColor,
               shadowColor: innerColor,
-              shadowOffset: {
-                width: 0,
-                height: 2,
-              },
+              shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.2,
               shadowRadius: 3,
               elevation: 3,
@@ -135,9 +135,8 @@ const ProductCard = React.memo(
       </TouchableOpacity>
     );
   },
-  // Enhanced comparison function
   (prevProps, nextProps) => {
-    // Compare primitive props first (fastest)
+    // Enhanced comparison function remains the same
     if (
       prevProps.innerColor !== nextProps.innerColor ||
       prevProps.containerColor !== nextProps.containerColor ||
@@ -146,11 +145,10 @@ const ProductCard = React.memo(
       return false;
     }
 
-    // Deep compare product object only if primitives match
     const prevProduct = prevProps.product;
     const nextProduct = nextProps.product;
 
-    if (prevProduct === nextProduct) return true; // Same reference
+    if (prevProduct === nextProduct) return true;
     if (!prevProduct || !nextProduct) return false;
 
     return (

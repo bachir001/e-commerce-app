@@ -1,16 +1,25 @@
-import { View, Text, FlatList, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import ProductCard from "@/components/common/ProductCard";
 import ProductSkeleton from "@/components/common/ProductSkeleton";
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
-import React, { useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useContext, useEffect, useMemo } from "react";
 import { HomePageSectionProp } from "@/constants/HomePageSections";
 import { set } from "lodash";
+import { Colors } from "react-native/Libraries/NewAppScreen";
+import AnimatedLoader from "@/components/common/AnimatedLayout";
+import { SessionContext } from "@/app/_layout";
 
 interface FeaturedSectionProps extends HomePageSectionProp {
   onViewMorePress?: () => void;
   list?: any;
-  setLoading: (loading: boolean) => void;
+  setLoading?: (loading: boolean) => void;
 }
 
 const MemoizedProductItem = React.memo(
@@ -41,9 +50,19 @@ const FeaturedSection = React.memo(
     list,
     setLoading,
   }: FeaturedSectionProps) => {
-    const { data, isLoading } = list
-      ? { data: list, isLoading: false }
-      : useFeaturedSection(type, fetchParams);
+    const { data, isLoading } = useFeaturedSection(
+      type,
+      fetchParams,
+      list ? false : true
+    );
+
+    const session = useContext(SessionContext);
+
+    if (!session) {
+      throw new Error("SessionContext is null. Make sure the provider is set.");
+    }
+
+    const { newArrivals } = session;
 
     // Memoize the renderItem function
     const renderProductItem = useCallback(
@@ -66,22 +85,37 @@ const FeaturedSection = React.memo(
     );
 
     useEffect(() => {
-      setLoading(isLoading);
-    }, [isLoading]);
+      const loadingState = isLoading;
+      setLoading?.(loadingState);
+
+      return () => {
+        if (loadingState) {
+          setLoading?.(false);
+        }
+      };
+    }, [isLoading, setLoading]);
+
+    if (isLoading) {
+      return (
+        <AnimatedLoader
+          color={Colors.PRIMARY}
+          text={`Loading ${title} Products`}
+        />
+      );
+    }
 
     return (
       <LinearGradient
         colors={["#5e3ebd", "#8b7bd8", "#ffffff"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
-        className="py-4 my-5"
+        className="py-4 mt-5 mb-10"
         style={{
           marginLeft: startFromLeft ? 0 : 20,
           marginRight: startFromLeft ? 20 : 0,
           borderTopLeftRadius: startFromLeft ? 0 : 25,
           borderTopRightRadius: startFromLeft ? 25 : 0,
           borderBottomRightRadius: startFromLeft ? 25 : 0,
-          height: 550,
         }}
       >
         <View className="flex-row justify-between items-start px-4 mb-4">
@@ -99,7 +133,7 @@ const FeaturedSection = React.memo(
         </View>
 
         <FlatList
-          data={data}
+          data={list ? newArrivals : data}
           renderItem={renderProductItem}
           keyExtractor={keyExtractor}
           horizontal

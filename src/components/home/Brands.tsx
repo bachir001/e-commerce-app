@@ -6,10 +6,12 @@ import {
   Image,
   Dimensions,
 } from "react-native";
-import { useContext } from "react";
-import { type Brand, SessionContext } from "@/app/_layout";
+import { useCallback, useContext } from "react";
+import { SessionContext } from "@/app/_layout";
+import { Brand } from "@/types/globalTypes";
 
 const { width: screenWidth } = Dimensions.get("window");
+
 const itemWidth = (screenWidth - 60) / 2;
 
 function BrandComponent({ name, image, slug, id }: Brand) {
@@ -46,30 +48,45 @@ function BrandComponent({ name, image, slug, id }: Brand) {
 }
 
 export default function Brands() {
-  const { brands } = useContext(SessionContext);
+  const { brands }: { brands: Brand[] } = useContext(SessionContext);
+
+  const renderItem = useCallback(
+    ({ item }: { item: Brand }) => {
+      return (
+        <BrandComponent
+          name={item.name}
+          image={item.image}
+          white_image={item.white_image}
+          slug={item.slug}
+          id={item.id}
+          backgroundColor={item.backgroundColor}
+        />
+      );
+    },
+    [brands]
+  );
+
+  const ItemSeparatorComponent = useCallback(() => {
+    return <View className="w-2" />;
+  }, []);
 
   return (
     <View className="py-2">
       <FlatList
         data={brands}
-        renderItem={({ item }) => (
-          <BrandComponent
-            name={item.name}
-            image={item.image}
-            white_image={item.white_image}
-            slug={item.slug}
-            id={item.id}
-            backgroundColor={item.backgroundColor}
-          />
-        )}
+        renderItem={renderItem}
         horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id.toString()}
         snapToInterval={screenWidth - 20}
         decelerationRate="fast"
-        contentContainerStyle={{ paddingHorizontal: 10 }}
-        ItemSeparatorComponent={() => <View className="w-2" />}
+        contentContainerStyle={contentContainerStyle}
+        ItemSeparatorComponent={ItemSeparatorComponent}
       />
     </View>
   );
 }
+
+const contentContainerStyle = {
+  paddingHorizontal: 10,
+};
