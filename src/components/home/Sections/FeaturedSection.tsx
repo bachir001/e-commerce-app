@@ -1,22 +1,15 @@
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import { View, Text, FlatList, TouchableOpacity } from "react-native";
+import React, { useCallback, useContext, useEffect } from "react";
+import { ChevronRight } from "lucide-react-native";
 import ProductCard from "@/components/common/ProductCard";
-import ProductSkeleton from "@/components/common/ProductSkeleton";
-import { useFeaturedSection } from "@/hooks/home/featuredSections";
-import React, { useCallback, useContext, useEffect, useMemo } from "react";
-import { HomePageSectionProp } from "@/constants/HomePageSections";
-import { set } from "lodash";
-import { Colors } from "react-native/Libraries/NewAppScreen";
 import AnimatedLoader from "@/components/common/AnimatedLayout";
+import { useFeaturedSection } from "@/hooks/home/featuredSections";
+import type { HomePageSectionProp } from "@/constants/HomePageSections";
 import { SessionContext } from "@/app/_layout";
 
 interface FeaturedSectionProps extends HomePageSectionProp {
+  color?: string;
+  startFromLeft?: boolean;
   onViewMorePress?: () => void;
   list?: any;
   setLoading?: (loading: boolean) => void;
@@ -25,7 +18,12 @@ interface FeaturedSectionProps extends HomePageSectionProp {
 const MemoizedProductItem = React.memo(
   ({ item, innerColor }: { item: any; innerColor: string }) => (
     <View className="mr-3">
-      <ProductCard product={item} innerColor={innerColor} />
+      <ProductCard
+        product={item}
+        innerColor={innerColor}
+        onAddToCart={() => console.log("Add to cart:", item.id)}
+        onAddToWishlist={() => console.log("Add to wishlist:", item.id)}
+      />
     </View>
   ),
   (prevProps, nextProps) => {
@@ -36,15 +34,13 @@ const MemoizedProductItem = React.memo(
   }
 );
 
-let controller = new AbortController();
-let signal = controller.signal;
-
 const FeaturedSection = React.memo(
   ({
     title,
     description,
     fetchParams,
     type,
+    color = "#5e3ebd",
     startFromLeft = false,
     onViewMorePress,
     list,
@@ -67,20 +63,14 @@ const FeaturedSection = React.memo(
     // Memoize the renderItem function
     const renderProductItem = useCallback(
       ({ item }: { item: any }) => (
-        <MemoizedProductItem item={item} innerColor="#5e3ebd" />
+        <MemoizedProductItem item={item} innerColor={color} />
       ),
-      []
+      [color]
     );
 
     // Memoize the keyExtractor function
     const keyExtractor = useCallback(
       (item: any, index: number) => `${item.id}-${index}`,
-      []
-    );
-
-    // Memoize the ItemSeparatorComponent
-    const ItemSeparatorComponent = useCallback(
-      () => <View className="w-2" />,
       []
     );
 
@@ -96,39 +86,40 @@ const FeaturedSection = React.memo(
     }, [isLoading, setLoading]);
 
     if (isLoading) {
-      return (
-        <AnimatedLoader
-          color={Colors.PRIMARY}
-          text={`Loading ${title} Products`}
-        />
-      );
+      return <AnimatedLoader color={color} text={`Loading ${title}`} />;
     }
 
+    // Create a light version of the color for the background
+    const bgColorClass = "bg-gray-50";
+    const lightColorStyle = { backgroundColor: `${color}10` }; // 10% opacity version of the color
+
     return (
-      <LinearGradient
-        colors={["#5e3ebd", "#8b7bd8", "#ffffff"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        className="py-4 mt-5 mb-10"
-        style={{
-          marginLeft: startFromLeft ? 0 : 20,
-          marginRight: startFromLeft ? 20 : 0,
-          borderTopLeftRadius: startFromLeft ? 0 : 25,
-          borderTopRightRadius: startFromLeft ? 25 : 0,
-          borderBottomRightRadius: startFromLeft ? 25 : 0,
-        }}
+      <View
+        className="py-5 my-2 mx-2 rounded-xl shadow-sm"
+        style={lightColorStyle}
       >
-        <View className="flex-row justify-between items-start px-4 mb-4">
+        <View className="flex-row justify-between items-center px-4 mb-4">
           <View className="flex-1 mr-4">
-            <Text className="text-white text-3xl font-bold mb-1">{title}</Text>
-            <Text className="text-white/80 text-lg">{description}</Text>
+            <Text className="text-lg font-bold text-gray-900">{title}</Text>
+            {description && (
+              <Text className="text-sm text-gray-600 mt-0.5">
+                {description}
+              </Text>
+            )}
           </View>
 
           <TouchableOpacity
             onPress={onViewMorePress}
-            className={`bg-white/20 px-3 py-2 ${startFromLeft && "rounded-lg"}`}
+            className="flex-row items-center px-2.5 py-1.5 rounded-full"
+            style={{ backgroundColor: `${color}20` }} // 20% opacity version of the color
           >
-            <Text className="text-white font-semibold text-sm">View More</Text>
+            <Text
+              className="text-xs font-semibold mr-0.5"
+              style={{ color: color }}
+            >
+              View All
+            </Text>
+            <ChevronRight size={16} color={color} />
           </TouchableOpacity>
         </View>
 
@@ -139,28 +130,26 @@ const FeaturedSection = React.memo(
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16 }}
-          ItemSeparatorComponent={ItemSeparatorComponent}
-          initialNumToRender={2} // Further reduced
-          maxToRenderPerBatch={3} // Reduced batch size
-          windowSize={5} // Reduced window size
+          initialNumToRender={3}
+          maxToRenderPerBatch={3}
+          windowSize={5}
           removeClippedSubviews={true}
-          updateCellsBatchingPeriod={100} // Add batching
+          updateCellsBatchingPeriod={100}
           getItemLayout={(data, index) => ({
-            length: 176,
-            offset: 176 * index,
+            length: 172, // width of item + margin
+            offset: 172 * index,
             index,
           })}
         />
-        {/* )} */}
-      </LinearGradient>
+      </View>
     );
   },
-  // Enhanced comparison for FeaturedSection
   (prevProps, nextProps) => {
     return (
       prevProps.title === nextProps.title &&
       prevProps.description === nextProps.description &&
       prevProps.type === nextProps.type &&
+      prevProps.color === nextProps.color &&
       prevProps.startFromLeft === nextProps.startFromLeft &&
       JSON.stringify(prevProps.fetchParams) ===
         JSON.stringify(nextProps.fetchParams)

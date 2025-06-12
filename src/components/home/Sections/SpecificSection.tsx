@@ -5,10 +5,8 @@ import {
   Image,
   TouchableOpacity,
   ImageBackground,
-  ActivityIndicator,
 } from "react-native";
-import React, { useEffect, useCallback, useMemo } from "react";
-import { Colors } from "@/constants/Colors";
+import React, { useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axiosApi from "@/apis/axiosApi";
 import type {
@@ -18,10 +16,9 @@ import type {
   RelatedCategory,
 } from "@/types/globalTypes";
 import type { HomePageSectionProp } from "@/constants/HomePageSections";
-import RelatedCategorySkeleton from "@/components/common/RelatedCategorySkeleton";
-import ProductSkeleton from "@/components/common/ProductSkeleton";
 import ProductCard from "@/components/common/ProductCard";
 import AnimatedLoader from "@/components/common/AnimatedLayout";
+import { ChevronRight } from "lucide-react-native";
 
 interface MegaCategoryInfo {
   status: boolean;
@@ -44,27 +41,33 @@ interface SpecificSectionProps extends HomePageSectionProp {
 }
 
 const RelatedCategoryItem = React.memo(
-  ({ name, image }: { name: string; image: string | null }) => {
+  ({
+    name,
+    image,
+    onPress,
+  }: {
+    name: string;
+    image: string | null;
+    onPress?: () => void;
+  }) => {
     return (
-      <TouchableOpacity className="items-center mr-4">
-        <View className="w-32 h-36 bg-white border-2 border-white rounded-xl overflow-hidden shadow-sm">
-          <View className="flex-1 items-center justify-center p-3">
-            {image ? (
-              <Image
-                source={{ uri: image }}
-                className="w-full h-full"
-                resizeMode="contain"
-              />
-            ) : (
-              <View className="w-full h-full bg-gray-100 rounded-lg items-center justify-center">
-                <Text className="text-gray-400 text-sm">No Image</Text>
-              </View>
-            )}
-          </View>
+      <TouchableOpacity className="items-center mr-3 w-20" onPress={onPress}>
+        <View className="w-20 h-20 rounded-full bg-white overflow-hidden shadow-md border-2 border-white">
+          {image ? (
+            <Image
+              source={{ uri: image }}
+              className="w-full h-full"
+              resizeMode="cover"
+            />
+          ) : (
+            <View className="w-full h-full bg-gray-100 items-center justify-center">
+              <Text className="text-gray-400 text-xs">No Image</Text>
+            </View>
+          )}
         </View>
         <Text
-          className="text-white text-sm font-medium mt-2 text-center w-32"
-          numberOfLines={2}
+          className="text-white text-xs font-medium mt-2 text-center"
+          numberOfLines={1}
         >
           {name}
         </Text>
@@ -81,7 +84,12 @@ const RelatedCategoryItem = React.memo(
 const MemoizedProductItem = React.memo(
   ({ item, innerColor }: { item: any; innerColor: string }) => (
     <View className="mr-3">
-      <ProductCard product={item} innerColor={innerColor} />
+      <ProductCard
+        product={item}
+        innerColor={innerColor}
+        onAddToCart={() => console.log("Add to cart:", item.id)}
+        onAddToWishlist={() => console.log("Add to wishlist:", item.id)}
+      />
     </View>
   ),
   (prevProps, nextProps) => {
@@ -93,8 +101,12 @@ const MemoizedProductItem = React.memo(
 );
 
 const MemoizedCategoryItem = React.memo(
-  ({ item }: { item: any }) => (
-    <RelatedCategoryItem name={item.name} image={item.image} />
+  ({ item, onPress }: { item: any; onPress?: () => void }) => (
+    <RelatedCategoryItem
+      name={item.name}
+      image={item.image}
+      onPress={() => onPress?.(item)}
+    />
   ),
   (prevProps, nextProps) => {
     return (
@@ -113,6 +125,7 @@ const SpecificSection = React.memo(
     mega_mobile_bg,
     color,
     setLoading,
+    onViewMorePress,
   }: SpecificSectionProps) => {
     const { data: metaCategoryInfo, isLoading } = useQuery({
       queryKey: ["metaCategoryInfo", type],
@@ -143,7 +156,12 @@ const SpecificSection = React.memo(
     );
 
     const renderCategoryItem = useCallback(
-      ({ item }: { item: any }) => <MemoizedCategoryItem item={item} />,
+      ({ item }: { item: any }) => (
+        <MemoizedCategoryItem
+          item={item}
+          onPress={() => console.log("Category pressed:", item.name)}
+        />
+      ),
       []
     );
 
@@ -169,66 +187,90 @@ const SpecificSection = React.memo(
     }, [isLoading, setLoading]);
 
     if (isLoading) {
-      return (
-        <AnimatedLoader color={color} text={`Loading ${title} Products`} />
-      );
+      return <AnimatedLoader color={color} text={`Loading ${title}`} />;
     }
 
     return (
-      <View className="flex flex-col">
+      <View className="mb-2">
+        {/* Categories Section */}
         {mega_mobile_bg ? (
           <ImageBackground
             source={{ uri: mega_mobile_bg }}
-            resizeMode="stretch"
+            className="py-4 mx-2 rounded-t-xl overflow-hidden"
+            imageStyle={{ opacity: 0.9 }}
           >
+            <View
+              className="flex-row justify-between items-center px-4 mb-3 py-2 -mt-4"
+              style={{ backgroundColor: `${color}B3` }} // 70% opacity
+            >
+              <Text className="text-base font-bold text-white">{title}</Text>
+              <TouchableOpacity
+                onPress={onViewMorePress}
+                className="bg-white/20 px-2.5 py-1 rounded-full"
+              >
+                <Text className="text-xs font-semibold text-white">
+                  View All
+                </Text>
+              </TouchableOpacity>
+            </View>
             <FlatList
               data={metaCategoryInfo?.relatedCategories}
               renderItem={renderCategoryItem}
               keyExtractor={categoryKeyExtractor}
               horizontal
               showsHorizontalScrollIndicator={false}
-              initialNumToRender={2}
-              maxToRenderPerBatch={3}
+              contentContainerStyle={{ paddingHorizontal: 16 }}
+              initialNumToRender={4}
+              maxToRenderPerBatch={4}
               windowSize={5}
               removeClippedSubviews={true}
-              updateCellsBatchingPeriod={100}
-              getItemLayout={(data, index) => ({
-                length: 144,
-                offset: 144 * index,
-                index,
-              })}
             />
           </ImageBackground>
         ) : (
-          <View style={{ backgroundColor: color }} className="px-4 py-4">
+          <View
+            className="py-4 mx-2 rounded-t-xl"
+            style={{ backgroundColor: color }}
+          >
+            <View className="flex-row justify-between items-center px-4 mb-3">
+              <Text className="text-base font-bold text-white">{title}</Text>
+              <TouchableOpacity
+                onPress={onViewMorePress}
+                className="bg-white/20 px-2.5 py-1 rounded-full"
+              >
+                <Text className="text-xs font-semibold text-white">
+                  View All
+                </Text>
+              </TouchableOpacity>
+            </View>
             <FlatList
               data={metaCategoryInfo?.relatedCategories}
               renderItem={renderCategoryItem}
               keyExtractor={categoryKeyExtractor}
               horizontal
               showsHorizontalScrollIndicator={false}
-              initialNumToRender={2}
-              maxToRenderPerBatch={3}
+              contentContainerStyle={{ paddingHorizontal: 16 }}
+              initialNumToRender={4}
+              maxToRenderPerBatch={4}
               windowSize={5}
               removeClippedSubviews={true}
-              updateCellsBatchingPeriod={100}
-              getItemLayout={(data, index) => ({
-                length: 144,
-                offset: 144 * index,
-                index,
-              })}
             />
           </View>
         )}
 
         {/* Related Products Section */}
-        <View className="bg-gray-50 px-4 py-4">
-          <View className="flex flex-row justify-between items-center mb-4">
-            <Text className="text-gray-800 text-lg font-bold">
+        <View className="py-4 bg-white mx-2 rounded-b-xl shadow-sm">
+          <View className="flex-row justify-between items-center px-4 mb-4">
+            <Text className="text-base font-bold text-gray-900">
               {description}
             </Text>
-            <TouchableOpacity className=" px-3 py-1.5 rounded-full">
-              <Text className="text-white font-semibold text-sm">Shop Now</Text>
+            <TouchableOpacity
+              className="flex-row items-center"
+              onPress={onViewMorePress}
+            >
+              <Text className="text-xs font-semibold text-gray-900 mr-0.5">
+                Shop Now
+              </Text>
+              <ChevronRight size={16} color="#111" />
             </TouchableOpacity>
           </View>
 
@@ -238,14 +280,15 @@ const SpecificSection = React.memo(
             keyExtractor={productKeyExtractor}
             horizontal
             showsHorizontalScrollIndicator={false}
-            initialNumToRender={2}
+            contentContainerStyle={{ paddingHorizontal: 16 }}
+            initialNumToRender={3}
             maxToRenderPerBatch={3}
             windowSize={5}
             removeClippedSubviews={true}
             updateCellsBatchingPeriod={100}
             getItemLayout={(data, index) => ({
-              length: 176,
-              offset: 176 * index,
+              length: 172,
+              offset: 172 * index,
               index,
             })}
           />

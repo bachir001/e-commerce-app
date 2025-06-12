@@ -1,146 +1,132 @@
 import { View, Text, Image, TouchableOpacity } from "react-native";
 import React from "react";
 import type { Product } from "@/types/globalTypes";
-import { FontAwesome5 } from "@expo/vector-icons";
+import { Heart, Star, ShoppingBag } from "lucide-react-native";
 
 interface Props {
   product: Product;
-  containerColor?: string;
   innerColor?: string;
-  loading?: boolean;
+  containerColor?: string;
+  onPress?: () => void;
+  onAddToCart?: () => void;
+  onAddToWishlist?: () => void;
 }
 
 const ProductCard = React.memo(
-  ({ product, containerColor = "white", innerColor = "#5e3ebd" }: Props) => {
-    if (!product) {
-      return null;
-    }
+  ({
+    product,
+    innerColor = "#5e3ebd",
+    containerColor = "white",
+    onPress,
+    onAddToCart,
+    onAddToWishlist,
+  }: Props) => {
+    if (!product) return null;
 
-    // Safe property access with fallbacks
     const productName = product.name || "Untitled Product";
     const productImage = product.image || "https://via.placeholder.com/150";
-    const productRating = product.rating ? String(product.rating) : "0";
-    const purchasePoints = product.purchase_points
-      ? String(product.purchase_points)
-      : undefined;
+    const productRating = product.rating ? Number(product.rating) : 0;
     const price = product.price ? String(product.price) : "0.00";
     const specialPrice = product.special_price
       ? String(product.special_price)
       : undefined;
 
     const hasSpecialPrice = specialPrice !== undefined;
-    const hasPurchasePoints = purchasePoints !== undefined;
+    const discount = hasSpecialPrice
+      ? Math.round(
+          ((Number(price) - Number(specialPrice)) / Number(price)) * 100
+        )
+      : 0;
 
     return (
       <TouchableOpacity
-        className="w-44 bg-white rounded-xl p-3 mx-1"
-        style={{
-          height: 250,
-          borderColor: innerColor,
-          borderWidth: 1,
-        }}
+        className="w-40 rounded-lg overflow-hidden shadow-md mx-1 my-2 border border-gray-100"
+        style={{ backgroundColor: containerColor }}
+        activeOpacity={0.9}
+        onPress={onPress}
       >
-        {/* Product Image */}
-        <View className="items-center mb-3 relative">
+        {/* Image container with wishlist button and discount badge */}
+        <View className="w-full h-48 relative bg-gray-50">
           <Image
             source={{ uri: productImage }}
-            className="w-28 h-28"
-            resizeMode="contain"
+            className="w-full h-full bg-gray-100"
+            resizeMode="cover"
           />
 
-          {/* Heart icon */}
           <TouchableOpacity
-            className="absolute top-0 right-0 w-7 h-7 bg-white rounded-full items-center justify-center"
-            style={{
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.1,
-              shadowRadius: 2,
-              elevation: 2,
-            }}
+            className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 items-center justify-center z-10 shadow-sm"
+            onPress={onAddToWishlist}
+            hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
           >
-            <FontAwesome5 name="heart" size={12} color="#ccc" />
+            <Heart size={18} color="#111" stroke="#111" fill="transparent" />
           </TouchableOpacity>
-        </View>
 
-        {/* Product Name - Always wrapped in Text */}
-        <Text
-          className="text-gray-800 text-sm font-semibold mb-2"
-          numberOfLines={2}
-        >
-          {productName}
-        </Text>
-
-        {/* Rating and Purchase Points Row */}
-        <View className="flex-row justify-between items-center mb-3">
-          <View className="flex-row items-center">
-            <FontAwesome5 name="star" size={12} color="#FFD700" />
-            <Text className="text-gray-600 text-xs ml-1">{productRating}</Text>
-          </View>
-
-          {hasPurchasePoints && (
-            <View className="flex-row items-center">
-              <Text
-                style={{ color: innerColor, fontSize: 10, fontWeight: "600" }}
-              >
-                {purchasePoints}
-              </Text>
-              <FontAwesome5
-                name="shopping-cart"
-                size={7}
-                color={innerColor}
-                style={{ marginLeft: 2 }}
-              />
+          {hasSpecialPrice && discount > 0 && (
+            <View
+              className="absolute top-2 left-2 px-1.5 py-0.5 rounded"
+              style={{ backgroundColor: "#e4344f" }}
+            >
+              <Text className="text-white text-xs font-bold">-{discount}%</Text>
             </View>
           )}
         </View>
 
-        {/* Price and Cart */}
-        <View className="flex-row justify-between items-center mt-auto">
-          <View>
-            {hasSpecialPrice && (
-              <Text
-                style={{ color: innerColor, fontSize: 14, fontWeight: "bold" }}
-              >
-                ${specialPrice}
+        {/* Product details */}
+        <View className="p-2.5">
+          {/* Rating */}
+          {productRating > 0 && (
+            <View className="flex-row items-center mb-1">
+              <Star size={12} color="#FFB800" fill="#FFB800" />
+              <Text className="text-xs text-gray-600 ml-0.5 font-medium">
+                {productRating.toFixed(1)}
               </Text>
-            )}
+            </View>
+          )}
 
-            <Text
-              style={{
-                color: hasSpecialPrice ? "#9CA3AF" : innerColor,
-                fontSize: hasSpecialPrice ? 11 : 14,
-                fontWeight: hasSpecialPrice ? "normal" : "bold",
-                textDecorationLine: hasSpecialPrice ? "line-through" : "none",
-              }}
-            >
-              ${price}
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            className="w-9 h-9 rounded-full items-center justify-center"
-            style={{
-              backgroundColor: innerColor,
-              shadowColor: innerColor,
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.2,
-              shadowRadius: 3,
-              elevation: 3,
-            }}
+          {/* Product name */}
+          <Text
+            className="text-sm font-medium text-gray-900 mb-1"
+            numberOfLines={1}
           >
-            <FontAwesome5 name="shopping-cart" size={12} color="white" />
-          </TouchableOpacity>
+            {productName}
+          </Text>
+
+          {/* Price row */}
+          <View className="flex-row items-center">
+            {hasSpecialPrice ? (
+              <>
+                <Text
+                  className="text-sm font-bold mr-1.5"
+                  style={{ color: "#e4344f" }}
+                >
+                  ${specialPrice}
+                </Text>
+                <Text className="text-xs text-gray-400 line-through">
+                  ${price}
+                </Text>
+              </>
+            ) : (
+              <Text className="text-sm font-bold text-gray-900">${price}</Text>
+            )}
+          </View>
         </View>
+
+        {/* Add to cart button */}
+        <TouchableOpacity
+          className="absolute bottom-2.5 right-2.5 w-8 h-8 rounded-full items-center justify-center shadow-sm"
+          style={{ backgroundColor: innerColor }}
+          activeOpacity={0.8}
+          onPress={onAddToCart}
+        >
+          <ShoppingBag size={16} color="#fff" />
+        </TouchableOpacity>
       </TouchableOpacity>
     );
   },
   (prevProps, nextProps) => {
-    // Enhanced comparison function remains the same
     if (
       prevProps.innerColor !== nextProps.innerColor ||
-      prevProps.containerColor !== nextProps.containerColor ||
-      prevProps.loading !== nextProps.loading
+      prevProps.containerColor !== nextProps.containerColor
     ) {
       return false;
     }
@@ -157,8 +143,7 @@ const ProductCard = React.memo(
       prevProduct.price === nextProduct.price &&
       prevProduct.special_price === nextProduct.special_price &&
       prevProduct.image === nextProduct.image &&
-      prevProduct.rating === nextProduct.rating &&
-      prevProduct.purchase_points === nextProduct.purchase_points
+      prevProduct.rating === nextProduct.rating
     );
   }
 );

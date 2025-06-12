@@ -13,23 +13,20 @@ import axiosApi from "@/apis/axiosApi";
 import ProductCard from "./ProductCard";
 import type { Product } from "@/types/globalTypes";
 import AnimatedLoader from "./AnimatedLayout";
-import { Colors } from "@/constants/Colors"; // Assuming Colors is defined here or imported
-
-interface ProductListProps {
-  type: "mega" | "featured" | "categoryData";
-  url: string;
-  loadMoreProducts: boolean;
-  onLoadComplete?: () => void;
-}
+import { Colors } from "@/constants/Colors";
+import useInfiniteProductList, {
+  ProductListProps,
+} from "@/hooks/home/infiniteProductList";
 
 const { width } = Dimensions.get("window");
-const CARD_WIDTH = (width - 48) / 2; // (Total width - horizontal padding * 2) / 2 columns
+const CARD_WIDTH = (width - 48) / 2;
 
 const ProductInfiniteList = memo(function ProductInfiniteList({
   type,
   url,
   loadMoreProducts,
   onLoadComplete,
+  onFetchTriggered,
 }: ProductListProps) {
   const {
     data,
@@ -39,75 +36,25 @@ const ProductInfiniteList = memo(function ProductInfiniteList({
     isLoading,
     isError,
     status, // 'pending', 'success', 'error'
-  } = useInfiniteQuery({
-    queryKey: ["products", type, url],
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await axiosApi.get(
-        `${url}?page=${pageParam}&per_page=20`
-      );
-
-      console.log(response.data.data.relatedProducts.current_page);
-
-      if (type === "categoryData") {
-        if (
-          response.data &&
-          response.data.data &&
-          response.data.data.relatedProducts
-        ) {
-          return {
-            products: response.data.data.relatedProducts.results || [],
-            currentPage: response.data.data.relatedProducts.current_page,
-            totalPages: response.data.data.relatedProducts.total_pages,
-          };
-        } else {
-          console.warn(
-            `[ProductInfiniteList] Unexpected API response structure for type 'categoryData' on page ${pageParam}. Data missing relatedProducts.`
-          );
-          return {
-            products: [],
-            currentPage: pageParam,
-            totalPages: pageParam,
-          };
-        }
-      }
-
-      return {
-        products: [],
-        currentPage: pageParam,
-        totalPages: pageParam,
-      };
-    },
-    getNextPageParam: (lastPage) => {
-      if (!lastPage) {
-        console.log(
-          "[ProductInfiniteList] getNextPageParam - No lastPage, returning undefined."
-        );
-        return undefined;
-      }
-      const currentPage = Number(lastPage.currentPage);
-      const totalPages = Number(lastPage.totalPages);
-
-      if (currentPage < totalPages) {
-        return currentPage + 1;
-      }
-
-      return undefined;
-    },
-    initialPageParam: 1,
-    staleTime: 5 * 60 * 1000,
-  });
+  } = useInfiniteProductList({ type, url, loadMoreProducts });
 
   const products = data?.pages.flatMap((page) => page?.products || []) || [];
 
   useEffect(() => {
-    if (loadMoreProducts && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    } else if (loadMoreProducts && !hasNextPage) {
-      onLoadComplete?.();
-    } else if (loadMoreProducts && isFetchingNextPage) {
-      console.log(
-        "[ProductInfiniteList] Already fetching, ignoring duplicate request from loadMoreProducts."
-      );
+    if (loadMoreProducts) {
+      if (isFetchingNextPage) {
+        console.log(
+          "[ProductInfiniteList] Already fetching, ignoring duplicate request."
+        );
+        return;
+      }
+
+      if (hasNextPage) {
+        fetchNextPage();
+        onFetchTriggered?.(); // Reset the trigger flag
+      } else {
+        onLoadComplete?.();
+      }
     }
   }, [
     loadMoreProducts,
@@ -115,6 +62,7 @@ const ProductInfiniteList = memo(function ProductInfiniteList({
     isFetchingNextPage,
     fetchNextPage,
     onLoadComplete,
+    onFetchTriggered,
   ]);
 
   const renderItem = useCallback(
