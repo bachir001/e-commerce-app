@@ -220,7 +220,7 @@ export default function HomeScreen(): JSX.Element {
                 url="getCategoryData/beauty-health"
                 loadMoreProducts={loadMoreProducts}
                 onLoadComplete={handleLoadComplete}
-                onFetchTriggered={() => setLoadMoreProducts(false)} // Add this
+                onFetchTriggered={() => setLoadMoreProducts(false)}
               />
             </View>
           ) : null
