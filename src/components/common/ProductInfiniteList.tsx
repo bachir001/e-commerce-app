@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect } from "react";
+import React, { memo, useCallback, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -6,28 +6,26 @@ import {
   ActivityIndicator,
   Dimensions,
 } from "react-native";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { FontAwesome5 } from "@expo/vector-icons";
-import axiosApi from "@/apis/axiosApi";
 import ProductCard from "./ProductCard";
 import type { Product } from "@/types/globalTypes";
 import AnimatedLoader from "./AnimatedLayout";
 import { Colors } from "@/constants/Colors";
-import useInfiniteProductList, {
-  ProductListProps,
-} from "@/hooks/home/infiniteProductList";
+import useInfiniteProductList from "@/hooks/home/infiniteProductList";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 48) / 2;
 
+interface ProductInfiniteListProps {
+  type: "mega" | "featured" | "categoryData";
+  url: string;
+}
+
 const ProductInfiniteList = memo(function ProductInfiniteList({
   type,
   url,
-  loadMoreProducts,
-  onLoadComplete,
-  onFetchTriggered,
-}: ProductListProps) {
+}: ProductInfiniteListProps) {
   const {
     data,
     fetchNextPage,
@@ -35,35 +33,24 @@ const ProductInfiniteList = memo(function ProductInfiniteList({
     isFetchingNextPage,
     isLoading,
     isError,
-    status, // 'pending', 'success', 'error'
-  } = useInfiniteProductList({ type, url, loadMoreProducts });
+    status,
+  } = useInfiniteProductList({ type, url });
+
+  const isLoadingMore = useRef(false);
 
   const products = data?.pages.flatMap((page) => page?.products || []) || [];
 
-  useEffect(() => {
-    if (loadMoreProducts) {
-      if (isFetchingNextPage) {
-        console.log(
-          "[ProductInfiniteList] Already fetching, ignoring duplicate request."
-        );
-        return;
-      }
-
-      if (hasNextPage) {
-        fetchNextPage();
-        onFetchTriggered?.(); // Reset the trigger flag
-      } else {
-        onLoadComplete?.();
-      }
+  const handleLoadMore = useCallback(() => {
+    // Prevent multiple simultaneous calls
+    if (isLoadingMore.current || isFetchingNextPage || !hasNextPage) {
+      return;
     }
-  }, [
-    loadMoreProducts,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-    onLoadComplete,
-    onFetchTriggered,
-  ]);
+
+    isLoadingMore.current = true;
+    fetchNextPage().finally(() => {
+      isLoadingMore.current = false;
+    });
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const renderItem = useCallback(
     ({ item }: { item: Product }) => (
@@ -126,7 +113,6 @@ const ProductInfiniteList = memo(function ProductInfiniteList({
             </Text>
           </View>
 
-          {/* Decorative elements */}
           <View className="absolute top-4 right-4 opacity-20">
             <FontAwesome5 name="gem" size={24} color="white" />
           </View>
@@ -191,8 +177,14 @@ const ProductInfiniteList = memo(function ProductInfiniteList({
         paddingHorizontal: 8,
       }}
       initialNumToRender={10}
-      maxToRenderPerBatch={1}
+      maxToRenderPerBatch={10}
       windowSize={10}
+      onEndReached={handleLoadMore}
+      onEndReachedThreshold={0.5}
+      removeClippedSubviews={true}
+      // Performance optimizations
+      getItemLayout={undefined} // Let FlatList calculate
+      updateCellsBatchingPeriod={50}
     />
   );
 });

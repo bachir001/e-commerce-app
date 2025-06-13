@@ -104,4 +104,5 @@ export interface Product {
   has_variants: boolean;
   rating: number;
   purchase_points: number | null;
+  reviews?: number;
 }
