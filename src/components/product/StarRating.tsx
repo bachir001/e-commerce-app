@@ -16,7 +16,7 @@ const StarRating = React.memo<{ rating: number; reviews: number }>(
         ))}
       </View>
       <Text className="text-sm text-gray-600 ml-2">
-        {rating.toFixed(1)} ({reviews} reviews)
+        {rating && rating.toFixed(1)} ({reviews} reviews)
       </Text>
     </View>
   )

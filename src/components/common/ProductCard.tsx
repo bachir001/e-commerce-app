@@ -1,7 +1,8 @@
 import { View, Text, Image, TouchableOpacity } from "react-native";
-import React from "react";
+import React, { useCallback } from "react";
 import type { Product } from "@/types/globalTypes";
 import { Heart, Star, ShoppingBag } from "lucide-react-native";
+import { useRouter } from "expo-router";
 
 interface Props {
   product: Product;
@@ -22,6 +23,8 @@ const ProductCard = React.memo(
     onAddToWishlist,
   }: Props) => {
     if (!product) return null;
+
+    const router = useRouter();
 
     const productName = product.name || "Untitled Product";
     const productImage = product.image || "https://via.placeholder.com/150";

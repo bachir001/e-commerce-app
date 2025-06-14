@@ -106,3 +106,9 @@ export interface Product {
   purchase_points: number | null;
   reviews?: number;
 }
+
+export interface popularSearches {
+  id: number;
+  query: string;
+  count: number;
+}

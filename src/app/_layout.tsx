@@ -24,10 +24,13 @@ import {
   useSliders,
 } from "@/hooks/home/topSection";
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
+import * as SplashScreen from "expo-splash-screen";
 
 export const queryClient = new QueryClient();
 
 export let SessionContext = createContext<SessionContextValue | null>(null);
+
+SplashScreen.preventAutoHideAsync();
 
 function AppWithProviders() {
   const { data: brands, isLoading: loadingBrands } = useBrands();
@@ -91,6 +94,12 @@ function AppWithProviders() {
       newArrivals,
     ]
   );
+
+  useEffect(() => {
+    if (!appNotReady) {
+      SplashScreen.hideAsync();
+    }
+  }, [appNotReady]);
 
   if (appNotReady) {
     return (

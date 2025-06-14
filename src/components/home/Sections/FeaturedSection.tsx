@@ -6,6 +6,7 @@ import AnimatedLoader from "@/components/common/AnimatedLayout";
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import type { HomePageSectionProp } from "@/constants/HomePageSections";
 import { SessionContext } from "@/app/_layout";
+import { router } from "expo-router";
 
 interface FeaturedSectionProps extends HomePageSectionProp {
   color?: string;
@@ -23,6 +24,12 @@ const MemoizedProductItem = React.memo(
         innerColor={innerColor}
         onAddToCart={() => console.log("Add to cart:", item.id)}
         onAddToWishlist={() => console.log("Add to wishlist:", item.id)}
+        onPress={() => {
+          router.push({
+            pathname: "/(tabs)/home/ProductDetails",
+            params: { productJSON: JSON.stringify(item) },
+          });
+        }}
       />
     </View>
   ),
@@ -60,7 +67,6 @@ const FeaturedSection = React.memo(
 
     const { newArrivals } = session;
 
-    // Memoize the renderItem function
     const renderProductItem = useCallback(
       ({ item }: { item: any }) => (
         <MemoizedProductItem item={item} innerColor={color} />
@@ -68,7 +74,6 @@ const FeaturedSection = React.memo(
       [color]
     );
 
-    // Memoize the keyExtractor function
     const keyExtractor = useCallback(
       (item: any, index: number) => `${item.id}-${index}`,
       []

@@ -66,7 +66,7 @@ export default function MainImageCarousel({
       />
 
       {/* Pagination Indicators */}
-      {allImages.length > 1 && (
+      {allImages && allImages.length > 1 && (
         <View className="absolute bottom-4 left-0 right-0 flex-row justify-center items-center">
           {allImages.map((_, index: number) => (
             <View

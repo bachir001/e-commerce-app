@@ -18,6 +18,8 @@ import { Colors } from "@/constants/Colors";
 import FeaturedSection from "@/components/home/Sections/FeaturedSection";
 import ProductInfiniteList from "@/components/common/ProductInfiniteList";
 
+const startTime = performance.now();
+
 const HOME_SCREEN_DATA_STRUCTURE = [
   {
     id: "beautyAndHealth",
@@ -109,7 +111,7 @@ export default function HomeScreen(): JSX.Element {
         isBusy.current = false;
       }
 
-      flatListRef.current?.scrollToEnd({ animated: true });
+      // flatListRef.current?.scrollToEnd({ animated: true });
     },
     [loadingSectionId]
   );
@@ -169,6 +171,7 @@ export default function HomeScreen(): JSX.Element {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         onEndReached={handleEndReached}
+        showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <View style={{ flex: 1, width: "100%" }}>
             <Header />
@@ -202,3 +205,7 @@ export default function HomeScreen(): JSX.Element {
     </SafeAreaView>
   );
 }
+
+const endTime = performance.now();
+
+console.log(`Execution time: ${endTime - startTime}ms`);
