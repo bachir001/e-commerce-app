@@ -1,14 +1,15 @@
 import axiosApi from "@/apis/axiosApi";
-import { queryClient, SessionContext } from "@/app/_layout";
+import { queryClient } from "@/app/_layout";
+import { useSessionStore } from "@/store/useSessionStore";
 import { SessionContextValue } from "@/types/globalTypes";
 import { useMutation } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { add } from "lodash";
-import { useContext } from "react";
 import Toast from "react-native-toast-message";
 
 export default function useAddAddress() {
-  const { token } = useContext(SessionContext) as SessionContextValue;
+  const { token } = useSessionStore((state) => ({
+    token: state.token,
+  }));
 
   return useMutation({
     mutationFn: async (addressData: any) => {

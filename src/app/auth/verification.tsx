@@ -1,6 +1,4 @@
-"use client";
-
-import { useState, useRef, useEffect, useContext } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,14 +12,16 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import axiosApi from "@/apis/axiosApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { SessionContext } from "../_layout";
 import { Colors } from "@/constants/Colors";
+import { useSessionStore } from "@/store/useSessionStore";
 
 export default function Verification() {
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
 
-  const { user, setUser, setToken, setIsLogged } = useContext(SessionContext);
+  const { setIsLogged } = useSessionStore((state) => ({
+    setIsLogged: state.setIsLogged,
+  }));
 
   const { email, password } = useLocalSearchParams();
 

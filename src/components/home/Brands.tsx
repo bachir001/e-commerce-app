@@ -6,15 +6,15 @@ import {
   Image,
   Dimensions,
 } from "react-native";
-import { useCallback, useContext } from "react";
-import { SessionContext } from "@/app/_layout";
+import React, { useCallback } from "react";
 import { Brand } from "@/types/globalTypes";
+import { useAppDataStore } from "@/store/useAppDataStore";
 
 const { width: screenWidth } = Dimensions.get("window");
 
 const itemWidth = (screenWidth - 60) / 2;
 
-function BrandComponent({ name, image, slug, id }: Brand) {
+const BrandComponent = React.memo(({ name, image, slug, id }: Brand) => {
   return (
     <TouchableOpacity
       className="mx-2 bg-white rounded-xl overflow-hidden"
@@ -45,10 +45,12 @@ function BrandComponent({ name, image, slug, id }: Brand) {
       </View>
     </TouchableOpacity>
   );
-}
+});
 
 export default function Brands() {
-  const { brands }: { brands: Brand[] } = useContext(SessionContext);
+  const { brands } = useAppDataStore((state) => ({
+    brands: state.brands,
+  }));
 
   const renderItem = useCallback(
     ({ item }: { item: Brand }) => {

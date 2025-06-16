@@ -8,8 +8,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { useContext, useState } from "react";
-import { SessionContext } from "@/app/_layout";
+import { useState } from "react";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
@@ -17,6 +16,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Colors } from "@/constants/Colors";
 
 import ChangePasswordModal from "@/components/account/ChangePasswordModal";
+import { useSessionStore } from "@/store/useSessionStore";
 interface UpdateBody {
   first_name?: string;
   last_name?: string;
@@ -25,13 +25,17 @@ interface UpdateBody {
 }
 
 export default function EditProfile() {
-  const { user, token, setUser } = useContext(SessionContext);
+  const { user, token, setUser } = useSessionStore((state) => ({
+    user: state.user,
+    token: state.token,
+    setUser: state.setUser,
+  }));
 
-  const [firstName, setFirstName] = useState<string>(user?.first_name);
-  const [lastName, setLastName] = useState<string>(user?.last_name);
-  const [mobile, setMobile] = useState<string | null>(user?.mobile);
+  const [firstName, setFirstName] = useState<string>(user?.first_name ?? "");
+  const [lastName, setLastName] = useState<string>(user?.last_name ?? "");
+  const [mobile, setMobile] = useState<string | null>(user?.mobile ?? "");
   const [dateOfBirth, setDateOfBirth] = useState<string | null>(
-    user?.date_of_birth
+    user?.date_of_birth ?? ""
   );
   const [loading, setLoading] = useState<boolean>(false);
   const [passLoading, setPassLoading] = useState<boolean>(false);

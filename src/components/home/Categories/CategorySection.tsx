@@ -1,16 +1,10 @@
-"use client";
-
-import { SessionContext } from "@/app/_layout";
-import React, { useContext } from "react";
+import React from "react";
 import { Dimensions, Image, View } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import CircularCategorylist from "./CircularCategoryList";
 import CategoryHeader from "./CategoryHeader";
-
-interface Slider {
-  id: string;
-  mobile_image: string;
-}
+import { useAppDataStore } from "@/store/useAppDataStore";
+import type { Slider } from "@/types/globalTypes";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("screen");
 const ITEM_WIDTH = SCREEN_WIDTH;
@@ -36,7 +30,7 @@ const SliderItem = ({ item }: SliderItemProps) => {
 };
 
 interface SliderComponentProps {
-  sliders: Slider[];
+  sliders: Slider[] | [];
 }
 
 const SliderComponent = ({ sliders }: SliderComponentProps) => {
@@ -57,7 +51,10 @@ const SliderComponent = ({ sliders }: SliderComponentProps) => {
 };
 
 const CategorySection = React.memo(() => {
-  const { sliders, megaCategories } = useContext(SessionContext);
+  const { sliders, megaCategories } = useAppDataStore((state) => ({
+    sliders: state.sliders,
+    megaCategories: state.megaCategories,
+  }));
 
   return (
     <View style={{ backgroundColor: "#FFF8E1" }} className="max-h-max pb-5">

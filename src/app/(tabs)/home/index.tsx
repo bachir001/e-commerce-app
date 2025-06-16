@@ -1,64 +1,40 @@
 import React, {
-  JSX,
   useCallback,
-  useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { SessionContext } from "@/app/_layout";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "@/components/home/Header";
 import CategorySection from "@/components/home/Categories/CategorySection";
-import { FlatList, Text, View } from "react-native";
+import { FlatList, View } from "react-native";
 import SpecificSection from "@/components/home/Sections/SpecificSection";
 import { HOMEPAGE_SECTIONS } from "@/constants/HomePageSections";
 import { Colors } from "@/constants/Colors";
 import FeaturedSection from "@/components/home/Sections/FeaturedSection";
 import ProductInfiniteList from "@/components/common/ProductInfiniteList";
-
-const startTime = performance.now();
+import { useSessionStore } from "@/store/useSessionStore";
+import { useAppDataStore } from "@/store/useAppDataStore";
 
 const HOME_SCREEN_DATA_STRUCTURE = [
-  {
-    id: "beautyAndHealth",
-    type: "specific",
-  },
-  {
-    id: "medicalEquipment",
-    type: "specific",
-  },
-  {
-    id: "bestSellers",
-    type: "featured",
-  },
-  {
-    id: "agriculture",
-    type: "specific",
-  },
-  {
-    id: "hardwareAndFasteners",
-    type: "specific",
-  },
-  {
-    id: "homeAndLiving",
-    type: "specific",
-  },
-  {
-    id: "sportsAndOutdoors",
-    type: "specific",
-  },
+  { id: "beautyAndHealth", type: "specific" },
+  { id: "medicalEquipment", type: "specific" },
+  { id: "bestSellers", type: "featured" },
+  { id: "agriculture", type: "specific" },
+  { id: "hardwareAndFasteners", type: "specific" },
+  { id: "homeAndLiving", type: "specific" },
+  { id: "sportsAndOutdoors", type: "specific" },
 ];
 
-export default function HomeScreen(): JSX.Element {
-  const session = useContext(SessionContext);
+export default function HomeScreen() {
+  // Optimized selectors
+  const setIsLogged = useSessionStore((state) => state.setIsLogged);
+  const setUser = useSessionStore((state) => state.setUser);
+  const setToken = useSessionStore((state) => state.setToken);
+  const newArrivals = useAppDataStore((state) => state.newArrivals);
 
-  if (!session) {
-    throw new Error("SessionContext is null. Make sure the provider is set.");
-  }
-
-  const { setIsLogged, setUser, setToken, newArrivals } = session;
   const [visibleSections, setVisibleSections] = useState([
     HOME_SCREEN_DATA_STRUCTURE[0],
   ]);
@@ -69,24 +45,37 @@ export default function HomeScreen(): JSX.Element {
   const isBusy = useRef(false);
   const flatListRef = useRef<FlatList>(null);
 
+  // Token check with useCallback
   const checkForToken = useCallback(async () => {
-    const token_ = await AsyncStorage.getItem("token");
-    const userJSON = await AsyncStorage.getItem("user");
-    let parsedUser;
-    if (typeof userJSON === "string") {
-      parsedUser = JSON.parse(userJSON);
-    }
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const userJSON = await AsyncStorage.getItem("user");
 
-    if (token_ !== null && typeof token_ === "string") {
-      setIsLogged(true);
-      setToken(token_);
-      setUser(parsedUser);
+      if (token) {
+        setIsLogged(true);
+        setToken(token);
+        if (userJSON) {
+          setUser(JSON.parse(userJSON));
+        }
+      }
+    } catch (error) {
+      console.error("Token check error:", error);
     }
   }, []);
 
   useEffect(() => {
     checkForToken();
   }, [checkForToken]);
+
+  const handleSectionLoading = useCallback(
+    (sectionId: string, isLoading: boolean) => {
+      if (!isLoading && loadingSectionId === sectionId) {
+        setLoadingSectionId(null);
+        isBusy.current = false;
+      }
+    },
+    [loadingSectionId]
+  );
 
   const loadMoreSections = useCallback(() => {
     if (isBusy.current || loadingSectionId !== null) return;
@@ -104,52 +93,35 @@ export default function HomeScreen(): JSX.Element {
     setCurrentIndex(nextSectionIndex);
   }, [currentIndex, loadingSectionId]);
 
-  const handleSectionLoading = useCallback(
-    (sectionId: string, isLoading: boolean) => {
-      if (!isLoading && loadingSectionId === sectionId) {
-        setLoadingSectionId(null);
-        isBusy.current = false;
-      }
-
-      // flatListRef.current?.scrollToEnd({ animated: true });
-    },
-    [loadingSectionId]
-  );
-
   const renderItem = useCallback(
     ({ item }: { item: (typeof HOME_SCREEN_DATA_STRUCTURE)[0] }) => {
       const sectionData =
         HOMEPAGE_SECTIONS[item.id as keyof typeof HOMEPAGE_SECTIONS];
 
-      if (!sectionData) {
-        return <Text>Section not found</Text>;
-      }
+      if (!sectionData) return null;
 
       switch (item.type) {
         case "featured":
           return (
             <FeaturedSection
               {...sectionData}
-              setLoading={(loading: boolean) => {
-                handleSectionLoading(item.id, loading);
-              }}
+              setLoading={(loading: boolean) =>
+                handleSectionLoading(item.id, loading)
+              }
             />
           );
         case "specific":
           return (
             <SpecificSection
               {...sectionData}
-              color={
-                Colors[item.id as keyof typeof HOMEPAGE_SECTIONS] ||
-                Colors.PRIMARY
+              color={Colors[item.id as keyof typeof Colors] || Colors.PRIMARY}
+              setLoading={(loading: boolean) =>
+                handleSectionLoading(item.id, loading)
               }
-              setLoading={(loading: boolean) => {
-                handleSectionLoading(item.id, loading);
-              }}
             />
           );
         default:
-          return <Text>Unknown section type</Text>;
+          return null;
       }
     },
     [handleSectionLoading]
@@ -163,37 +135,38 @@ export default function HomeScreen(): JSX.Element {
     }
   }, [currentIndex, loadMoreSections, showInfiniteList]);
 
+  // Memoized header component
+  const ListHeader = useMemo(
+    () => (
+      <View style={{ flex: 1, width: "100%" }}>
+        <Header />
+        <CategorySection />
+        {newArrivals?.length > 0 && (
+          <FeaturedSection list={true} type="new-arrivals" />
+        )}
+      </View>
+    ),
+    [newArrivals]
+  );
+
   return (
-    <SafeAreaView>
+    <SafeAreaView style={{ flex: 1 }}>
       <FlatList
         ref={flatListRef}
         data={visibleSections}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
+        ListHeaderComponent={ListHeader}
         onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
         showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          <View style={{ flex: 1, width: "100%" }}>
-            <Header />
-            <CategorySection />
-            {newArrivals !== undefined &&
-              newArrivals !== null &&
-              newArrivals.length > 0 && (
-                <FeaturedSection list={true} type="new-arrivals" />
-              )}
-          </View>
-        }
         initialNumToRender={1}
-        windowSize={10}
-        onEndReachedThreshold={0.1}
+        windowSize={5}
+        extraData={loadingSectionId}
         removeClippedSubviews={false}
-        maintainVisibleContentPosition={{
-          minIndexForVisible: 0,
-          autoscrollToTopThreshold: 10,
-        }}
         ListFooterComponent={
-          showInfiniteList && loadingSectionId === null ? (
-            <View className="w-full mt-4">
+          showInfiniteList && !loadingSectionId ? (
+            <View style={{ marginTop: 20 }}>
               <ProductInfiniteList
                 type="categoryData"
                 url="getCategoryData/beauty-health"
@@ -205,7 +178,3 @@ export default function HomeScreen(): JSX.Element {
     </SafeAreaView>
   );
 }
-
-const endTime = performance.now();
-
-console.log(`Execution time: ${endTime - startTime}ms`);
