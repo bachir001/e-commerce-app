@@ -33,21 +33,6 @@ export interface SubCategory extends Category {
   children: Category[];
 }
 
-type niche =
-  | "garden-tools"
-  | "sports-outdoor"
-  | "hardware-and-fasteners"
-  | "home-living"
-  | "beauty-health";
-
-const allowedNiches: niche[] = [
-  "garden-tools",
-  "sports-outdoor",
-  "hardware-and-fasteners",
-  "home-living",
-  "beauty-health",
-];
-
 const useDebounce = (value: string, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -75,7 +60,7 @@ const EmptyComponent = React.memo(() => (
 ));
 
 const LoadingComponent = React.memo(() => (
-  <SafeAreaView className="flex-1 bg-white">
+  <SafeAreaView className="flex-1 bg-white justify-center items-center">
     <View className="px-6 py-4">
       <View className="w-32 h-8 bg-gray-200 rounded mb-2" />
       <View className="w-48 h-4 bg-gray-200 rounded mb-6" />
@@ -102,35 +87,11 @@ export default function CategoriesScreen() {
     );
   }, [categories, debouncedSearchQuery]);
 
-  const handleCategoryPress = useCallback((category: MainCategory) => {
-    router.push({
-      pathname: `(tabs)/categories/${category.slug}/${
-        allowedNiches.includes(category.slug as niche) ? "mega" : "category"
-      }`,
-      params: {
-        categoryJSON: category ? JSON.stringify(category) : null,
-
-        color:
-          category.slug === "beauty-health"
-            ? Colors.beautyAndHealth
-            : category.slug === "home-living"
-            ? Colors.homeAndLiving
-            : category.slug === "hardware-and-fasteners"
-            ? Colors.hardware
-            : category.slug === "garden-tools"
-            ? Colors.agriculture
-            : category.slug === "sports-outdoor"
-            ? Colors.sportsAndOutdoors
-            : null,
-      },
-    });
-  }, []);
-
   const renderItem = useCallback(
     ({ item }: { item: MainCategory }) => (
-      <CategoryItem item={item} onPress={handleCategoryPress} />
+      <CategoryItem item={item} color="#5e3ebd" />
     ),
-    [handleCategoryPress]
+    []
   );
 
   const keyExtractor = useCallback(

@@ -49,11 +49,10 @@ function AppWithProviders() {
         if (brands && !loadingBrands) setBrands(brands);
         if (sliders && !loadingSliders) setSliders(sliders);
         if (megaCategories && !loadingMega) {
-          console.log(megaCategories);
+          // console.log(megaCategories);
           setMegaCategories(megaCategories);
         }
         if (newArrivals && !loadingNewArrivals) setNewArrivals(newArrivals);
-
       } catch (error) {
         console.error("Initialization error:", error);
       }

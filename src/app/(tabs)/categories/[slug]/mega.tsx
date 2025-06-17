@@ -16,36 +16,52 @@ import { LinearGradient } from "expo-linear-gradient";
 import { FontAwesome5 } from "@expo/vector-icons";
 import type { SubCategory } from "..";
 import CategoryItem from "@/components/categories/CategoryItem";
+import MegaHeader from "@/components/categories/MegaHeader";
+import { useFeaturedSection } from "@/hooks/home/featuredSections";
+import ProductCard from "@/components/common/ProductCard";
+import { Product } from "@/types/globalTypes";
+import DotsLoader from "@/components/common/AnimatedLayout";
+import { Colors } from "@/constants/Colors";
 
 const { width } = Dimensions.get("window");
 
 export default function Mega() {
   const router = useRouter();
-  const { categoryJSON, color } = useLocalSearchParams();
+  const { categoryJSON, color = Colors.beautyAndHealth } =
+    useLocalSearchParams();
   const [imageLoading, setImageLoading] = useState(true);
 
   const category =
     typeof categoryJSON === "string" ? JSON.parse(categoryJSON) : null;
-  const bgColor = Array.isArray(color) ? color[0] : color || "#5e3ebd";
+
+  const { data: bestSellers, isLoading: bestSellersLoading } =
+    useFeaturedSection("best-sellers", {
+      per_page: 10 as const,
+      page: 1 as const,
+      sort: "price_high_low" as const,
+    });
 
   const onCategoryPress = useCallback((item: SubCategory) => {
-    // Handle category navigation
     console.log("Category pressed:", item.name);
   }, []);
 
   const renderSubCategories = useCallback(
     ({ item, index }: { item: SubCategory; index: number }) => (
       <View className="mr-4">
-        <CategoryItem item={item} onPress={() => onCategoryPress(item)} />
+        <CategoryItem item={item} color={color} />
       </View>
     ),
     [onCategoryPress]
   );
 
-  const keyExtractor = useCallback(
-    (item: SubCategory) => item.id.toString(),
-    []
+  const renderBestSellers = useCallback(
+    ({ item, index }: { item: Product; index: number }) => (
+      <ProductCard product={item} innerColor={color} />
+    ),
+    [onCategoryPress]
   );
+
+  const keyExtractor = useCallback((item: any) => item.id.toString(), []);
 
   const renderSectionHeader = (
     title: string,
@@ -68,35 +84,9 @@ export default function Mega() {
   );
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: bgColor }}>
-      <LinearGradient
-        colors={[bgColor, `${bgColor}CC`, `${bgColor}99`]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={{ height: 200 }}
-        className="px-6 py-8 justify-center items-center relative"
-      >
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="absolute top-12 left-6 w-10 h-10 bg-white/20 rounded-full items-center justify-center"
-        >
-          <FontAwesome5 name="arrow-left" size={16} color="white" />
-        </TouchableOpacity>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: color }}>
+      <MegaHeader category={category} bgColor={color} />
 
-        <View className="items-center">
-          <Text className="font-bold text-3xl text-white text-center mb-2">
-            {category?.name}
-          </Text>
-          <Text className="text-white/80 text-base text-center">
-            {category?.subcategories?.length || 0} subcategories available
-          </Text>
-        </View>
-
-        <View className="absolute top-16 right-8 w-20 h-20 rounded-full bg-white/10" />
-        <View className="absolute bottom-8 left-8 w-12 h-12 rounded-full bg-white/15" />
-      </LinearGradient>
-
-      {/* Main Content with improved styling */}
       <ScrollView
         className="flex-1 bg-white"
         style={{
@@ -106,7 +96,6 @@ export default function Mega() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Hero Image Section */}
         <View className="px-6 pt-8 pb-6">
           <View
             className="relative rounded-3xl overflow-hidden"
@@ -152,7 +141,7 @@ export default function Mega() {
 
             {/* Featured badge */}
             <View className="absolute top-4 left-4 bg-white/90 rounded-full px-3 py-1">
-              <Text className="text-xs font-bold" style={{ color: bgColor }}>
+              <Text className="text-xs font-bold" style={{ color: color }}>
                 FEATURED
               </Text>
             </View>
@@ -214,10 +203,10 @@ export default function Mega() {
             </View>
           </View>
 
-          {category?.subcategories && category.subcategories.length > 0 ? (
+          {bestSellers && bestSellers.length > 0 ? (
             <FlatList
-              data={category.subcategories.slice(0, 5)}
-              renderItem={renderSubCategories}
+              data={bestSellers}
+              renderItem={renderBestSellers}
               keyExtractor={keyExtractor}
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -239,51 +228,6 @@ export default function Mega() {
           )}
         </View>
 
-        {/* Additional Info Section */}
-        <View className="px-6 mb-8">
-          <View className="bg-gray-50 rounded-2xl p-6">
-            <View className="flex-row items-center mb-4">
-              <View
-                className="w-10 h-10 rounded-2xl items-center justify-center mr-3"
-                style={{ backgroundColor: `${bgColor}20` }}
-              >
-                <FontAwesome5 name="info-circle" size={16} color={bgColor} />
-              </View>
-              <Text className="font-bold text-gray-900 text-lg">
-                About This Category
-              </Text>
-            </View>
-
-            <Text className="text-gray-600 leading-6">
-              {category?.description ||
-                `Discover amazing products in the ${category?.name} category. We've curated the best selection to help you find exactly what you're looking for.`}
-            </Text>
-
-            {/* Stats */}
-            <View className="flex-row justify-between mt-6 pt-4 border-t border-gray-200">
-              <View className="items-center">
-                <Text className="font-bold text-xl" style={{ color: bgColor }}>
-                  {category?.subcategories?.length || 0}
-                </Text>
-                <Text className="text-gray-500 text-sm">Categories</Text>
-              </View>
-              <View className="items-center">
-                <Text className="font-bold text-xl" style={{ color: bgColor }}>
-                  100+
-                </Text>
-                <Text className="text-gray-500 text-sm">Products</Text>
-              </View>
-              <View className="items-center">
-                <Text className="font-bold text-xl" style={{ color: bgColor }}>
-                  4.8★
-                </Text>
-                <Text className="text-gray-500 text-sm">Rating</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Bottom spacing */}
         <View className="h-8" />
       </ScrollView>
     </SafeAreaView>

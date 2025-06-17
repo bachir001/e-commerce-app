@@ -26,12 +26,6 @@ const MemoizedProductItem = React.memo(
         innerColor={innerColor}
         onAddToCart={() => console.log("Add to cart:", item.id)}
         onAddToWishlist={() => console.log("Add to wishlist:", item.id)}
-        onPress={() => {
-          router.push({
-            pathname: "/(tabs)/home/ProductDetails",
-            params: { productJSON: JSON.stringify(item) },
-          });
-        }}
       />
     </View>
   ),

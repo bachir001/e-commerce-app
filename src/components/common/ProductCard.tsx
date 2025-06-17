@@ -18,13 +18,19 @@ const ProductCard = React.memo(
     product,
     innerColor = "#5e3ebd",
     containerColor = "white",
-    onPress,
     onAddToCart,
     onAddToWishlist,
   }: Props) => {
     if (!product) return null;
 
     const router = useRouter();
+
+    const onPress = () => {
+      router.push({
+        pathname: "/ProductDetails",
+        params: { productJSON: JSON.stringify(product) },
+      });
+    };
 
     const productName = product.name || "Untitled Product";
     const productImage = product.image || "https://via.placeholder.com/150";
