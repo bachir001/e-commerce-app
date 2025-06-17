@@ -24,7 +24,7 @@ const newArrivalsOptions = {
   page: 1,
 };
 
-SplashScreen.preventAutoHideAsync();
+// SplashScreen.preventAutoHideAsync();
 
 function AppWithProviders() {
   const { setSessionId } = useSessionStore();
@@ -75,18 +75,18 @@ function AppWithProviders() {
     // loadingNewArrivals,
   ]);
 
-  // const appNotReady =
-  //   loadingBrands || loadingSliders || loadingMega || loadingNewArrivals;
+  const appNotReady =
+    loadingBrands || loadingSliders || loadingMega || loadingNewArrivals;
 
-  // if (appNotReady) {
-  //   return (
-  //     <ImageBackground
-  //       source={require("@/assets/images/initialPageLoader.jpeg")}
-  //       className="flex-1 justify-center items-center"
-  //       resizeMode="cover"
-  //     />
-  //   );
-  // }
+  if (appNotReady) {
+    return (
+      <ImageBackground
+        source={require("@/assets/images/initialPageLoader.jpeg")}
+        className="flex-1 justify-center items-center"
+        resizeMode="cover"
+      />
+    );
+  }
 
   return (
     <>
