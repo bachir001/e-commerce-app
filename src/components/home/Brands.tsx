@@ -9,6 +9,7 @@ import {
 import { useCallback, useContext } from "react";
 import { SessionContext } from "@/app/_layout";
 import { Brand } from "@/types/globalTypes";
+import { useBrands } from "@/hooks/home/topSection";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -48,7 +49,7 @@ function BrandComponent({ name, image, slug, id }: Brand) {
 }
 
 export default function Brands() {
-  const { brands }: { brands: Brand[] } = useContext(SessionContext);
+  const { data: brands, isLoading: loadingBrands } = useBrands();
 
   const renderItem = useCallback(
     ({ item }: { item: Brand }) => {
@@ -73,7 +74,7 @@ export default function Brands() {
   return (
     <View className="py-2">
       <FlatList
-        data={brands}
+        data={brands ? brands : []}
         renderItem={renderItem}
         horizontal
         showsHorizontalScrollIndicator={false}
