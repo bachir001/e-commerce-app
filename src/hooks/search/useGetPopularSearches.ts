@@ -5,13 +5,14 @@ export default function useGetPopularSearches() {
   return useQuery({
     queryKey: ["popularSearches"],
     queryFn: async () => {
-      const response = await axiosApi.get("search/popular");
+      try {
+        const response = await axiosApi.get("search/popular");
 
-      if (!response) {
-        throw new Error("Cannot get popular searches");
+        return response.data.data || [];
+      } catch (err) {
+        console.error(err);
+        throw new Error("Failed to load popular searches");
       }
-
-      return response.data.data;
     },
   });
 }

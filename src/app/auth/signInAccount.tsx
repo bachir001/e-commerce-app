@@ -9,14 +9,14 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, Stack, useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
-import { SessionContext } from "../_layout";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Colors } from "@/constants/Colors";
+import { useSessionStore } from "@/store/useSessionStore";
 
 interface LoginBody {
   email?: string;
@@ -30,7 +30,8 @@ export default function loginAccount() {
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
-  const { setUser, setToken, setIsLogged } = useContext(SessionContext);
+  const { setIsLogged } = useSessionStore();
+
   const router = useRouter();
 
   const handleLogin = async () => {
@@ -47,7 +48,7 @@ export default function loginAccount() {
       await axiosApi
         .post("https://api-gocami-test.gocami.com/api/login", RequestBody)
         .then(async (response) => {
-          console.log(response)
+          console.log(response);
           if (response.data.status) {
             await Promise.all([
               AsyncStorage.setItem("token", response.data.data.token),

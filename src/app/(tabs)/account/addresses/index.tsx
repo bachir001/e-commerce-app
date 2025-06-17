@@ -9,13 +9,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useContext, useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
-import { SessionContext } from "@/app/_layout";
+
 import { Colors } from "@/constants/Colors";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { useQuery } from "@tanstack/react-query";
+import { useSessionStore } from "@/store/useSessionStore";
 
 export interface Address {
   id: number;
@@ -41,13 +42,12 @@ export interface Address {
 export default function AddressPage() {
   const router = useRouter();
 
-  const [loading, setLoading] = useState<boolean>(false);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
-  const { token } = useContext(SessionContext);
+  const { token } = useSessionStore();
 
   const {
     data: addresses = [],

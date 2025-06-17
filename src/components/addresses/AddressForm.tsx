@@ -1,8 +1,7 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   Switch,
@@ -17,10 +16,11 @@ import axiosApi from "@/apis/axiosApi";
 import { CustomPicker } from "./CustomPicker";
 import { PickerModal } from "./PickerModal";
 import AddressInput from "./AddressInput";
-import { queryClient, SessionContext } from "@/app/_layout";
+
 import Toast from "react-native-toast-message";
-import { QueryClient, useMutation } from "@tanstack/react-query";
+
 import useAddAddress from "@/hooks/addresses/addAddress";
+import { useSessionStore } from "@/store/useSessionStore";
 
 export interface Governorate {
   id: number;
@@ -84,9 +84,7 @@ export default function AddressForm({
   const [cityLoading, setCityLoading] = useState<boolean>(false);
   const [areaLoading, setAreaLoading] = useState<boolean>(false);
 
-  const [loading, setLoading] = useState<boolean>(false);
-
-  const { token, governorates, setGovernorates } = useContext(SessionContext);
+  const { token, governorates, setGovernorates } = useSessionStore();
 
   const addAddressMutation = useAddAddress();
 

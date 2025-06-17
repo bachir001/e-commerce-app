@@ -1,10 +1,14 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback } from "react";
 import { Tabs } from "expo-router";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 import { useCartStore } from "@/store/cartStore";
 import { Home, LayoutGrid, ShoppingBag, User } from "lucide-react-native";
+import { Platform } from "react-native";
+// Corrected Haptics import: Import all as Haptics
+import * as Haptics from "expo-haptics";
+import { ImpactFeedbackStyle } from "expo-haptics"; // Keep this for the style enum
 
 export default function TabLayout() {
   const colorScheme = useColorScheme() ?? "light";
@@ -22,6 +26,14 @@ export default function TabLayout() {
         animation: "fade",
       }}
       initialRouteName="home"
+      screenListeners={{
+        tabPress: (e) => {
+          // Add a check to ensure Haptics is available before calling methods
+          if (Haptics && (Platform.OS === "ios" || Platform.OS === "android")) {
+            Haptics.impactAsync(ImpactFeedbackStyle.Light);
+          }
+        },
+      }}
     >
       <Tabs.Screen
         name="home"
@@ -66,10 +78,7 @@ export default function TabLayout() {
           headerShown: false,
           title: "Account",
           tabBarLabel: "Account",
-          tabBarIcon: ({ color }) => (
-            // <MaterialCommunityIcons name="account" size={24} color={color} />
-            <User size={24} color="#5e3ebd" />
-          ),
+          tabBarIcon: ({ color }) => <User size={24} color="#5e3ebd" />,
         }}
       />
     </Tabs>

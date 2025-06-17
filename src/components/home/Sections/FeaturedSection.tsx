@@ -1,12 +1,13 @@
 import { View, Text, FlatList, TouchableOpacity } from "react-native";
-import React, { useCallback, useContext, useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { ChevronRight } from "lucide-react-native";
 import ProductCard from "@/components/common/ProductCard";
 import AnimatedLoader from "@/components/common/AnimatedLayout";
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import type { HomePageSectionProp } from "@/constants/HomePageSections";
-import { SessionContext } from "@/app/_layout";
+
 import { router } from "expo-router";
+import { useAppDataStore } from "@/store/useAppDataStore";
 
 interface FeaturedSectionProps extends HomePageSectionProp {
   color?: string;
@@ -59,13 +60,7 @@ const FeaturedSection = React.memo(
       list ? false : true
     );
 
-    const session = useContext(SessionContext);
-
-    if (!session) {
-      throw new Error("SessionContext is null. Make sure the provider is set.");
-    }
-
-    const { newArrivals } = session;
+    const { newArrivals } = useAppDataStore();
 
     const renderProductItem = useCallback(
       ({ item }: { item: any }) => (

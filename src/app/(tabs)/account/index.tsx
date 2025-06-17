@@ -1,21 +1,17 @@
-import { useContext, useEffect, useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  Linking, // Make sure to import Linking for phone/email if you use them
-} from "react-native";
+import { useMemo, useState } from "react";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+
 import { useRouter } from "expo-router";
 import Header from "@/components/account/AccountHeader";
 import IconGrid, { type IconGridItem } from "@/components/account/IconGrid";
 import Footer from "@/components/account/Footer";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { SessionContext } from "@/app/_layout";
+
 import { FontAwesome5 } from "@expo/vector-icons";
 import ContactModal from "@/components/account/ContactModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Colors } from "@/constants/Colors";
+import { useSessionStore } from "@/store/useSessionStore";
 
 function getFlagEmoji(countryCode: string): string {
   return countryCode
@@ -28,7 +24,8 @@ function getFlagEmoji(countryCode: string): string {
 
 export default function AccountScreen() {
   const router = useRouter();
-  const {isLogged, setIsLogged, user} = useContext(SessionContext);
+  const { user, isLogged, setIsLogged } = useSessionStore();
+
   const [isContactModalVisible, setContactModalVisible] = useState(false);
 
   // let user;
@@ -145,7 +142,7 @@ export default function AccountScreen() {
         icon: "bell",
         label: "My Notifications",
         onPress: () => router.push("/notifications"),
-      }
+      },
     ],
     []
   );
