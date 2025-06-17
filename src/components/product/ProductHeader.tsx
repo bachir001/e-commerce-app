@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { ChevronLeft, Heart, Share2 } from "lucide-react-native";
 import { TouchableOpacity, View } from "react-native";
 
@@ -11,6 +12,7 @@ export default function ProductHeader({
       <TouchableOpacity
         className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
         activeOpacity={0.7}
+        onPress={() => router.back()}
       >
         <ChevronLeft size={24} color="#333" />
       </TouchableOpacity>

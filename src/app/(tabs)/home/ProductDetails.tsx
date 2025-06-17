@@ -25,6 +25,7 @@ import ProductInformation from "@/components/product/ProductInformation";
 import SimilarProductsSection from "@/components/product/SimilarProductsSection";
 import useGetRelatedProducts from "@/hooks/products/useGetRelatedProducts";
 import useGetProductDetails from "@/hooks/products/useGetProductDetails";
+import axiosApi from "@/apis/axiosApi";
 
 export interface Category {
   id: number;
@@ -35,6 +36,16 @@ export interface Category {
   category_cover_image: string | null;
   description: string | null;
   subcategories: Category[] & { children: Category[] };
+}
+
+interface MainDetail extends Product {
+  sku: string;
+  video_url: string | null;
+  quantity: number;
+  value_points: number;
+  details: string;
+  brand: Brand;
+  categories: Category[];
 }
 
 export default function ProductDetailsScreen(): React.ReactElement {
@@ -50,11 +61,15 @@ export default function ProductDetailsScreen(): React.ReactElement {
     isError: relatedProductsError,
   } = useGetRelatedProducts(product?.slug || "");
 
-  const {
-    data: productDetail,
-    isLoading: productDetailLoading,
-    isError: productDetailError,
-  } = useGetProductDetails(product?.slug || "");
+  // const {
+  //   data: productDetail,
+  //   isLoading: productDetailLoading,
+  //   isError: productDetailError,
+  // } = useGetProductDetails(product?.slug || "");
+
+  //Product Detail
+  const [productDetail, setProductDetail] = useState<MainDetail | null>(null);
+  const [productDetailLoading, setProductDetailLoading] = useState(false);
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const mainCarouselReference = useRef<FlatList<string>>(null);
@@ -151,6 +166,22 @@ export default function ProductDetailsScreen(): React.ReactElement {
   }, []);
 
   useEffect(() => {
+    const fetchProductDetail = async () => {
+      setProductDetailLoading(true);
+      try {
+        const response = await axiosApi.get(`getProduct/${product?.slug}`);
+        if (response.status === 200) {
+          setProductDetail(response.data.data.mainDetail);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setProductDetailLoading(false);
+      }
+    };
+
+    fetchProductDetail();
+
     return () => {
       if (scrollTimeout.current) {
         clearTimeout(scrollTimeout.current);
