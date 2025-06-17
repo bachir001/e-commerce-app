@@ -9,6 +9,7 @@ import {
 import Modal from "react-native-modal";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Colors } from "@/constants/Colors";
+import DotsLoader from "../common/AnimatedLayout";
 
 interface ChangePasswordModalProps {
   isVisible: boolean;
@@ -251,7 +252,7 @@ export default function ChangePasswordModal({
             >
               {loading ? (
                 <View className="flex-row items-center">
-                  <ActivityIndicator size="small" color="white" />
+                  <DotsLoader size="small" color="white" />
                 </View>
               ) : (
                 <Text className="text-white font-semibold">

@@ -81,21 +81,18 @@ function AppWithProviders() {
   }
 
   return (
-    <>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          animation: "fade_from_bottom",
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="auth/signInAccount"
-          options={{ headerShown: true, title: "Sign In" }}
-        />
-      </Stack>
-      <Toast />
-    </>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "fade_from_bottom",
+      }}
+    >
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="auth/signInAccount"
+        options={{ headerShown: true, title: "Sign In" }}
+      />
+    </Stack>
   );
 }
 

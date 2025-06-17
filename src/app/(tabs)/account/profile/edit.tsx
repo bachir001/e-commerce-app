@@ -17,6 +17,7 @@ import { Colors } from "@/constants/Colors";
 
 import ChangePasswordModal from "@/components/account/ChangePasswordModal";
 import { useSessionStore } from "@/store/useSessionStore";
+import DotsLoader from "@/components/common/AnimatedLayout";
 interface UpdateBody {
   first_name?: string;
   last_name?: string;
@@ -78,13 +79,14 @@ export default function EditProfile() {
     try {
       const updateBody: UpdateBody = {};
 
-      if (firstName !== user.first_name) updateBody.first_name = firstName;
+      if (firstName !== user?.first_name) updateBody.first_name = firstName;
 
-      if (lastName !== user.last_name) updateBody.last_name = lastName;
+      if (lastName !== user?.last_name) updateBody.last_name = lastName;
 
-      if (mobile !== user.mobile && mobile !== null) updateBody.mobile = mobile;
+      if (mobile !== user?.mobile && mobile !== null)
+        updateBody.mobile = mobile;
 
-      if (dateOfBirth !== user.date_of_birth && dateOfBirth !== null)
+      if (dateOfBirth !== user?.date_of_birth && dateOfBirth !== null)
         updateBody.date_of_birth = dateOfBirth;
 
       // const genderId = gender === "Female" ? 2 : 1;
@@ -196,7 +198,7 @@ export default function EditProfile() {
           }}
         >
           {loading ? (
-            <ActivityIndicator size="small" color="white" />
+            <DotsLoader size="small" color="white" />
           ) : (
             <Text className="text-white font-medium text-sm">Save</Text>
           )}

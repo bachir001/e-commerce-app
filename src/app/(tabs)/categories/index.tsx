@@ -13,6 +13,7 @@ import { ThemedText } from "@/components/common/ThemedText";
 import { ThemedView } from "@/components/common/ThemedView";
 import { IconSymbol } from "@/components/common/IconSymbol";
 import { Link } from "expo-router";
+import DotsLoader from "@/components/common/AnimatedLayout";
 
 interface Banner {
   text: string | null;
@@ -70,7 +71,7 @@ export default function CategoriesScreen() {
   if (loading)
     return (
       <ThemedView style={styles.center}>
-        <ActivityIndicator size="large" />
+        <DotsLoader />
       </ThemedView>
     );
   if (error)

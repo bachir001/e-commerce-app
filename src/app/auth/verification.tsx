@@ -16,6 +16,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { Colors } from "@/constants/Colors";
 import { useSessionStore } from "@/store/useSessionStore";
+import DotsLoader from "@/components/common/AnimatedLayout";
 
 export default function Verification() {
   const router = useRouter();
@@ -250,7 +251,7 @@ export default function Verification() {
           disabled={verificationCode.join("").length !== 6 || isExpired}
         >
           {loading ? (
-            <ActivityIndicator size="small" color="white" />
+            <DotsLoader size="small" color="white" />
           ) : (
             <Text className="text-base font-semibold text-white">Verify</Text>
           )}

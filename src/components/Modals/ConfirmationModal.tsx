@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
+import DotsLoader from "../common/AnimatedLayout";
 
 interface ConfirmationModalProps {
   isVisible: boolean;
@@ -112,7 +113,7 @@ export default function ConfirmationModal({
               className={`flex-1 py-3 px-4 ${getConfirmButtonStyles()} rounded-xl items-center justify-center`}
             >
               {loading ? (
-                <ActivityIndicator size="small" color="white" />
+                <DotsLoader size="small" color="white" />
               ) : (
                 <Text className="font-semibold text-white">
                   {confirmButtonText}

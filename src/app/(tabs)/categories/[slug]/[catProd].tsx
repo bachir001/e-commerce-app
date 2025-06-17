@@ -1,11 +1,6 @@
 // src/app/(tabs)/categories/[slug]/[catProds].tsx
 
-import React, {
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
-} from 'react';
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -13,16 +8,21 @@ import {
   FlatList,
   TouchableOpacity,
   ListRenderItemInfo,
-} from 'react-native';
-import { Stack, useLocalSearchParams } from 'expo-router';
-import axios from 'axios';
-import ProductCard, { ProductCardProps } from '@/components/common/ProductCard';
-import { ThemedView } from '@/components/common/ThemedView';
-import { IconSymbol } from '@/components/common/IconSymbol';
-import { ThemedText } from '@/components/common/ThemedText';
-import FilterModal from '@/components/FilterModal';
-import SortModal from '@/components/SortModal';
-import type { AvailableFilters, SelectedFilters, PriceBounds } from '@/types/types';
+} from "react-native";
+import { Stack, useLocalSearchParams } from "expo-router";
+import axios from "axios";
+import ProductCard, { ProductCardProps } from "@/components/common/ProductCard";
+import { ThemedView } from "@/components/common/ThemedView";
+import { IconSymbol } from "@/components/common/IconSymbol";
+import { ThemedText } from "@/components/common/ThemedText";
+import FilterModal from "@/components/FilterModal";
+import SortModal from "@/components/SortModal";
+import type {
+  AvailableFilters,
+  SelectedFilters,
+  PriceBounds,
+} from "@/types/types";
+import DotsLoader from "@/components/common/AnimatedLayout";
 
 interface ApiProduct {
   id: number;
@@ -59,7 +59,7 @@ export default function CategoryProductsScreen() {
   const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>({
     selectedByKey: {},
     priceRange: [0, 0],
-    sortOption: 'default',
+    sortOption: "default",
   });
 
   const [products, setProducts] = useState<ProductCardProps[]>([]);
@@ -82,21 +82,23 @@ export default function CategoryProductsScreen() {
         `https://newapi.gocami.com/api/filters?model_type=category&model_id=${model_id}`
       );
       const data = res.data.data;
-      const filters: Record<string, { id: number; name: string; code?: string }[]> =
-        {};
+      const filters: Record<
+        string,
+        { id: number; name: string; code?: string }[]
+      > = {};
       let bounds: PriceBounds | undefined;
 
       for (const [key, raw] of Object.entries(data)) {
-        if (key === 'categories') continue;
+        if (key === "categories") continue;
 
         // Price bounds
         if (
-          typeof raw === 'object' &&
+          typeof raw === "object" &&
           raw !== null &&
-          'min' in raw &&
-          'max' in raw &&
-          typeof (raw as any).min === 'number' &&
-          typeof (raw as any).max === 'number'
+          "min" in raw &&
+          "max" in raw &&
+          typeof (raw as any).min === "number" &&
+          typeof (raw as any).max === "number"
         ) {
           bounds = {
             priceMin: (raw as any).min,
@@ -110,16 +112,13 @@ export default function CategoryProductsScreen() {
           const arr = raw as any[];
           if (
             arr.every(
-              (v) =>
-                v &&
-                typeof v.id === 'number' &&
-                typeof v.name === 'string'
+              (v) => v && typeof v.id === "number" && typeof v.name === "string"
             )
           ) {
             filters[key] = arr.map((v) => ({
               id: v.id,
               name: v.name,
-              ...(typeof v.code === 'string' ? { code: v.code } : {}),
+              ...(typeof v.code === "string" ? { code: v.code } : {}),
             }));
           }
         }
@@ -130,13 +129,11 @@ export default function CategoryProductsScreen() {
         selectedByKey: Object.fromEntries(
           Object.keys(filters).map((k) => [k, []])
         ) as Record<string, number[]>,
-        priceRange: bounds
-          ? [bounds.priceMin, bounds.priceMax]
-          : [0, 0],
-        sortOption: 'default',
+        priceRange: bounds ? [bounds.priceMin, bounds.priceMax] : [0, 0],
+        sortOption: "default",
       });
     } catch (e: any) {
-      setError(e.message || 'Error fetching filters');
+      setError(e.message || "Error fetching filters");
     } finally {
       setFiltersLoaded(true);
     }
@@ -161,10 +158,7 @@ export default function CategoryProductsScreen() {
         ...Object.fromEntries(
           Object.entries(selectedFilters.selectedByKey)
             .filter(([, ids]) => ids.length > 0)
-            .map(([k, ids]) => [
-              `${k.slice(0, -1)}_id`,
-              ids.join(','),
-            ])
+            .map(([k, ids]) => [`${k.slice(0, -1)}_id`, ids.join(",")])
         ),
       };
 
@@ -183,7 +177,7 @@ export default function CategoryProductsScreen() {
               item.special_price !== null && item.special_price < item.price
                 ? item.special_price
                 : item.price,
-            description: item.description.replace(/<[^>]+>/g, ''),
+            description: item.description.replace(/<[^>]+>/g, ""),
             image: item.image,
             slug: item.slug,
             onAddToCart: () => {}, // stable no-op
@@ -196,7 +190,7 @@ export default function CategoryProductsScreen() {
           setTotalPages(res.data.data.relatedProducts.total_pages);
         }
       } catch (e: any) {
-        setError(e.message || 'Error fetching products');
+        setError(e.message || "Error fetching products");
       } finally {
         setIsLoading(false);
         setIsLoadingMore(false);
@@ -212,14 +206,11 @@ export default function CategoryProductsScreen() {
   }, [filtersLoaded, fetchProducts, page, selectedFilters]);
 
   // Handlers
-  const applyFilters = useCallback(
-    (newSel: Partial<SelectedFilters>) => {
-      setSelectedFilters((sf) => ({ ...sf, ...newSel }));
-      setPage(1);
-      setProducts([]);
-    },
-    []
-  );
+  const applyFilters = useCallback((newSel: Partial<SelectedFilters>) => {
+    setSelectedFilters((sf) => ({ ...sf, ...newSel }));
+    setPage(1);
+    setProducts([]);
+  }, []);
   const resetFilters = useCallback(() => {
     setSelectedFilters({
       selectedByKey: Object.fromEntries(
@@ -228,7 +219,7 @@ export default function CategoryProductsScreen() {
       priceRange: availableFilters.bounds
         ? [availableFilters.bounds.priceMin, availableFilters.bounds.priceMax]
         : [0, 0],
-      sortOption: 'default',
+      sortOption: "default",
     });
     setPage(1);
     setProducts([]);
@@ -249,10 +240,7 @@ export default function CategoryProductsScreen() {
     []
   );
   const renderFooter = useCallback(
-    () =>
-      isLoadingMore ? (
-        <ActivityIndicator style={styles.loadingFooter} />
-      ) : null,
+    () => (isLoadingMore ? <DotsLoader /> : null),
     [isLoadingMore]
   );
   const getItemLayout = useCallback(
@@ -267,7 +255,7 @@ export default function CategoryProductsScreen() {
   if (isLoading) {
     return (
       <ThemedView style={styles.center}>
-        <ActivityIndicator size="large" />
+        <DotsLoader size="large" />
       </ThemedView>
     );
   }
@@ -275,7 +263,7 @@ export default function CategoryProductsScreen() {
     return (
       <ThemedView style={styles.center}>
         <ThemedText>
-          {error.includes('results') ? 'No products found.' : error}
+          {error.includes("results") ? "No products found." : error}
         </ThemedText>
       </ThemedView>
     );
@@ -283,21 +271,25 @@ export default function CategoryProductsScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: name || 'Category' }} />
+      <Stack.Screen options={{ title: name || "Category" }} />
       <ThemedView style={styles.container}>
         <View style={styles.headerRow}>
           <TouchableOpacity
             style={styles.headerButton}
             onPress={() => setFilterVisible(true)}
           >
-            <IconSymbol name="line.3.horizontal.decrease" size={20} color='grey'/>
+            <IconSymbol
+              name="line.3.horizontal.decrease"
+              size={20}
+              color="grey"
+            />
             <ThemedText style={styles.buttonText}>Filter</ThemedText>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerButton}
             onPress={() => setSortVisible(true)}
           >
-            <IconSymbol name="arrow.up.arrow.down" size={20} color='grey'/>
+            <IconSymbol name="arrow.up.arrow.down" size={20} color="grey" />
             <ThemedText style={styles.buttonText}>Sort</ThemedText>
           </TouchableOpacity>
         </View>
@@ -340,18 +332,18 @@ const CARD_HEIGHT = 320; // approximate card + margin height
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 8 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
   headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     padding: 12,
     borderBottomWidth: 1,
-    borderColor: '#DDD',
+    borderColor: "#DDD",
   },
-  headerButton: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headerButton: { flexDirection: "row", alignItems: "center", gap: 8 },
   buttonText: { marginLeft: 4, fontSize: 16 },
   listContent: { paddingBottom: 16 },
-  columnWrapper: { justifyContent: 'space-between' },
-  cardContainer: { width: '48%', marginBottom: 16 },
+  columnWrapper: { justifyContent: "space-between" },
+  cardContainer: { width: "48%", marginBottom: 16 },
   loadingFooter: { paddingVertical: 16 },
 });

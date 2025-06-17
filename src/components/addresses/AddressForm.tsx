@@ -21,6 +21,7 @@ import Toast from "react-native-toast-message";
 
 import useAddAddress from "@/hooks/addresses/addAddress";
 import { useSessionStore } from "@/store/useSessionStore";
+import DotsLoader from "../common/AnimatedLayout";
 
 export interface Governorate {
   id: number;
@@ -413,7 +414,7 @@ export default function AddressForm({
               }}
             >
               {addAddressMutation.isPending ? (
-                <ActivityIndicator size="small" color="white" />
+                <DotsLoader size="small" color="white" />
               ) : (
                 <Text className="text-white font-semibold">
                   {type === "create" ? "Create Address" : "Update Address"}

@@ -8,6 +8,7 @@ import type { HomePageSectionProp } from "@/constants/HomePageSections";
 
 import { router } from "expo-router";
 import { useAppDataStore } from "@/store/useAppDataStore";
+import DotsLoader from "@/components/common/AnimatedLayout";
 
 interface FeaturedSectionProps extends HomePageSectionProp {
   color?: string;
@@ -86,7 +87,7 @@ const FeaturedSection = React.memo(
     }, [isLoading, setLoading]);
 
     if (isLoading) {
-      return <AnimatedLoader color={color} text={`Loading ${title}`} />;
+      return <DotsLoader color={color} text={`Loading ${title}`} />;
     }
 
     // Create a light version of the color for the background

@@ -13,6 +13,7 @@ import type { Product } from "@/types/globalTypes";
 import AnimatedLoader from "./AnimatedLayout";
 import { Colors } from "@/constants/Colors";
 import useInfiniteProductList from "@/hooks/home/infiniteProductList";
+import DotsLoader from "./AnimatedLayout";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 48) / 2;
@@ -65,7 +66,7 @@ const ProductInfiniteList = memo(function ProductInfiniteList({
     if (isFetchingNextPage) {
       return (
         <View className="py-4 items-center">
-          <ActivityIndicator size="large" color={Colors.PRIMARY} />
+          <DotsLoader size="large" color={Colors.PRIMARY} />
           <Text className="text-gray-500 mt-2 text-sm">
             Loading more products...
           </Text>
@@ -128,7 +129,7 @@ const ProductInfiniteList = memo(function ProductInfiniteList({
   if (status === "pending") {
     return (
       <View className="flex-1 justify-center items-center py-20">
-        <AnimatedLoader text="Loading Products" />
+        <DotsLoader text="Loading Products" />
       </View>
     );
   }
