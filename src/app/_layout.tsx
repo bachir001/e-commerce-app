@@ -50,14 +50,14 @@ function AppWithProviders() {
         if (megaCategories && !loadingMega) setMegaCategories(megaCategories);
         if (newArrivals && !loadingNewArrivals) setNewArrivals(newArrivals);
 
-        if (
-          !loadingBrands &&
-          !loadingSliders &&
-          !loadingMega &&
-          !loadingNewArrivals
-        ) {
-          await SplashScreen.hideAsync();
-        }
+        // if (
+        //   !loadingBrands &&
+        //   !loadingSliders &&
+        //   !loadingMega &&
+        //   !loadingNewArrivals
+        // ) {
+        //   await SplashScreen.hideAsync();
+        // }
       } catch (error) {
         console.error("Initialization error:", error);
       }
@@ -69,10 +69,10 @@ function AppWithProviders() {
     sliders,
     megaCategories,
     newArrivals,
-    loadingBrands,
-    loadingSliders,
-    loadingMega,
-    loadingNewArrivals,
+    // loadingBrands,
+    // loadingSliders,
+    // loadingMega,
+    // loadingNewArrivals,
   ]);
 
   // const appNotReady =
