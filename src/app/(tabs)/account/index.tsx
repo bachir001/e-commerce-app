@@ -28,13 +28,9 @@ function getFlagEmoji(countryCode: string): string {
 
 export default function AccountScreen() {
   const router = useRouter();
-  const {isLogged, setIsLogged, user} = useContext(SessionContext);
+  const {isLogged, setIsLogged, user,setUser,setToken} = useContext(SessionContext);
   const [isContactModalVisible, setContactModalVisible] = useState(false);
 
-  // let user;
-  // if (storage.getString("user") !== null) {
-  //   user = JSON.parse(storage.getString("user")!);
-  // }
 
   const openContactSheet = () => {
     setContactModalVisible(true);
@@ -155,8 +151,8 @@ export default function AccountScreen() {
       AsyncStorage.removeItem("token"),
       AsyncStorage.removeItem("user"),
     ]);
-    // setUser(null);
-    // setToken(null);
+    setUser(null);
+    setToken(null);
     setIsLogged(false);
   };
 

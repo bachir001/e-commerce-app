@@ -24,6 +24,7 @@ import {
   useSliders,
 } from "@/hooks/home/topSection";
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const queryClient = new QueryClient();
 
@@ -81,18 +82,21 @@ const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({
 };
 
 // Session Context (your existing context)
-export let SessionContext = createContext<SessionContextValue | null>(null);
+export const SessionContext = createContext<SessionContextValue | null>(null); // Changed from 'let' to 'const'
+
 
 function AppWithProviders() {
   const { data: brands, isLoading: loadingBrands } = useBrands();
   const { data: sliders, isLoading: loadingSliders } = useSliders();
   const { data: megaCategories, isLoading: loadingMega } = useMegaCategories();
-  const { data: newArrivals, isLoading: loadingNewArrivals } =
+
+  // Fixed syntax error in this hook call:
+  const { data: newArrivals, isLoading: loadingNewArrivals } = 
     useFeaturedSection("new-arrivals", {
       per_page: 15,
       sort: "price_high_low" as const,
       page: 1,
-    });
+    }, true);
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLogged, setIsLogged] = useState<boolean>(false);
@@ -104,18 +108,22 @@ function AppWithProviders() {
     async function performInitialLoad() {
       try {
         const id = await getOrCreateSessionId();
-        setSessionId(id);
-        initOneSignal();
+        const userString = await AsyncStorage.getItem("user");
+        const userParsed = userString ? JSON.parse(userString) : null;
+
+        setSessionId(id); 
+        // Initialize OneSignal and wait for completion
+        initOneSignal(userParsed);
+        console.log('OneSignal initialized initiated');
       } catch (error) {
         console.error("Error during initial app load:", error);
       }
     }
-
+    
     performInitialLoad();
   }, []);
 
-  const appNotReady =
-    loadingBrands || loadingSliders || loadingMega || loadingNewArrivals;
+  const appNotReady = loadingBrands || loadingSliders || loadingMega;
 
   const contextValue = useMemo(
     () => ({
@@ -131,7 +139,6 @@ function AppWithProviders() {
       brands,
       sliders,
       megaCategories,
-      newArrivals,
     }),
     [
       sessionId,
@@ -142,7 +149,6 @@ function AppWithProviders() {
       brands,
       sliders,
       megaCategories,
-      newArrivals, // Added this to dependency array
     ]
   );
 
