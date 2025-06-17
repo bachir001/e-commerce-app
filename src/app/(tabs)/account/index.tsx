@@ -28,10 +28,6 @@ export default function AccountScreen() {
 
   const [isContactModalVisible, setContactModalVisible] = useState(false);
 
-  // let user;
-  // if (storage.getString("user") !== null) {
-  //   user = JSON.parse(storage.getString("user")!);
-  // }
 
   const openContactSheet = () => {
     setContactModalVisible(true);
@@ -152,8 +148,8 @@ export default function AccountScreen() {
       AsyncStorage.removeItem("token"),
       AsyncStorage.removeItem("user"),
     ]);
-    // setUser(null);
-    // setToken(null);
+    setUser(null);
+    setToken(null);
     setIsLogged(false);
   };
 

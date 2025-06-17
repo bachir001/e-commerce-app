@@ -3,9 +3,9 @@ export interface UserContextType {
   first_name: string;
   last_name: string;
   mobile: string | null;
-  gender_id: number | null;
+  gender_id: number;
   gender: string;
-  date_of_birth: string | null;
+  date_of_birth: string | Date;
   email: string | null;
   email_verified: boolean;
   mobile_verified: boolean;

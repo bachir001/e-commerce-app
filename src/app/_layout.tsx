@@ -75,8 +75,7 @@ function AppWithProviders() {
     // loadingNewArrivals,
   ]);
 
-  const appNotReady =
-    loadingBrands || loadingSliders || loadingMega || loadingNewArrivals;
+  const appNotReady = loadingBrands || loadingSliders || loadingMega;
 
   if (appNotReady) {
     return (
