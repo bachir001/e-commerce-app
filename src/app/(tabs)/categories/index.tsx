@@ -1,211 +1,230 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
-  StyleSheet,
   View,
-  ImageBackground,
+  Text,
+  FlatList,
   TouchableOpacity,
-  ActivityIndicator,
-  Alert,
+  Image,
+  TextInput,
 } from "react-native";
-import { ParallaxFlatList } from "@/components/common/ParallaxFlatList";
-import { Collapsible } from "@/components/Collapsible";
-import { ThemedText } from "@/components/common/ThemedText";
-import { ThemedView } from "@/components/common/ThemedView";
-import { IconSymbol } from "@/components/common/IconSymbol";
-import { Link } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { FontAwesome5 } from "@expo/vector-icons";
+import useGetCategoriesData from "@/hooks/categories/useGetCategoriesData";
+import CategoryItem from "@/components/categories/CategoryItem";
 import DotsLoader from "@/components/common/AnimatedLayout";
+import { router } from "expo-router";
+import { Colors } from "@/constants/Colors";
 
-interface Banner {
-  text: string | null;
-  link: string;
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
   image: string;
-}
-interface CategoryInfo {
-  id: number;
-  name: string;
-  slug: string;
-  banners: Banner[];
-}
-interface RelatedCategory {
-  id: number;
-  name: string;
-  slug: string;
-  children?: RelatedCategory[];
-}
-interface CategorySection {
-  categoryInfo: CategoryInfo;
-  relatedCategories: RelatedCategory[];
+  main_image: string;
+  category_cover_image: string;
+  description: string | null;
 }
 
-export default function CategoriesScreen() {
-  const [sectionsData, setSectionsData] = useState<CategorySection[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const trimLongWords = (text: string) => {
-    const maxLength = 9;
-    return text.length > maxLength
-      ? text.substring(0, maxLength) + "..."
-      : text;
-  };
+export interface MainCategory extends Category {
+  subcategories?: SubCategory[];
+}
+
+export interface SubCategory extends Category {
+  children: Category[];
+}
+
+type niche =
+  | "garden-tools"
+  | "sports-outdoor"
+  | "hardware-and-fasteners"
+  | "home-living"
+  | "beauty-health";
+
+const allowedNiches: niche[] = [
+  "garden-tools",
+  "sports-outdoor",
+  "hardware-and-fasteners",
+  "home-living",
+  "beauty-health",
+];
+
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {
-    fetch("https://newapi.gocami.com/api/categories-menu")
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.status) setSectionsData(json.data);
-        else setError("Failed to load categories");
-      })
-      .catch(() => setError("Network error"))
-      .finally(() => setLoading(false));
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
+const EmptyComponent = React.memo(() => (
+  <View className="items-center py-12">
+    <FontAwesome5 name="search" size={48} color="#D1D5DB" />
+    <Text className="text-gray-500 text-lg font-medium mt-4">
+      No categories found
+    </Text>
+    <Text className="text-gray-400 text-sm">Try a different search term</Text>
+  </View>
+));
+
+const LoadingComponent = React.memo(() => (
+  <SafeAreaView className="flex-1 bg-white">
+    <View className="px-6 py-4">
+      <View className="w-32 h-8 bg-gray-200 rounded mb-2" />
+      <View className="w-48 h-4 bg-gray-200 rounded mb-6" />
+      <View className="w-full h-12 bg-gray-200 rounded-xl" />
+    </View>
+    <DotsLoader size="large" />
+  </SafeAreaView>
+));
+
+export default function CategoriesScreen() {
+  const { data: categories, isLoading: isCategoriesLoading } =
+    useGetCategoriesData();
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  const filteredCategories = useMemo(() => {
+    if (!categories || !debouncedSearchQuery.trim()) return categories;
+
+    const query = debouncedSearchQuery.toLowerCase().trim();
+    return categories.filter((category: Category) =>
+      category.name.toLowerCase().includes(query)
+    );
+  }, [categories, debouncedSearchQuery]);
+
+  const handleCategoryPress = useCallback((category: MainCategory) => {
+    router.push({
+      pathname: `(tabs)/categories/${category.slug}/${
+        allowedNiches.includes(category.slug as niche) ? "mega" : "category"
+      }`,
+      params: {
+        categoryJSON: category ? JSON.stringify(category) : null,
+
+        color:
+          category.slug === "beauty-health"
+            ? Colors.beautyAndHealth
+            : category.slug === "home-living"
+            ? Colors.homeAndLiving
+            : category.slug === "hardware-and-fasteners"
+            ? Colors.hardware
+            : category.slug === "garden-tools"
+            ? Colors.agriculture
+            : category.slug === "sports-outdoor"
+            ? Colors.sportsAndOutdoors
+            : null,
+      },
+    });
   }, []);
 
-  const headerImage = (
-    <IconSymbol
-      size={310}
-      color="#808080"
-      name="chevron.left.forwardslash.chevron.right"
-      style={styles.headerImage}
-    />
+  const renderItem = useCallback(
+    ({ item }: { item: MainCategory }) => (
+      <CategoryItem item={item} onPress={handleCategoryPress} />
+    ),
+    [handleCategoryPress]
   );
 
-  if (loading)
-    return (
-      <ThemedView style={styles.center}>
-        <DotsLoader />
-      </ThemedView>
-    );
-  if (error)
-    return (
-      <ThemedView style={styles.center}>
-        <ThemedText>{error}</ThemedText>
-      </ThemedView>
-    );
+  const keyExtractor = useCallback(
+    (item: MainCategory) => item.id.toString(),
+    []
+  );
 
-  const items = [
-    {
-      key: "page-title",
-      element: (
-        <View style={styles.titleContainer}>
-          <ThemedText type="title">Categories</ThemedText>
-        </View>
-      ),
-    },
-    ...sectionsData.flatMap((section) => {
-      const { categoryInfo, relatedCategories } = section;
-      const banner = categoryInfo.banners[0]; // use only first image
-      return [
-        {
-          key: `header-${categoryInfo.id}`,
-          element: (
-            <ThemedView style={styles.sectionHeader}>
-              <ThemedText type="subtitle">{categoryInfo.name}</ThemedText>
-            </ThemedView>
-          ),
-        },
-        banner && {
-          key: `banner-${categoryInfo.id}`,
-          element: (
-            <TouchableOpacity
-              style={styles.singleBannerWrapper}
-              onPress={() => {
-                /* navigate to banner.link */
-              }}
-            >
-              <ImageBackground
-                source={{ uri: banner.image }}
-                resizeMode="cover"
-                style={styles.singleBanner}
-              >
-                {banner.text && (
-                  <View style={styles.bannerOverlay}>
-                    <ThemedText style={styles.bannerText}>
-                      {banner.text}
-                    </ThemedText>
-                  </View>
-                )}
-              </ImageBackground>
-            </TouchableOpacity>
-          ),
-        },
-        {
-          key: `related-${categoryInfo.id}`,
-          element: (
-            <Collapsible title="Related Categories">
-              <View style={styles.grid}>
-                {relatedCategories.map((rc) => (
-                  <Link
-                    key={rc.id}
-                    href={{
-                      pathname: "/(tabs)/categories/[slug]/[catProds]",
-                      params: {
-                        slug: rc.slug, // Add the missing slug parameter
-                        catProds: rc.slug,
-                        name: rc.name,
-                        model_id: categoryInfo.id, // ← here!
-                      },
-                    }}
-                    asChild
-                  >
-                    <TouchableOpacity
-                      key={rc.id}
-                      style={styles.card}
-                      onPress={() => {
-                        /* navigate */
-                      }}
-                      onLongPress={() => Alert.alert(rc.name)} // Shows full name in a popup
-                    >
-                      <ThemedText style={styles.cardText}>
-                        {trimLongWords(rc.name)}
-                      </ThemedText>
-                    </TouchableOpacity>
-                  </Link>
-                ))}
-              </View>
-            </Collapsible>
-          ),
-        },
-      ].filter(Boolean as any);
-    }),
-  ];
+  const handleClearSearch = useCallback(() => {
+    setSearchQuery("");
+  }, []);
+
+  if (isCategoriesLoading) {
+    return <LoadingComponent />;
+  }
 
   return (
-    <ParallaxFlatList<(typeof items)[0]>
-      data={items}
-      renderItem={({ item }) => item.element}
-      keyExtractor={(item) => item.key}
-      headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
-      headerImage={headerImage}
-      contentContainerStyle={{ padding: 16 }}
-    />
+    <SafeAreaView className="flex-1 bg-white">
+      <View className="px-6 py-4 mb-2">
+        <View className="flex-row items-center justify-between mb-6">
+          <View className="flex-1">
+            <Text className="text-3xl font-bold text-gray-900">Categories</Text>
+            <Text className="text-gray-500 text-base mt-1">
+              Discover what you're looking for
+            </Text>
+          </View>
+          <View className="w-12 h-12 bg-indigo-50 rounded-2xl items-center justify-center">
+            <FontAwesome5 name="th-large" size={20} color="#5e3ebd" />
+          </View>
+        </View>
+
+        <View className="flex-row items-center bg-gray-50 rounded-2xl px-4 py-3 mb-4">
+          <FontAwesome5 name="search" size={16} color="#9CA3AF" />
+          <TextInput
+            className="flex-1 ml-3 text-gray-700"
+            placeholder="Search categories..."
+            placeholderTextColor="#9CA3AF"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            autoCorrect={false}
+            autoCapitalize="none"
+            selectTextOnFocus={false}
+          />
+          {searchQuery && searchQuery.length > 0 && (
+            <TouchableOpacity onPress={handleClearSearch}>
+              <FontAwesome5 name="times" size={16} color="#9CA3AF" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {filteredCategories && filteredCategories.length > 0 && (
+          <View className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-4 mb-4">
+            <View className="flex-row items-center">
+              <View className="w-10 h-10 bg-white rounded-2xl items-center justify-center mr-3 shadow-sm">
+                <FontAwesome5 name="layer-group" size={16} color="#5e3ebd" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-gray-900 font-bold text-base">
+                  {filteredCategories.length} Categories
+                </Text>
+                <Text className="text-gray-600 text-sm">
+                  {searchQuery
+                    ? `Found for "${searchQuery}"`
+                    : "Ready to explore"}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+      </View>
+
+      <FlatList
+        data={filteredCategories}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        numColumns={3}
+        ListEmptyComponent={EmptyComponent}
+        contentContainerStyle={{
+          paddingBottom: 20,
+        }}
+        columnWrapperStyle={{
+          paddingHorizontal: 16,
+        }}
+        showsVerticalScrollIndicator={false}
+        initialNumToRender={12}
+        maxToRenderPerBatch={9}
+        windowSize={5}
+        removeClippedSubviews={true}
+        legacyImplementation={false}
+        disableVirtualization={false}
+        updateCellsBatchingPeriod={50}
+        keyboardShouldPersistTaps="handled"
+        decelerationRate="fast"
+      />
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  headerImage: { position: "absolute", bottom: -90, left: -35 },
-  titleContainer: { marginBottom: 16 },
-  sectionHeader: { marginTop: 24, marginBottom: 8 },
-  singleBannerWrapper: {
-    alignSelf: "center",
-    marginBottom: 16,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  singleBanner: { width: 200, height: 100, justifyContent: "flex-end" },
-  bannerOverlay: { backgroundColor: "rgba(0,0,0,0.4)", padding: 6 },
-  bannerText: { color: "#fff", fontWeight: "600" },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  card: {
-    width: "48%",
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: "#fff",
-    elevation: 2,
-    marginBottom: 12,
-  },
-  cardText: { textAlign: "center", fontWeight: "500", fontSize: 12 },
-});

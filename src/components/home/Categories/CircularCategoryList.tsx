@@ -30,9 +30,10 @@ export default function CircularCategorylist({
         ItemSeparatorComponent={() => <View className="w-20" />}
         renderItem={({ item }: { item: MegaCategory[] }) => (
           <View className="flex-col gap-6">
-            {item.map((subItem) => (
-              <CircularCategory key={subItem.id} props={subItem} />
-            ))}
+            {item &&
+              item.map((subItem) => (
+                <CircularCategory key={subItem.id} props={subItem} />
+              ))}
           </View>
         )}
       />

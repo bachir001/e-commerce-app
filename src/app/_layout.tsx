@@ -47,7 +47,10 @@ function AppWithProviders() {
 
         if (brands && !loadingBrands) setBrands(brands);
         if (sliders && !loadingSliders) setSliders(sliders);
-        if (megaCategories && !loadingMega) setMegaCategories(megaCategories);
+        if (megaCategories && !loadingMega) {
+          console.log(megaCategories);
+          setMegaCategories(megaCategories);
+        }
         if (newArrivals && !loadingNewArrivals) setNewArrivals(newArrivals);
 
         // if (

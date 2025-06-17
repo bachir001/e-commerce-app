@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 
-import { useRouter } from "expo-router";
+import { router, useRouter } from "expo-router";
 import Header from "@/components/account/AccountHeader";
 import IconGrid, { type IconGridItem } from "@/components/account/IconGrid";
 import Footer from "@/components/account/Footer";
@@ -12,6 +12,52 @@ import ContactModal from "@/components/account/ContactModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Colors } from "@/constants/Colors";
 import { useSessionStore } from "@/store/useSessionStore";
+
+const serviceItems = [
+  {
+    icon: "bell",
+    label: "My Notifications",
+    onPress: () => router.push("/notifications"),
+  },
+];
+
+const productItems = [
+  {
+    icon: "heart",
+    label: "Wishlist",
+    onPress: () => router.push("/wishlist"),
+  },
+  {
+    icon: "tag",
+    label: "Brands",
+    onPress: () => router.push("/brands"),
+  },
+  {
+    icon: "shopping-cart",
+    label: "Cart",
+    onPress: () => router.push("/(tabs)/cart"),
+  },
+];
+
+const orderItems = [
+  {
+    icon: "box",
+    label: "Picked up",
+    onPress: () => router.push("/orders/picked-up"),
+  },
+  {
+    icon: "times-circle",
+    label: "Cancelled",
+    onPress: () => router.push("/orders/cancelled"),
+  },
+  {
+    icon: "star",
+    label: "Reviews",
+    onPress: () => router.push("/orders/reviews"),
+  },
+];
+
+const languages = [{ code: "en", flag: getFlagEmoji("US") }];
 
 function getFlagEmoji(countryCode: string): string {
   return countryCode
@@ -24,10 +70,9 @@ function getFlagEmoji(countryCode: string): string {
 
 export default function AccountScreen() {
   const router = useRouter();
-  const { user, isLogged, setIsLogged } = useSessionStore();
+  const { user, isLogged, setIsLogged, setUser, setToken } = useSessionStore();
 
   const [isContactModalVisible, setContactModalVisible] = useState(false);
-
 
   const openContactSheet = () => {
     setContactModalVisible(true);
@@ -36,11 +81,6 @@ export default function AccountScreen() {
   const closeContactModal = () => {
     setContactModalVisible(false);
   };
-
-  const languages = useMemo(
-    () => [{ code: "en", flag: getFlagEmoji("US") }],
-    []
-  );
 
   const contactItems: IconGridItem[] = useMemo(
     () => [
@@ -63,56 +103,12 @@ export default function AccountScreen() {
     [router]
   );
 
-  const productItems: IconGridItem[] = useMemo(
-    () => [
-      {
-        icon: "heart",
-        label: "Wishlist",
-        onPress: () => router.push("/wishlist"),
-      },
-      {
-        icon: "tag",
-        label: "Brands",
-        onPress: () => router.push("/brands"),
-      },
-      {
-        icon: "shopping-cart",
-        label: "Cart",
-        onPress: () => router.push("/(tabs)/cart"),
-      },
-    ],
-    [router]
-  );
-
-  const orderItems: IconGridItem[] = useMemo(
-    () => [
-      {
-        icon: "box",
-        label: "Picked up",
-        onPress: () => router.push("/orders/picked-up"),
-      },
-      {
-        icon: "times-circle",
-        label: "Cancelled",
-        onPress: () => router.push("/orders/cancelled"),
-      },
-      {
-        icon: "star",
-        label: "Reviews",
-        onPress: () => router.push("/orders/reviews"),
-      },
-    ],
-    [router]
-  );
-
   const helpItems: IconGridItem[] = useMemo(
     () => [
       {
         icon: "headset",
         label: "Get Support",
-        onPress: () => {
-          /* TODO */
-        },
+        onPress: () => {},
       },
       {
         icon: "question-circle",
@@ -127,17 +123,6 @@ export default function AccountScreen() {
         onPress: () => {
           /* TODO */
         },
-      },
-    ],
-    []
-  );
-
-  const serviceItems: IconGridItem[] = useMemo(
-    () => [
-      {
-        icon: "bell",
-        label: "My Notifications",
-        onPress: () => router.push("/notifications"),
       },
     ],
     []

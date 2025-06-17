@@ -18,8 +18,8 @@ interface SessionStore {
 
   setSessionId: (sessionId: string | null) => void;
   setIsLogged: (logged: boolean) => void;
-  setUser: (user: UserContextType) => void;
-  setToken: (token: string) => void;
+  setUser: (user: UserContextType | null) => void;
+  setToken: (token: string | null) => void;
   setGovernorates: (governorates: Governorate[]) => void;
 }
 
