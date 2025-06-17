@@ -36,6 +36,7 @@
     "expo-linking": "~7.1.4",
     "expo-router": "~5.0.5",
     "expo-secure-store": "~14.2.3",
+    "expo-splash-screen": "~0.30.9",
     "expo-status-bar": "~2.2.3",
     "expo-symbols": "~0.4.5",
     "expo-system-ui": "~5.0.8",
@@ -58,15 +59,14 @@
     "react-native-reanimated-carousel": "^4.0.2",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
-    "react-native-svg": "15.11.2",
+    "react-native-svg": "^15.11.2",
     "react-native-toast-message": "^2.3.0",
     "react-native-vector-icons": "^10.2.0",
     "tailwind-merge": "^3.3.1",
     "tailwind-rn": "^4.2.0",
     "uuid": "^11.1.0",
     "zod": "^3.24.4",
-    "zustand": "^5.0.4",
-    "expo-splash-screen": "~0.30.9"
+    "zustand": "^5.0.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
