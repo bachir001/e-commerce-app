@@ -1,156 +1,81 @@
 import "../../global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  createContext,
-  useEffect,
-  useMemo,
-  useState,
-  useContext,
-  useCallback,
-} from "react";
+import { useEffect, useMemo } from "react";
 import { getOrCreateSessionId } from "@/lib/session";
 import { initOneSignal } from "@/Services/oneSignal";
 import { Stack } from "expo-router";
 import Toast from "react-native-toast-message";
 import { ImageBackground } from "react-native";
 import {
-  Governorate,
-  SessionContextValue,
-  UserContextType,
-} from "@/types/globalTypes";
-import {
   useBrands,
   useMegaCategories,
   useSliders,
 } from "@/hooks/home/topSection";
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SplashScreen from "expo-splash-screen";
+import { useSessionStore } from "@/store/useSessionStore";
+import { useAppDataStore } from "@/store/useAppDataStore";
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient({});
 
-// Loading Context for managing section loading states
-interface LoadingContextType {
-  loadingSections: Set<string>;
-  addLoadingSection: (sectionId: string) => void;
-  removeLoadingSection: (sectionId: string) => void;
-  isAnyLoading: boolean;
-}
-
-const LoadingContext = createContext<LoadingContextType | null>(null);
-
-export const useLoadingContext = () => {
-  const context = useContext(LoadingContext);
-  if (!context) {
-    throw new Error("useLoadingContext must be used within LoadingProvider");
-  }
-  return context;
+const newArrivalsOptions = {
+  per_page: 15,
+  sort: "price_high_low" as const,
+  page: 1,
 };
 
-const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [loadingSections, setLoadingSections] = useState<Set<string>>(
-    new Set()
-  );
-
-  const addLoadingSection = useCallback((sectionId: string) => {
-    setLoadingSections((prev) => new Set(prev).add(sectionId));
-  }, []);
-
-  const removeLoadingSection = useCallback((sectionId: string) => {
-    setLoadingSections((prev) => {
-      const newSet = new Set(prev);
-      newSet.delete(sectionId);
-      return newSet;
-    });
-  }, []);
-
-  const isAnyLoading = loadingSections.size > 0;
-
-  return (
-    <LoadingContext.Provider
-      value={{
-        loadingSections,
-        addLoadingSection,
-        removeLoadingSection,
-        isAnyLoading,
-      }}
-    >
-      {children}
-    </LoadingContext.Provider>
-  );
-};
-
-// Session Context (your existing context)
-export const SessionContext = createContext<SessionContextValue | null>(null); // Changed from 'let' to 'const'
-
+// SplashScreen.preventAutoHideAsync();
 
 function AppWithProviders() {
+  const { setSessionId } = useSessionStore();
+  const { setBrands, setSliders, setMegaCategories, setNewArrivals } =
+    useAppDataStore();
+
   const { data: brands, isLoading: loadingBrands } = useBrands();
   const { data: sliders, isLoading: loadingSliders } = useSliders();
   const { data: megaCategories, isLoading: loadingMega } = useMegaCategories();
 
-  // Fixed syntax error in this hook call:
-  const { data: newArrivals, isLoading: loadingNewArrivals } = 
-    useFeaturedSection("new-arrivals", {
-      per_page: 15,
-      sort: "price_high_low" as const,
-      page: 1,
-    }, true);
-
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [isLogged, setIsLogged] = useState<boolean>(false);
-  const [user, setUser] = useState<UserContextType | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [governorates, setGovernorates] = useState<Governorate[]>([]);
+  const { data: newArrivals, isLoading: loadingNewArrivals } =
+    useFeaturedSection("new-arrivals", newArrivalsOptions);
 
   useEffect(() => {
-    async function performInitialLoad() {
+    const initializeApp = async () => {
       try {
         const id = await getOrCreateSessionId();
-        const userString = await AsyncStorage.getItem("user");
-        const userParsed = userString ? JSON.parse(userString) : null;
+        setSessionId(id);
+        initOneSignal();
 
-        setSessionId(id); 
-        // Initialize OneSignal and wait for completion
-        initOneSignal(userParsed);
-        console.log('OneSignal initialized initiated');
+        if (brands && !loadingBrands) setBrands(brands);
+        if (sliders && !loadingSliders) setSliders(sliders);
+        if (megaCategories && !loadingMega) setMegaCategories(megaCategories);
+        if (newArrivals && !loadingNewArrivals) setNewArrivals(newArrivals);
+
+        // if (
+        //   !loadingBrands &&
+        //   !loadingSliders &&
+        //   !loadingMega &&
+        //   !loadingNewArrivals
+        // ) {
+        //   await SplashScreen.hideAsync();
+        // }
       } catch (error) {
-        console.error("Error during initial app load:", error);
+        console.error("Initialization error:", error);
       }
-    }
-    
-    performInitialLoad();
-  }, []);
+    };
+
+    initializeApp();
+  }, [
+    brands,
+    sliders,
+    megaCategories,
+    newArrivals,
+    // loadingBrands,
+    // loadingSliders,
+    // loadingMega,
+    // loadingNewArrivals,
+  ]);
 
   const appNotReady = loadingBrands || loadingSliders || loadingMega;
-
-  const contextValue = useMemo(
-    () => ({
-      sessionId,
-      isLogged,
-      setIsLogged,
-      user,
-      setUser,
-      token,
-      setToken,
-      governorates,
-      setGovernorates,
-      brands,
-      sliders,
-      megaCategories,
-    }),
-    [
-      sessionId,
-      isLogged,
-      user,
-      token,
-      governorates,
-      brands,
-      sliders,
-      megaCategories,
-    ]
-  );
 
   if (appNotReady) {
     return (
@@ -163,23 +88,21 @@ function AppWithProviders() {
   }
 
   return (
-    <LoadingProvider>
-      <SessionContext.Provider value={contextValue}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: "fade_from_bottom",
-          }}
-        >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="auth/signInAccount"
-            options={{ headerShown: true, title: "Sign In" }}
-          />
-        </Stack>
-        <Toast />
-      </SessionContext.Provider>
-    </LoadingProvider>
+    <>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "fade_from_bottom",
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="auth/signInAccount"
+          options={{ headerShown: true, title: "Sign In" }}
+        />
+      </Stack>
+      <Toast />
+    </>
   );
 }
 

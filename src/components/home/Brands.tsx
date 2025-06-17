@@ -6,13 +6,16 @@ import {
   Image,
   Dimensions,
 } from "react-native";
-import { useContext } from "react";
-import { type Brand, SessionContext } from "@/app/_layout";
+import React, { useCallback } from "react";
+
+import { Brand } from "@/types/globalTypes";
+import { useAppDataStore } from "@/store/useAppDataStore";
 
 const { width: screenWidth } = Dimensions.get("window");
+
 const itemWidth = (screenWidth - 60) / 2;
 
-function BrandComponent({ name, image, slug, id }: Brand) {
+const BrandComponent = React.memo(({ name, image, slug, id }: Brand) => {
   return (
     <TouchableOpacity
       className="mx-2 bg-white rounded-xl overflow-hidden"
@@ -43,33 +46,48 @@ function BrandComponent({ name, image, slug, id }: Brand) {
       </View>
     </TouchableOpacity>
   );
-}
+});
 
 export default function Brands() {
-  const { brands } = useContext(SessionContext);
+  const { brands } = useAppDataStore();
+
+  const renderItem = useCallback(
+    ({ item }: { item: Brand }) => {
+      return (
+        <BrandComponent
+          name={item.name}
+          image={item.image}
+          white_image={item.white_image}
+          slug={item.slug}
+          id={item.id}
+          backgroundColor={item.backgroundColor}
+        />
+      );
+    },
+    [brands]
+  );
+
+  const ItemSeparatorComponent = useCallback(() => {
+    return <View className="w-2" />;
+  }, []);
 
   return (
     <View className="py-2">
       <FlatList
         data={brands}
-        renderItem={({ item }) => (
-          <BrandComponent
-            name={item.name}
-            image={item.image}
-            white_image={item.white_image}
-            slug={item.slug}
-            id={item.id}
-            backgroundColor={item.backgroundColor}
-          />
-        )}
+        renderItem={renderItem}
         horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id.toString()}
         snapToInterval={screenWidth - 20}
         decelerationRate="fast"
-        contentContainerStyle={{ paddingHorizontal: 10 }}
-        ItemSeparatorComponent={() => <View className="w-2" />}
+        contentContainerStyle={contentContainerStyle}
+        ItemSeparatorComponent={ItemSeparatorComponent}
       />
     </View>
   );
 }
+
+const contentContainerStyle = {
+  paddingHorizontal: 10,
+};

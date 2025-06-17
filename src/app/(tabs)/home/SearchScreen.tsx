@@ -1,15 +1,12 @@
-// src/app/search/SearchScreen.tsx
-import React, { useState, useCallback, useMemo } from "react";
-import { Ionicons } from "@expo/vector-icons";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import {
   View,
-  StyleSheet,
   TextInput,
   FlatList,
   ActivityIndicator,
   Pressable,
   Image,
-  ListRenderItemInfo,
+  TouchableOpacity,
 } from "react-native";
 import { ThemedView } from "@/components/common/ThemedView";
 import { ThemedText } from "@/components/common/ThemedText";
@@ -18,53 +15,46 @@ import { Colors } from "@/constants/Colors";
 import { debounce } from "lodash";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ArrowLeft, Search, X, Star, ChevronRight } from "lucide-react-native";
+import PopularSearches from "@/components/search/PopularSearches";
+import { Product } from "@/types/globalTypes";
+import useGetSearchResults from "@/hooks/search/useGetSearchResults";
 
-interface SearchResult {
-  id: number;
-  name: string;
-  image: string;
-  price: number;
-  slug: string;
-  type?: "product" | "category" | "brand" | "seller";
-  count?: number;
-}
+const startTime = performance.now();
 
 export default function SearchScreen() {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  // const inputRef = useRef<TextInput>(null);
   const scheme = useColorScheme() ?? "light";
   const colors = Colors[scheme];
 
-  // 1. Memoize debounced search
+  const {
+    data: results,
+    isLoading: loading,
+    isError: resultsError,
+    refetch,
+  } = useGetSearchResults(query);
+
   const debouncedSearch = useMemo(
     () =>
       debounce(async (q: string) => {
         if (q.trim().length < 3) {
-          setResults([]);
           return;
         }
-        setLoading(true);
-        try {
-          const res = await fetch(
-            `https://api-gocami-test.gocami.com/api/search?q=${encodeURIComponent(
-              q.trim()
-            )}`
-          );
-          if (!res.ok) throw new Error();
-          const data = await res.json();
-          setResults(data.data?.results ?? []);
-        } catch {
-          setResults([]);
-        } finally {
-          setLoading(false);
-        }
+        refetch();
       }, 500),
-    []
+    [refetch]
   );
 
-  // 2. Stable handler for text changes
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
   const onChangeText = useCallback(
     (text: string) => {
       setQuery(text);
@@ -73,98 +63,95 @@ export default function SearchScreen() {
     [debouncedSearch]
   );
 
-  // 3. Stable navigation handler
-  const onPressItem = useCallback(
-    (slug: string) => {
-      router.push({
-        pathname: "/(tabs)/home/ProductDetails",
-        params: { productName: slug },
-      });
-    },
-    [router]
-  );
+  const clearSearch = useCallback(() => {
+    setQuery("");
+  }, []);
 
-  // 4. Memoized renderItem
+  const onPressItem = useCallback((product: Product) => {
+    router.push({
+      pathname: "/(tabs)/home/ProductDetails",
+      params: { productJSON: JSON.stringify(product) },
+    });
+  }, []);
+
   const renderItem = useCallback(
-    ({ item }: ListRenderItemInfo<SearchResult>) => (
+    ({ item }: { item: Product }) => (
       <Pressable
-        onPress={() => onPressItem(item.slug)}
-        style={({ pressed }) => [styles.resultItem, pressed && styles.pressed]}
-        accessibilityRole="button"
-        accessibilityLabel={`Go to ${item.name}`}
+        onPress={() => onPressItem(item)}
+        className="py-4 px-4 border-b border-gray-100 active:bg-gray-50"
       >
-        <View style={styles.resultContent}>
-          <Image source={{ uri: item.image }} style={styles.image} />
-          <View style={styles.textContainer}>
-            <ThemedText style={styles.name}>{item.name}</ThemedText>
-            {item.type && (
-              <View style={styles.typeRow}>
-                <ThemedText style={styles.type}>{item.type}</ThemedText>
-                {item.count != null && (
-                  <View style={styles.badge}>
-                    <ThemedText style={styles.count}>{item.count}</ThemedText>
-                  </View>
-                )}
-              </View>
-            )}
-            {item.price > 0 && !isNaN(item.price) && (
-              <ThemedText style={styles.price}>
-                ${item.price.toFixed(2)}
+        <View className="flex-row">
+          <Image
+            source={{ uri: item.image }}
+            className="w-20 h-20 rounded-lg bg-gray-100 mr-4"
+            resizeMode="cover"
+            fadeDuration={0}
+          />
+          <View className="flex-1 justify-center">
+            <ThemedText variant="semibold" className="text-gray-900 mb-1">
+              {item.name}
+            </ThemedText>
+            {item.price > 0 && (
+              <ThemedText className="text-base font-semibold text-[#5e3ebd]">
+                ${item.price}
               </ThemedText>
             )}
           </View>
+          <ChevronRight size={20} color="#9ca3af" className="self-center" />
         </View>
       </Pressable>
     ),
-    [onPressItem]
-  );
-
-  // 5. Memoize empty component
-  const emptyComponent = useMemo(
-    () => (
-      <ThemedText style={styles.emptyText}>
-        {query ? "No results found" : "Start typing to search"}
-      </ThemedText>
-    ),
-    [query]
+    []
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ThemedView>
-        <View style={[styles.header, { backgroundColor: colors.background }]}>
-          <Pressable onPress={() => router.back()} accessibilityRole="button">
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </Pressable>
-
-          <View
-            style={[
-              styles.inputWrapper,
-              { backgroundColor: colors.tint + "20" },
-            ]}
+    <SafeAreaView className="flex-1 bg-white">
+      <ThemedView className="flex-1">
+        <View className="flex-row items-center px-4 py-3 border-b border-gray-100">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="p-1 rounded-full"
           >
+            <ArrowLeft size={24} color={colors.text} />
+          </TouchableOpacity>
+          <View className="flex-1 flex-row items-center bg-gray-100 rounded-full px-3 py-2 ml-3">
+            <Search size={18} color="#9ca3af" />
             <TextInput
-              autoFocus
-              style={styles.input}
-              placeholder="Search..."
-              placeholderTextColor={colors.text + "80"}
+              // ref={inputRef}
+              // autoFocus
+              className="flex-1 text-base px-2 py-0"
+              placeholder="Search products, brands..."
+              placeholderTextColor="#9ca3af"
               value={query}
               onChangeText={onChangeText}
             />
+            {query && query.length > 0 && (
+              <TouchableOpacity onPress={clearSearch} className="p-1">
+                <X size={18} color="#9ca3af" />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
         {loading ? (
-          <ActivityIndicator size="large" style={styles.loader} />
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size="large" color="#5e3ebd" />
+          </View>
         ) : (
           <FlatList
             data={results}
             keyExtractor={(item) => item.id.toString()}
             renderItem={renderItem}
-            ListEmptyComponent={emptyComponent}
-            contentContainerStyle={styles.list}
-            initialNumToRender={10}
+            ListEmptyComponent={
+              <View className="pt-4">
+                {/* {renderRecentSearches} */}
+                <PopularSearches onPressRecentSearch={onChangeText} />
+              </View>
+            }
+            initialNumToRender={5}
+            maxToRenderPerBatch={5}
             windowSize={5}
+            removeClippedSubviews={true}
           />
         )}
       </ThemedView>
@@ -172,61 +159,5 @@ export default function SearchScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFF", paddingTop: 2 },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    marginBottom: 8,
-  },
-  inputWrapper: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    height: 40,
-    marginLeft: 12,
-  },
-  input: { flex: 1, fontSize: 16, paddingVertical: 0 },
-  loader: { marginTop: 20 },
-  list: { paddingBottom: 20 },
-  resultItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-  },
-  pressed: { opacity: 0.6 },
-  resultContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  image: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    backgroundColor: "#f5f5f5",
-    marginRight: 12,
-  },
-  textContainer: { flex: 1 },
-  name: { fontSize: 16, fontWeight: "500", marginBottom: 4, color: "#333" },
-  typeRow: { flexDirection: "row", alignItems: "center", marginBottom: 4 },
-  type: { fontSize: 14, color: "#666" },
-  badge: {
-    backgroundColor: "#e0e0e0",
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginLeft: 8,
-  },
-  count: { fontSize: 12, color: "#333" },
-  price: { fontSize: 16, fontWeight: "600", color: "#7b23cd" },
-  emptyText: {
-    textAlign: "center",
-    marginTop: 20,
-    opacity: 0.5,
-    color: "#666",
-  },
-});
+const endTime = performance.now();
+console.log(`Execution time SEARCH: ${endTime - startTime}ms`);

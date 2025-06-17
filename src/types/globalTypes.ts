@@ -35,6 +35,9 @@ export interface SessionContextValue {
   addAddress: (address: Address) => void;
   governorates: Governorate[];
   setGovernorates: React.Dispatch<React.SetStateAction<Governorate[]>>;
+  newArrivals: Product[] | null;
+  sectionIsPending: boolean;
+  setSectionIsPending: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export interface Brand {
@@ -101,4 +104,11 @@ export interface Product {
   has_variants: boolean;
   rating: number;
   purchase_points: number | null;
+  reviews?: number;
+}
+
+export interface popularSearches {
+  id: number;
+  query: string;
+  count: number;
 }

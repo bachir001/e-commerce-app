@@ -41,7 +41,7 @@ export const HOMEPAGE_SECTIONS = {
     type: "beauty-health" as const,
     fetchParams: {
       per_page: 15,
-      sort: "price_high_low" as const,
+      // sort: "price_high_low" as const,
       page: 1,
     },
   } as HomePageSectionProp,
@@ -51,7 +51,7 @@ export const HOMEPAGE_SECTIONS = {
     type: "home-living" as const,
     fetchParams: {
       per_page: 15,
-      sort: "price_high_low" as const,
+      // sort: "price_high_low" as const,
       page: 1,
     },
   } as HomePageSectionProp,
@@ -61,7 +61,7 @@ export const HOMEPAGE_SECTIONS = {
     type: "medical-equipment" as const,
     fetchParams: {
       per_page: 15,
-      sort: "price_high_low" as const,
+      // sort: "price_high_low" as const,
       page: 1,
     },
     // mega_mobile_bg:
@@ -73,7 +73,7 @@ export const HOMEPAGE_SECTIONS = {
     type: "garden-tools" as const,
     fetchParams: {
       per_page: 15,
-      sort: "price_high_low" as const,
+      // sort: "price_high_low" as const,
       page: 1,
     },
     // mega_mobile_bg:
@@ -85,7 +85,7 @@ export const HOMEPAGE_SECTIONS = {
     type: "hardware-and-fasteners" as const,
     fetchParams: {
       per_page: 15,
-      sort: "price_high_low" as const,
+      // sort: "price_high_low" as const,
       page: 1,
     },
     // mega_mobile_bg:
@@ -97,7 +97,7 @@ export const HOMEPAGE_SECTIONS = {
     type: "sports-outdoor" as const,
     fetchParams: {
       per_page: 15,
-      sort: "price_high_low" as const,
+      // sort: "price_high_low" as const,
       page: 1,
     },
     // mega_mobile_bg:

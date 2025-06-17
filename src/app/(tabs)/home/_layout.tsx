@@ -7,14 +7,7 @@ export default function HomeLayout() {
       screenOptions={{
         headerShown: false,
       }}
-    >
-      <Stack.Screen name="index" />
-      <Stack.Screen
-        name="SearchScreen"
-        options={{
-          presentation: "modal",
-        }}
-      />
-    </Stack>
+      initialRouteName="index"
+    />
   );
 }
