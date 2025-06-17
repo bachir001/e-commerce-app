@@ -132,7 +132,6 @@ export default function HomeScreen() {
     }
   }, [currentIndex, loadMoreSections, showInfiniteList]);
 
-  // Memoized header component
   const ListHeader = useMemo(
     () => (
       <View style={{ flex: 1, width: "100%" }}>
@@ -171,6 +170,7 @@ export default function HomeScreen() {
             </View>
           ) : null
         }
+        decelerationRate="fast"
       />
     </SafeAreaView>
   );

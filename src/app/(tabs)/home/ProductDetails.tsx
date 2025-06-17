@@ -27,17 +27,7 @@ import useGetRelatedProducts from "@/hooks/products/useGetRelatedProducts";
 import useGetProductDetails from "@/hooks/products/useGetProductDetails";
 import axiosApi from "@/apis/axiosApi";
 import DotsLoader from "@/components/common/AnimatedLayout";
-
-export interface Category {
-  id: number;
-  name: string;
-  slug: string;
-  image: string;
-  main_image: string | null;
-  category_cover_image: string | null;
-  description: string | null;
-  subcategories: Category[] & { children: Category[] };
-}
+import { Category, MainCategory } from "../categories";
 
 interface MainDetail extends Product {
   sku: string;
@@ -46,7 +36,7 @@ interface MainDetail extends Product {
   value_points: number;
   details: string;
   brand: Brand;
-  categories: Category[];
+  categories: MainCategory[];
 }
 
 export default function ProductDetailsScreen(): React.ReactElement {
