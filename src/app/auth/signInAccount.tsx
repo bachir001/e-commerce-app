@@ -17,6 +17,7 @@ import axiosApi from "@/apis/axiosApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Colors } from "@/constants/Colors";
 import { useSessionStore } from "@/store/useSessionStore";
+import DotsLoader from "@/components/common/AnimatedLayout";
 
 interface LoginBody {
   email?: string;
@@ -189,7 +190,7 @@ export default function loginAccount() {
                 onPress={handleLogin}
               >
                 {loading ? (
-                  <ActivityIndicator size="small" color="white" />
+                  <DotsLoader size="small" color="white" />
                 ) : (
                   <Text className="text-white text-center">Sign In</Text>
                 )}

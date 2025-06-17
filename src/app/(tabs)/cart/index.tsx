@@ -24,6 +24,7 @@ import { useCartStore, CartItem } from "@/store/cartStore";
 import axios from "axios";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getOrCreateSessionId } from "@/lib/session";
+import DotsLoader from "@/components/common/AnimatedLayout";
 
 // Types remain the same...
 interface BestSellerRaw {
@@ -200,7 +201,7 @@ export default function CartScreen(): React.ReactElement {
           </Pressable>
 
           {isCartLoading ? (
-            <ActivityIndicator style={{ width: 24, marginHorizontal: 4 }} />
+            <DotsLoader />
           ) : (
             <Text style={styles.qtyText}>{item.quantity}</Text>
           )}

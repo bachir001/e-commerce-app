@@ -26,6 +26,7 @@ import SimilarProductsSection from "@/components/product/SimilarProductsSection"
 import useGetRelatedProducts from "@/hooks/products/useGetRelatedProducts";
 import useGetProductDetails from "@/hooks/products/useGetProductDetails";
 import axiosApi from "@/apis/axiosApi";
+import DotsLoader from "@/components/common/AnimatedLayout";
 
 export interface Category {
   id: number;
@@ -315,7 +316,7 @@ export default function ProductDetailsScreen(): React.ReactElement {
               className="rounded-xl py-4 px-6 flex-row items-center justify-center"
             >
               {isCartOperationInProgress ? (
-                <ActivityIndicator color="#ffffff" size="small" />
+                <DotsLoader color="#ffffff" size="small" />
               ) : (
                 <>
                   <ShoppingBag size={20} color="#fff" />

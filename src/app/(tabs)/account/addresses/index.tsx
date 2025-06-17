@@ -17,6 +17,7 @@ import { Colors } from "@/constants/Colors";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { useQuery } from "@tanstack/react-query";
 import { useSessionStore } from "@/store/useSessionStore";
+import DotsLoader from "@/components/common/AnimatedLayout";
 
 export interface Address {
   id: number;
@@ -161,7 +162,7 @@ export default function AddressPage() {
 
       {addressesLoading && addresses.length === 0 ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color={Colors.PRIMARY} />
+          <DotsLoader size="large" color={Colors.PRIMARY} />
         </View>
       ) : (
         <ScrollView

@@ -8,6 +8,7 @@ import { useState } from "react";
 import axiosApi from "@/apis/axiosApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Colors } from "@/constants/Colors";
+import DotsLoader from "@/components/common/AnimatedLayout";
 
 export default function Confirmation() {
   const router = useRouter();
@@ -144,7 +145,7 @@ export default function Confirmation() {
             onPress={handleContinue}
           >
             {loading ? (
-              <ActivityIndicator size="small" color="white" />
+              <DotsLoader size="small" color="white" />
             ) : (
               <Text className="text-base font-semibold text-white">
                 Continue

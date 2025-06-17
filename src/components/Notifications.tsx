@@ -19,8 +19,11 @@ import {
   StoredNotification,
 } from "@/Services/storage";
 import { format } from "date-fns";
+import DotsLoader from "./common/AnimatedLayout";
 
-export default function Notifications(props: { /* … */ }) {
+export default function Notifications(props: {
+  /* … */
+}) {
   const router = useRouter();
   const [notifications, setNotifications] = useState<StoredNotification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -57,7 +60,7 @@ export default function Notifications(props: { /* … */ }) {
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" />
+        <DotsLoader size="large" />
         <Text style={{ marginTop: 8, color: "#666" }}>Loading…</Text>
       </SafeAreaView>
     );
@@ -67,7 +70,10 @@ export default function Notifications(props: { /* … */ }) {
     <SafeAreaView style={styles.container}>
       {/* Header with Larger Back Arrow */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>
@@ -154,10 +160,10 @@ const styles = StyleSheet.create({
   backButton: {
     paddingRight: 8,
     marginRight: 12,
-    marginBottom:5
+    marginBottom: 5,
   },
   backText: {
-    fontSize: 28,      // ← made the arrow larger
+    fontSize: 28, // ← made the arrow larger
     color: "#333",
   },
   headerTitle: {

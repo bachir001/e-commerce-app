@@ -20,6 +20,7 @@ import ProductCard from "@/components/common/ProductCard";
 import AnimatedLoader from "@/components/common/AnimatedLayout";
 import { ChevronRight } from "lucide-react-native";
 import { router } from "expo-router";
+import DotsLoader from "@/components/common/AnimatedLayout";
 
 interface MegaCategoryInfo {
   status: boolean;
@@ -194,7 +195,7 @@ const SpecificSection = React.memo(
     }, [isLoading, setLoading]);
 
     if (isLoading) {
-      return <AnimatedLoader color={color} text={`Loading ${title}`} />;
+      return <DotsLoader color={color} text={`Loading ${title}`} />;
     }
 
     return (

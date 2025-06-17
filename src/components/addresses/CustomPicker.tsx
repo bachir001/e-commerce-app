@@ -1,5 +1,6 @@
 import { FontAwesome5 } from "@expo/vector-icons";
 import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import DotsLoader from "../common/AnimatedLayout";
 
 interface CustomPickerProps {
   label: string;
@@ -31,7 +32,7 @@ export function CustomPicker({
         disabled={disabled}
       >
         {loading ? (
-          <ActivityIndicator size="small" color="#5e3ebd" />
+          <DotsLoader size="small" color="#5e3ebd" />
         ) : (
           <Text
             className={`flex-1 ${value ? "text-gray-800" : "text-gray-400"}`}
