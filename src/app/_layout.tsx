@@ -1,4 +1,5 @@
 import "../../global.css";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { getOrCreateSessionId } from "@/lib/session";
@@ -12,10 +13,8 @@ import {
   useSliders,
 } from "@/hooks/home/topSection";
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
-import * as SplashScreen from "expo-splash-screen";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useAppDataStore } from "@/store/useAppDataStore";
-
 export const queryClient = new QueryClient({});
 
 const newArrivalsOptions = {
@@ -42,8 +41,10 @@ function AppWithProviders() {
     const initializeApp = async () => {
       try {
         const id = await getOrCreateSessionId();
+        const userString = await AsyncStorage.getItem("user");
+        const userParsed = userString ? JSON.parse(userString) : null;
         setSessionId(id);
-        initOneSignal();
+        initOneSignal(userParsed);
 
         if (brands && !loadingBrands) setBrands(brands);
         if (sliders && !loadingSliders) setSliders(sliders);
@@ -53,14 +54,6 @@ function AppWithProviders() {
         }
         if (newArrivals && !loadingNewArrivals) setNewArrivals(newArrivals);
 
-        // if (
-        //   !loadingBrands &&
-        //   !loadingSliders &&
-        //   !loadingMega &&
-        //   !loadingNewArrivals
-        // ) {
-        //   await SplashScreen.hideAsync();
-        // }
       } catch (error) {
         console.error("Initialization error:", error);
       }
