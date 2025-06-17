@@ -15,27 +15,15 @@ interface SessionState {
   setGovernorates: (govs: Governorate[]) => void;
 }
 
-export const useSessionStore = create<SessionState>()(
-  persist(
-    (set) => ({
-      sessionId: null,
-      isLogged: false,
-      user: null,
-      token: null,
-      governorates: [],
-      setSessionId: (id) => set({ sessionId: id }),
-      setIsLogged: (logged) => set({ isLogged: logged }),
-      setUser: (user) => set({ user }),
-      setToken: (token) => set({ token }),
-      setGovernorates: (govs) => set({ governorates: govs }),
-    }),
-    {
-      name: "session-store",
-      partialize: (state) => ({
-        isLogged: state.isLogged,
-        user: state.user,
-        token: state.token,
-      }),
-    }
-  )
-);
+export const useSessionStore = create<SessionState>()((set) => ({
+  sessionId: null,
+  isLogged: false,
+  user: null,
+  token: null,
+  governorates: [],
+  setSessionId: (id) => set({ sessionId: id }),
+  setIsLogged: (logged) => set({ isLogged: logged }),
+  setUser: (user) => set({ user }),
+  setToken: (token) => set({ token }),
+  setGovernorates: (govs) => set({ governorates: govs }),
+}));

@@ -1,93 +1,73 @@
 import "../../global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { getOrCreateSessionId } from "@/lib/session";
 import { initOneSignal } from "@/Services/oneSignal";
 import { Stack } from "expo-router";
 import Toast from "react-native-toast-message";
 import { ImageBackground } from "react-native";
-import {
-  useBrands,
-  useMegaCategories,
-  useSliders,
-} from "@/hooks/home/topSection";
-import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import * as SplashScreen from "expo-splash-screen";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useAppDataStore } from "@/store/useAppDataStore";
 
-export const queryClient = new QueryClient({});
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 SplashScreen.preventAutoHideAsync();
 
 function AppWithProviders() {
-  const setSessionId = useSessionStore((state) => state.setSessionId);
-  const setBrands = useAppDataStore((state) => state.setBrands);
-  const setSliders = useAppDataStore((state) => state.setSliders);
-  const setMegaCategories = useAppDataStore((state) => state.setMegaCategories);
-  const setNewArrivals = useAppDataStore((state) => state.setNewArrivals);
+  const [appIsReady, setAppIsReady] = useState(false);
+  const setSessionId = useSessionStore((s) => s.setSessionId);
+  const { fetchBrands, fetchSliders, fetchMegaCategories } = useAppDataStore();
 
-  const { data: brands, isLoading: loadingBrands } = useBrands();
-  const { data: sliders, isLoading: loadingSliders } = useSliders();
-  const { data: megaCategories, isLoading: loadingMega } = useMegaCategories();
-
-  const newArrivalsOptions = useMemo(
-    () => ({
-      per_page: 15,
-      sort: "price_high_low" as const,
-      page: 1,
-    }),
-    []
-  );
-
-  const { data: newArrivals, isLoading: loadingNewArrivals } =
-    useFeaturedSection("new-arrivals", newArrivalsOptions);
-
-  // Combined initialization and data loading effect
   useEffect(() => {
+    let isMounted = true;
+
     const initializeApp = async () => {
+      console.log("run");
       try {
-        // Initialize session
         const id = await getOrCreateSessionId();
-        setSessionId(id);
-        initOneSignal();
-
-        // Update stores only when data changes
-        if (brands && !loadingBrands) setBrands(brands);
-        if (sliders && !loadingSliders) setSliders(sliders);
-        if (megaCategories && !loadingMega) setMegaCategories(megaCategories);
-        if (newArrivals && !loadingNewArrivals) setNewArrivals(newArrivals);
-
-        // Hide splash screen when all data is loaded
-        if (
-          !loadingBrands &&
-          !loadingSliders &&
-          !loadingMega &&
-          !loadingNewArrivals
-        ) {
-          await SplashScreen.hideAsync();
+        if (isMounted) {
+          setSessionId(id);
+          initOneSignal();
         }
+
+        await Promise.allSettled([
+          fetchBrands(),
+          fetchSliders(),
+          fetchMegaCategories(),
+        ]);
       } catch (error) {
         console.error("Initialization error:", error);
+      } finally {
+        isMounted && setAppIsReady(true);
       }
     };
 
     initializeApp();
-  }, [
-    brands,
-    sliders,
-    megaCategories,
-    newArrivals,
-    loadingBrands,
-    loadingSliders,
-    loadingMega,
-    loadingNewArrivals,
-  ]);
 
-  const appNotReady =
-    loadingBrands || loadingSliders || loadingMega || loadingNewArrivals;
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-  if (appNotReady) {
+  useEffect(() => {
+    const hideSplashScreen = async () => {
+      if (appIsReady) {
+        await SplashScreen.hideAsync();
+      }
+    };
+
+    hideSplashScreen();
+  }, [appIsReady]);
+
+  if (!appIsReady) {
     return (
       <ImageBackground
         source={require("@/assets/images/initialPageLoader.jpeg")}

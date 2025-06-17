@@ -26,14 +26,14 @@ const HOME_SCREEN_DATA_STRUCTURE = [
   { id: "hardwareAndFasteners", type: "specific" },
   { id: "homeAndLiving", type: "specific" },
   { id: "sportsAndOutdoors", type: "specific" },
-];
+] as const;
 
 export default function HomeScreen() {
-  // Optimized selectors
+  // Zustand selectors - these are already optimized, don't wrap with useCallback
   const setIsLogged = useSessionStore((state) => state.setIsLogged);
   const setUser = useSessionStore((state) => state.setUser);
   const setToken = useSessionStore((state) => state.setToken);
-  const newArrivals = useAppDataStore((state) => state.newArrivals);
+  const { newArrivals } = useAppDataStore();
 
   const [visibleSections, setVisibleSections] = useState([
     HOME_SCREEN_DATA_STRUCTURE[0],
@@ -41,12 +41,16 @@ export default function HomeScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loadingSectionId, setLoadingSectionId] = useState<string | null>(null);
   const [showInfiniteList, setShowInfiniteList] = useState(false);
+  const [tokenChecked, setTokenChecked] = useState(false);
 
   const isBusy = useRef(false);
   const flatListRef = useRef<FlatList>(null);
 
-  // Token check with useCallback
   const checkForToken = useCallback(async () => {
+    if (tokenChecked) return;
+
+    console.log("rann");
+
     try {
       const token = await AsyncStorage.getItem("token");
       const userJSON = await AsyncStorage.getItem("user");
@@ -60,8 +64,10 @@ export default function HomeScreen() {
       }
     } catch (error) {
       console.error("Token check error:", error);
+    } finally {
+      setTokenChecked(true);
     }
-  }, []);
+  }, [tokenChecked]);
 
   useEffect(() => {
     checkForToken();
@@ -135,19 +141,32 @@ export default function HomeScreen() {
     }
   }, [currentIndex, loadMoreSections, showInfiniteList]);
 
-  // Memoized header component
+  // Memoize the header component and add comprehensive null checks
   const ListHeader = useMemo(
     () => (
       <View style={{ flex: 1, width: "100%" }}>
         <Header />
         <CategorySection />
-        {newArrivals?.length > 0 && (
-          <FeaturedSection list={true} type="new-arrivals" />
-        )}
+        {newArrivals &&
+          Array.isArray(newArrivals) &&
+          newArrivals.length > 0 && (
+            <FeaturedSection list={true} type="new-arrivals" />
+          )}
       </View>
     ),
     [newArrivals]
   );
+
+  const ListFooterComponent = useMemo(() => {
+    return showInfiniteList && !loadingSectionId ? (
+      <View style={{ marginTop: 20 }}>
+        <ProductInfiniteList
+          type="categoryData"
+          url="getCategoryData/beauty-health"
+        />
+      </View>
+    ) : null;
+  }, [showInfiniteList, loadingSectionId]);
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -164,16 +183,7 @@ export default function HomeScreen() {
         windowSize={5}
         extraData={loadingSectionId}
         removeClippedSubviews={false}
-        ListFooterComponent={
-          showInfiniteList && !loadingSectionId ? (
-            <View style={{ marginTop: 20 }}>
-              <ProductInfiniteList
-                type="categoryData"
-                url="getCategoryData/beauty-health"
-              />
-            </View>
-          ) : null
-        }
+        ListFooterComponent={ListFooterComponent}
       />
     </SafeAreaView>
   );
