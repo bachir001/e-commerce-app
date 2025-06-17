@@ -16,7 +16,9 @@ import axiosApi from "@/apis/axiosApi";
 import { CustomPicker } from "./CustomPicker";
 import { PickerModal } from "./PickerModal";
 import AddressInput from "./AddressInput";
+
 import Toast from "react-native-toast-message";
+
 import useAddAddress from "@/hooks/addresses/addAddress";
 import { useSessionStore } from "@/store/useSessionStore";
 
@@ -82,11 +84,7 @@ export default function AddressForm({
   const [cityLoading, setCityLoading] = useState<boolean>(false);
   const [areaLoading, setAreaLoading] = useState<boolean>(false);
 
-  const { token, governorates, setGovernorates } = useSessionStore((state) => ({
-    token: state.token,
-    governorates: state.governorates,
-    setGovernorates: state.setGovernorates,
-  }));
+  const { token, governorates, setGovernorates } = useSessionStore();
 
   const addAddressMutation = useAddAddress();
 

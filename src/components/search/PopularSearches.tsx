@@ -1,4 +1,5 @@
 import { Text, TouchableOpacity, View } from "react-native";
+
 import { ThemedText } from "../common/ThemedText";
 import { FontAwesome5 } from "@expo/vector-icons";
 import useGetPopularSearches from "@/hooks/search/useGetPopularSearches";

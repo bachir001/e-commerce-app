@@ -1,81 +1,92 @@
 import "../../global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { getOrCreateSessionId } from "@/lib/session";
 import { initOneSignal } from "@/Services/oneSignal";
 import { Stack } from "expo-router";
 import Toast from "react-native-toast-message";
 import { ImageBackground } from "react-native";
+import {
+  useBrands,
+  useMegaCategories,
+  useSliders,
+} from "@/hooks/home/topSection";
+import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import * as SplashScreen from "expo-splash-screen";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useAppDataStore } from "@/store/useAppDataStore";
 
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 3,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
+export const queryClient = new QueryClient({});
+
+const newArrivalsOptions = {
+  per_page: 15,
+  sort: "price_high_low" as const,
+  page: 1,
+};
 
 SplashScreen.preventAutoHideAsync();
 
 function AppWithProviders() {
-  const [appIsReady, setAppIsReady] = useState(false);
-  const setSessionId = useSessionStore((s) => s.setSessionId);
-  const { fetchBrands, fetchSliders, fetchMegaCategories } = useAppDataStore();
+  const { setSessionId } = useSessionStore();
+  const { setBrands, setSliders, setMegaCategories, setNewArrivals } =
+    useAppDataStore();
+
+  const { data: brands, isLoading: loadingBrands } = useBrands();
+  const { data: sliders, isLoading: loadingSliders } = useSliders();
+  const { data: megaCategories, isLoading: loadingMega } = useMegaCategories();
+
+  const { data: newArrivals, isLoading: loadingNewArrivals } =
+    useFeaturedSection("new-arrivals", newArrivalsOptions);
 
   useEffect(() => {
-    let isMounted = true;
-
     const initializeApp = async () => {
-      console.log("run");
       try {
         const id = await getOrCreateSessionId();
-        if (isMounted) {
-          setSessionId(id);
-          initOneSignal();
-        }
+        setSessionId(id);
+        initOneSignal();
 
-        await Promise.allSettled([
-          fetchBrands(),
-          fetchSliders(),
-          fetchMegaCategories(),
-        ]);
+        if (brands && !loadingBrands) setBrands(brands);
+        if (sliders && !loadingSliders) setSliders(sliders);
+        if (megaCategories && !loadingMega) setMegaCategories(megaCategories);
+        if (newArrivals && !loadingNewArrivals) setNewArrivals(newArrivals);
+
+        // if (
+        //   !loadingBrands &&
+        //   !loadingSliders &&
+        //   !loadingMega &&
+        //   !loadingNewArrivals
+        // ) {
+        //   await SplashScreen.hideAsync();
+        // }
       } catch (error) {
         console.error("Initialization error:", error);
-      } finally {
-        isMounted && setAppIsReady(true);
       }
     };
 
     initializeApp();
+  }, [
+    brands,
+    sliders,
+    megaCategories,
+    newArrivals,
+    // loadingBrands,
+    // loadingSliders,
+    // loadingMega,
+    // loadingNewArrivals,
+  ]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  // const appNotReady =
+  //   loadingBrands || loadingSliders || loadingMega || loadingNewArrivals;
 
-  useEffect(() => {
-    const hideSplashScreen = async () => {
-      if (appIsReady) {
-        await SplashScreen.hideAsync();
-      }
-    };
-
-    hideSplashScreen();
-  }, [appIsReady]);
-
-  if (!appIsReady) {
-    return (
-      <ImageBackground
-        source={require("@/assets/images/initialPageLoader.jpeg")}
-        className="flex-1 justify-center items-center"
-        resizeMode="cover"
-      />
-    );
-  }
+  // if (appNotReady) {
+  //   return (
+  //     <ImageBackground
+  //       source={require("@/assets/images/initialPageLoader.jpeg")}
+  //       className="flex-1 justify-center items-center"
+  //       resizeMode="cover"
+  //     />
+  //   );
+  // }
 
   return (
     <>

@@ -4,12 +4,11 @@ import { useSessionStore } from "@/store/useSessionStore";
 import { SessionContextValue } from "@/types/globalTypes";
 import { useMutation } from "@tanstack/react-query";
 import { router } from "expo-router";
+
 import Toast from "react-native-toast-message";
 
 export default function useAddAddress() {
-  const { token } = useSessionStore((state) => ({
-    token: state.token,
-  }));
+  const { token } = useSessionStore();
 
   return useMutation({
     mutationFn: async (addressData: any) => {

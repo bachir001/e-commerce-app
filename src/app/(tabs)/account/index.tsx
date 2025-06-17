@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+
 import { useRouter } from "expo-router";
 import Header from "@/components/account/AccountHeader";
 import IconGrid, { type IconGridItem } from "@/components/account/IconGrid";
 import Footer from "@/components/account/Footer";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { FontAwesome5 } from "@expo/vector-icons";
 import ContactModal from "@/components/account/ContactModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -22,11 +24,7 @@ function getFlagEmoji(countryCode: string): string {
 
 export default function AccountScreen() {
   const router = useRouter();
-  const { user, isLogged, setIsLogged } = useSessionStore((state) => ({
-    setIsLogged: state.setIsLogged,
-    isLogged: state.isLogged,
-    user: state.user,
-  }));
+  const { user, isLogged, setIsLogged } = useSessionStore();
 
   const [isContactModalVisible, setContactModalVisible] = useState(false);
 

@@ -30,9 +30,7 @@ export default function loginAccount() {
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
-  const { setIsLogged } = useSessionStore((state) => ({
-    setIsLogged: state.setIsLogged,
-  }));
+  const { setIsLogged } = useSessionStore();
 
   const router = useRouter();
 

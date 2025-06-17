@@ -7,6 +7,7 @@ import {
   Dimensions,
 } from "react-native";
 import React, { useCallback } from "react";
+
 import { Brand } from "@/types/globalTypes";
 import { useAppDataStore } from "@/store/useAppDataStore";
 
@@ -48,9 +49,7 @@ const BrandComponent = React.memo(({ name, image, slug, id }: Brand) => {
 });
 
 export default function Brands() {
-  const { brands } = useAppDataStore((state) => ({
-    brands: state.brands,
-  }));
+  const { brands } = useAppDataStore();
 
   const renderItem = useCallback(
     ({ item }: { item: Brand }) => {

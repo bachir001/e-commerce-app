@@ -8,16 +8,6 @@ export default function HomeLayout() {
         headerShown: false,
       }}
       initialRouteName="index"
-    >
-      <Stack.Screen name="index" />
-
-      <Stack.Screen
-        name="SearchScreen"
-        options={{
-          presentation: "modal",
-        }}
-      />
-      <Stack.Screen name="ProductDetails" />
-    </Stack>
+    />
   );
 }

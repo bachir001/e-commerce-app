@@ -1,4 +1,5 @@
 import React from "react";
+
 import { Dimensions, Image, View } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import CircularCategorylist from "./CircularCategoryList";
@@ -51,10 +52,7 @@ const SliderComponent = ({ sliders }: SliderComponentProps) => {
 };
 
 const CategorySection = React.memo(() => {
-  const { sliders, megaCategories } = useAppDataStore((state) => ({
-    sliders: state.sliders,
-    megaCategories: state.megaCategories,
-  }));
+  const { sliders, megaCategories } = useAppDataStore();
 
   return (
     <View style={{ backgroundColor: "#FFF8E1" }} className="max-h-max pb-5">

@@ -5,6 +5,7 @@ import ProductCard from "@/components/common/ProductCard";
 import AnimatedLoader from "@/components/common/AnimatedLayout";
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import type { HomePageSectionProp } from "@/constants/HomePageSections";
+
 import { router } from "expo-router";
 import { useAppDataStore } from "@/store/useAppDataStore";
 
@@ -59,9 +60,7 @@ const FeaturedSection = React.memo(
       list ? false : true
     );
 
-    const { newArrivals } = useAppDataStore((state) => ({
-      newArrivals: state.newArrivals,
-    }));
+    const { newArrivals } = useAppDataStore();
 
     const renderProductItem = useCallback(
       ({ item }: { item: any }) => (

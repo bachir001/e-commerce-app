@@ -25,11 +25,7 @@ interface UpdateBody {
 }
 
 export default function EditProfile() {
-  const { user, token, setUser } = useSessionStore((state) => ({
-    user: state.user,
-    token: state.token,
-    setUser: state.setUser,
-  }));
+  const { user, token, setUser } = useSessionStore();
 
   const [firstName, setFirstName] = useState<string>(user?.first_name ?? "");
   const [lastName, setLastName] = useState<string>(user?.last_name ?? "");

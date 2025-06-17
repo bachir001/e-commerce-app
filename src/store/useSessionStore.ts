@@ -1,29 +1,48 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { Governorate, UserContextType } from "@/types/globalTypes";
+import {
+  Brand,
+  Slider,
+  MegaCategory,
+  Product,
+  UserContextType,
+  Governorate,
+} from "@/types/globalTypes";
+import axiosApi from "@/apis/axiosApi";
 
-interface SessionState {
+interface SessionStore {
   sessionId: string | null;
   isLogged: boolean;
   user: UserContextType | null;
   token: string | null;
   governorates: Governorate[];
-  setSessionId: (id: string | null) => void;
+
+  setSessionId: (sessionId: string | null) => void;
   setIsLogged: (logged: boolean) => void;
-  setUser: (user: UserContextType | null) => void;
-  setToken: (token: string | null) => void;
-  setGovernorates: (govs: Governorate[]) => void;
+  setUser: (user: UserContextType) => void;
+  setToken: (token: string) => void;
+  setGovernorates: (governorates: Governorate[]) => void;
 }
 
-export const useSessionStore = create<SessionState>()((set) => ({
+export const useSessionStore = create<SessionStore>((set) => ({
   sessionId: null,
   isLogged: false,
   user: null,
   token: null,
   governorates: [],
-  setSessionId: (id) => set({ sessionId: id }),
-  setIsLogged: (logged) => set({ isLogged: logged }),
-  setUser: (user) => set({ user }),
-  setToken: (token) => set({ token }),
-  setGovernorates: (govs) => set({ governorates: govs }),
+
+  setSessionId: (sessionId: string | null) => {
+    set({ sessionId: sessionId });
+  },
+  setIsLogged: (logged) => {
+    set({ isLogged: logged });
+  },
+  setUser: (user) => {
+    set({ user: user });
+  },
+  setToken: (token) => {
+    set({ token });
+  },
+  setGovernorates: (governorates) => {
+    set({ governorates });
+  },
 }));

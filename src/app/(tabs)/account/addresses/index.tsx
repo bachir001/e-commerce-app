@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
+
 import { Colors } from "@/constants/Colors";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { useQuery } from "@tanstack/react-query";
@@ -46,9 +47,7 @@ export default function AddressPage() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
-  const { token } = useSessionStore((state) => ({
-    token: state.token,
-  }));
+  const { token } = useSessionStore();
 
   const {
     data: addresses = [],
