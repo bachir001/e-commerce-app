@@ -1,7 +1,5 @@
-"use client";
-
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -9,64 +7,77 @@ import {
   ScrollView,
   Text,
   View,
-  TouchableOpacity,
-  Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { FontAwesome5 } from "@expo/vector-icons";
-import type { SubCategory } from "..";
+import type { SubCategory } from "./(tabs)/categories";
 import CategoryItem from "@/components/categories/CategoryItem";
 import MegaHeader from "@/components/categories/MegaHeader";
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import ProductCard from "@/components/common/ProductCard";
-import { Product } from "@/types/globalTypes";
-import DotsLoader from "@/components/common/AnimatedLayout";
+import { Product, RelatedCategory } from "@/types/globalTypes";
 import { Colors } from "@/constants/Colors";
-
-const { width } = Dimensions.get("window");
+import useGetCategoryRelatedCategories, {
+  CategoryData,
+} from "@/hooks/categories/useGetCategory";
+import DotsLoader from "@/components/common/AnimatedLayout";
 
 export default function Mega() {
   const router = useRouter();
-  const { categoryJSON, color = Colors.beautyAndHealth } =
-    useLocalSearchParams();
+  const { slug, color = Colors.beautyAndHealth } = useLocalSearchParams();
   const [imageLoading, setImageLoading] = useState(true);
 
-  const category =
-    typeof categoryJSON === "string" ? JSON.parse(categoryJSON) : null;
+  const { data: category, isLoading: categoryLoading } =
+    useGetCategoryRelatedCategories(
+      slug as string,
+      slug !== undefined && slug !== null
+    ); //this comes in the form of CategoryData {categoryInfo, relatedCategories}
 
   const { data: bestSellers, isLoading: bestSellersLoading } =
-    useFeaturedSection("best-sellers", {
-      per_page: 10 as const,
-      page: 1 as const,
-      sort: "price_high_low" as const,
-    });
-
-  const onCategoryPress = useCallback((item: SubCategory) => {
-    console.log("Category pressed:", item.name);
-  }, []);
+    useFeaturedSection(
+      "best-sellers",
+      {
+        per_page: 10 as const,
+        page: 1 as const,
+        sort: "price_high_low" as const,
+        language: "en",
+        category_slug: slug,
+      },
+      typeof slug === "string" && slug !== undefined && slug !== null
+    );
 
   const renderSubCategories = useCallback(
-    ({ item, index }: { item: SubCategory; index: number }) => (
-      <View className="mr-4">
-        <CategoryItem item={item} color={color} />
-      </View>
-    ),
-    [onCategoryPress]
+    ({ item, index }: { item: RelatedCategory; index: number }) => {
+      if (!item) {
+        return null;
+      }
+
+      return (
+        <View className="mr-4">
+          <CategoryItem
+            item={item}
+            color={color as string}
+            // subCount={}
+          />
+        </View>
+      );
+    },
+    []
   );
 
   const renderBestSellers = useCallback(
     ({ item, index }: { item: Product; index: number }) => (
-      <ProductCard product={item} innerColor={color} />
+      <ProductCard product={item} innerColor={color as string} />
     ),
-    [onCategoryPress]
+    []
   );
 
   const keyExtractor = useCallback((item: any) => item.id.toString(), []);
 
   const renderSectionHeader = (
     title: string,
-    subtitle?: string,
-    showViewAll?: boolean
+    subtitle?: string
+    // showViewAll?: boolean
   ) => (
     <View className="flex-row items-center justify-between mb-4">
       <View className="flex-1">
@@ -83,9 +94,28 @@ export default function Mega() {
     </View>
   );
 
+  if (categoryLoading || bestSellersLoading) {
+    return (
+      <View className="flex-1 flex justify-center items-center">
+        <DotsLoader size="large" />
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: color }}>
-      <MegaHeader category={category} bgColor={color} />
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: color as string }}
+    >
+      {category &&
+        category?.categoryInfo !== null &&
+        category.relatedCategories.length > 0 && (
+          <MegaHeader
+            name={category.categoryInfo?.name ?? ""}
+            subCount={category?.relatedCategories.length}
+            bgColor={color as string}
+          />
+        )}
 
       <ScrollView
         className="flex-1 bg-white"
@@ -120,7 +150,6 @@ export default function Mega() {
               onLoadEnd={() => setImageLoading(false)}
             />
 
-            {/* Image overlay with gradient */}
             <LinearGradient
               colors={["transparent", "rgba(0,0,0,0.3)"]}
               style={{
@@ -132,14 +161,12 @@ export default function Mega() {
               }}
             />
 
-            {/* Loading state */}
             {imageLoading && (
               <View className="absolute inset-0 bg-gray-200 items-center justify-center">
                 <FontAwesome5 name="image" size={32} color="#9CA3AF" />
               </View>
             )}
 
-            {/* Featured badge */}
             <View className="absolute top-4 left-4 bg-white/90 rounded-full px-3 py-1">
               <Text className="text-xs font-bold" style={{ color: color }}>
                 FEATURED
@@ -148,17 +175,18 @@ export default function Mega() {
           </View>
         </View>
 
-        {/* Categories Section */}
         <View className="px-6 mb-8">
           {renderSectionHeader(
             "Subcategories",
-            "Explore different types within this category",
-            true
+            "Explore different types within this category"
+            // true
           )}
 
-          {category?.subcategories && category.subcategories.length > 0 ? (
+          {category &&
+          category?.relatedCategories &&
+          category.relatedCategories.length > 0 ? (
             <FlatList
-              data={category.subcategories}
+              data={category.relatedCategories}
               renderItem={renderSubCategories}
               keyExtractor={keyExtractor}
               horizontal
@@ -181,12 +209,11 @@ export default function Mega() {
           )}
         </View>
 
-        {/* Best Sellers Section */}
         <View className="px-6 mb-8">
           {renderSectionHeader(
             "Popular Choices",
-            "Most loved items in this category",
-            true
+            "Most loved items in this category"
+            // true
           )}
 
           <View className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-4 mb-4">

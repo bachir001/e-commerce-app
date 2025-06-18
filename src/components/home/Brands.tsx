@@ -9,7 +9,7 @@ import {
 import React, { useCallback } from "react";
 
 import { Brand } from "@/types/globalTypes";
-import { useAppDataStore } from "@/store/useAppDataStore";
+import { useBrands } from "@/hooks/home/topSection";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -49,7 +49,7 @@ const BrandComponent = React.memo(({ name, image, slug, id }: Brand) => {
 });
 
 export default function Brands() {
-  const { brands } = useAppDataStore();
+  const { data: brands } = useBrands();
 
   const renderItem = useCallback(
     ({ item }: { item: Brand }) => {

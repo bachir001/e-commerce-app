@@ -60,32 +60,6 @@ export interface Slider {
   model_slug: string;
 }
 
-export interface MegaCategory {
-  id: number;
-  name: string;
-  description: string | null;
-  slug: string;
-  level: string;
-  mega_primary: boolean;
-  mega_bg: string;
-  mega_mobile_bg: string;
-  mega_title: string;
-  mega_title_color: string;
-  mega_description: string;
-  mega_description_color: string;
-}
-
-export interface RelatedCategory {
-  id: number;
-  name: string;
-  description: string | null;
-  slug: string;
-  image: string | null;
-  main_image: string | null;
-  category_cover_image: string | null;
-  children: RelatedCategory[];
-}
-
 export interface Product {
   id: number;
   name: string;
@@ -111,4 +85,32 @@ export interface popularSearches {
   id: number;
   query: string;
   count: number;
+}
+
+export interface CategoryInfo {
+  id: number;
+  name: string;
+  slug: string;
+  image: string | null;
+  description: string | null;
+}
+
+export interface MegaCategory extends CategoryInfo {
+  mega_bg: string;
+  mega_mobile_bg: string;
+  mega_title: string;
+  mega_title_color: string;
+  mega_description: string;
+  mega_description_color: string;
+}
+
+export interface RelatedCategory extends CategoryInfo {
+  mega_primary: boolean;
+}
+
+export interface GeneralCategory extends CategoryInfo {
+  image: string | null;
+  main_image?: string;
+  category_cover_image?: string;
+  relatedCategories: RelatedCategory[];
 }

@@ -1,5 +1,5 @@
 import { View, Text, Image, TouchableOpacity } from "react-native";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import type { Product } from "@/types/globalTypes";
 import { Heart, Star, ShoppingBag } from "lucide-react-native";
 import { useRouter } from "expo-router";
@@ -46,6 +46,10 @@ const ProductCard = React.memo(
           ((Number(price) - Number(specialPrice)) / Number(price)) * 100
         )
       : 0;
+
+    useEffect(() => {
+      console.log(product);
+    }, []);
 
     return (
       <TouchableOpacity

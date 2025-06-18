@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  Image,
   TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,8 +11,6 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import useGetCategoriesData from "@/hooks/categories/useGetCategoriesData";
 import CategoryItem from "@/components/categories/CategoryItem";
 import DotsLoader from "@/components/common/AnimatedLayout";
-import { router } from "expo-router";
-import { Colors } from "@/constants/Colors";
 
 export interface Category {
   id: number;
@@ -23,6 +20,8 @@ export interface Category {
   main_image: string;
   category_cover_image: string;
   description: string | null;
+  mega_primary?: boolean | null;
+  level?: string | null;
 }
 
 export interface MainCategory extends Category {

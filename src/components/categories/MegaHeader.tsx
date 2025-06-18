@@ -1,15 +1,16 @@
-import { Category, MainCategory } from "@/app/(tabs)/categories";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
 
 export default function MegaHeader({
-  category,
+  name,
   bgColor,
+  subCount,
 }: {
-  category: MainCategory;
+  name: string;
   bgColor: string;
+  subCount?: number;
 }) {
   return (
     <LinearGradient
@@ -28,10 +29,10 @@ export default function MegaHeader({
 
       <View className="items-center">
         <Text className="font-bold text-3xl text-white text-center mb-2">
-          {category?.name}
+          {name}
         </Text>
         <Text className="text-white/80 text-base text-center">
-          {category?.subcategories?.length || 0} subcategories available
+          {subCount || 0} subcategories available
         </Text>
       </View>
 

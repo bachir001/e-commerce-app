@@ -27,8 +27,7 @@ import useGetRelatedProducts from "@/hooks/products/useGetRelatedProducts";
 import useGetProductDetails from "@/hooks/products/useGetProductDetails";
 import axiosApi from "@/apis/axiosApi";
 import DotsLoader from "@/components/common/AnimatedLayout";
-import { Category, MainCategory } from "../categories";
-
+import { MainCategory } from "./(tabs)/categories";
 interface MainDetail extends Product {
   sku: string;
   video_url: string | null;
