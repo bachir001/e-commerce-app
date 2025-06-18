@@ -60,11 +60,6 @@ const EmptyComponent = React.memo(() => (
 
 const LoadingComponent = React.memo(() => (
   <SafeAreaView className="flex-1 bg-white justify-center items-center">
-    <View className="px-6 py-4">
-      <View className="w-32 h-8 bg-gray-200 rounded mb-2" />
-      <View className="w-48 h-4 bg-gray-200 rounded mb-6" />
-      <View className="w-full h-12 bg-gray-200 rounded-xl" />
-    </View>
     <DotsLoader size="large" />
   </SafeAreaView>
 ));

@@ -1,13 +1,15 @@
 import { View, Text, Image, TouchableOpacity } from "react-native";
-import React, { useCallback, useEffect } from "react";
+import React from "react";
 import type { Product } from "@/types/globalTypes";
 import { Heart, Star, ShoppingBag } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface Props {
   product: Product;
   innerColor?: string;
   containerColor?: string;
+  variant?: "default" | "grid";
   onPress?: () => void;
   onAddToCart?: () => void;
   onAddToWishlist?: () => void;
@@ -18,12 +20,12 @@ const ProductCard = React.memo(
     product,
     innerColor = "#5e3ebd",
     containerColor = "white",
+    variant = "default",
     onAddToCart,
     onAddToWishlist,
   }: Props) => {
-    if (!product) return null;
-
     const router = useRouter();
+    if (!product) return null;
 
     const onPress = () => {
       router.push({
@@ -47,10 +49,139 @@ const ProductCard = React.memo(
         )
       : 0;
 
-    useEffect(() => {
-      console.log(product);
-    }, []);
+    if (variant === "grid") {
+      return (
+        <TouchableOpacity
+          className="rounded-2xl overflow-hidden bg-white"
+          style={{
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 6,
+          }}
+          activeOpacity={0.95}
+          onPress={onPress}
+        >
+          {/* Image container */}
+          <View className="w-full h-48 relative bg-gray-50">
+            <Image
+              source={{ uri: productImage }}
+              className="w-full h-full"
+              resizeMode="cover"
+            />
 
+            {/* Gradient overlay */}
+            <LinearGradient
+              colors={["transparent", "rgba(0,0,0,0.1)"]}
+              style={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: 40,
+              }}
+            />
+
+            {/* Wishlist button */}
+            <TouchableOpacity
+              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 items-center justify-center shadow-sm"
+              onPress={onAddToWishlist}
+              hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+            >
+              <Heart size={16} color="#666" stroke="#666" fill="transparent" />
+            </TouchableOpacity>
+
+            {/* Discount badge */}
+            {hasSpecialPrice && discount > 0 && (
+              <LinearGradient
+                colors={["#FF4757", "#FF3742"]}
+                className="absolute top-3 left-3 px-2 py-1 rounded-full"
+                style={{
+                  shadowColor: "#FF4757",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 4,
+                  elevation: 3,
+                }}
+              >
+                <Text className="text-white text-xs font-bold">
+                  -{discount}%
+                </Text>
+              </LinearGradient>
+            )}
+          </View>
+
+          {/* Product details */}
+          <View className="p-4">
+            {/* Rating */}
+            {productRating > 0 && (
+              <View className="flex-row items-center mb-2">
+                <Star size={14} color="#FFB800" fill="#FFB800" />
+                <Text className="text-xs text-gray-600 ml-1 font-medium">
+                  {productRating.toFixed(1)}
+                </Text>
+                <View className="flex-1" />
+                <View className="bg-green-100 px-2 py-0.5 rounded-full">
+                  <Text className="text-green-700 text-xs font-semibold">
+                    In Stock
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/* Product name */}
+            <Text
+              className="text-base font-semibold text-gray-900 mb-3"
+              numberOfLines={2}
+            >
+              {productName}
+            </Text>
+
+            {/* Price and cart section */}
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1">
+                {hasSpecialPrice ? (
+                  <View>
+                    <Text
+                      className="text-lg font-bold"
+                      style={{ color: "#FF4757" }}
+                    >
+                      ${specialPrice}
+                    </Text>
+                    <Text className="text-sm text-gray-400 line-through">
+                      ${price}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text className="text-lg font-bold text-gray-900">
+                    ${price}
+                  </Text>
+                )}
+              </View>
+
+              <TouchableOpacity
+                className="w-10 h-10 rounded-xl items-center justify-center"
+                style={{
+                  backgroundColor: innerColor,
+                  shadowColor: innerColor,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 6,
+                  elevation: 6,
+                }}
+                activeOpacity={0.8}
+                onPress={onAddToCart}
+              >
+                <ShoppingBag size={18} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      );
+    }
+
+    // Default variant (original design)
     return (
       <TouchableOpacity
         className="w-40 rounded-lg overflow-hidden shadow-md mx-1 my-2 border border-gray-100"
@@ -139,7 +270,8 @@ const ProductCard = React.memo(
   (prevProps, nextProps) => {
     if (
       prevProps.innerColor !== nextProps.innerColor ||
-      prevProps.containerColor !== nextProps.containerColor
+      prevProps.containerColor !== nextProps.containerColor ||
+      prevProps.variant !== nextProps.variant
     ) {
       return false;
     }

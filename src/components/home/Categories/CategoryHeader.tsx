@@ -1,5 +1,3 @@
-"use client";
-
 import { View, Text, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";

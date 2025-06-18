@@ -102,7 +102,7 @@ export default function SearchScreen() {
 
   const onPressItem = useCallback((product: Product) => {
     router.push({
-      pathname: "/(tabs)/home/ProductDetails",
+      pathname: "/ProductDetails",
       params: { productJSON: JSON.stringify(product) },
     });
   }, []);

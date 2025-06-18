@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   FlatList,
   Image,
@@ -17,10 +17,9 @@ import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import ProductCard from "@/components/common/ProductCard";
 import { Product, RelatedCategory } from "@/types/globalTypes";
 import { Colors } from "@/constants/Colors";
-import useGetCategoryRelatedCategories, {
-  CategoryData,
-} from "@/hooks/categories/useGetCategory";
+import useGetCategoryRelatedCategories from "@/hooks/categories/useGetCategory";
 import DotsLoader from "@/components/common/AnimatedLayout";
+import InfiniteList from "@/components/common/InfiniteList";
 
 export default function Mega() {
   const router = useRouter();
@@ -256,6 +255,8 @@ export default function Mega() {
         </View>
 
         <View className="h-8" />
+
+        <InfiniteList slug={slug as string} />
       </ScrollView>
     </SafeAreaView>
   );
