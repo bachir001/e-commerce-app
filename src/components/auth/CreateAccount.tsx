@@ -8,6 +8,7 @@ import {
   Platform,
   StyleSheet,
   KeyboardAvoidingView,
+  ActivityIndicator,
 } from "react-native";
 import { SetStateAction, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,24 +21,35 @@ import { Picker } from "@react-native-picker/picker";
 import Checkbox from "expo-checkbox";
 import Toast from "react-native-toast-message";
 import { Colors } from "@/constants/Colors";
+import axiosApi from "@/apis/axiosApi";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useSessionStore } from "@/store/useSessionStore";
+import { loginOneSignal } from "@/Services/OneSignalService";
+
+interface CompleteSignUp {
+  password: string;
+  password_confirmation: string;
+  first_name: string;
+  last_name: string;
+  terms: 1;
+  gender_id: 1 | 2;
+  email: string;
+}
 
 const passwordRegex: RegExp =
   /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
 
-export default function CreateAccount() {
-  const [mode, setMode] = useState<"date" | "time">("date");
-  const [show, setShow] = useState(false);
+export default function CreateAccount({ email }: { email: string }) {
+  const { isLogged, setIsLogged } = useSessionStore();
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [selectedGender, setSelectedGender] = useState<1 | 2>(1);
   const [termAccepted, setTermAccepted] = useState(true);
-  const [date, setDate] = useState(new Date());
   const [mobile, setMobile] = useState("");
 
   const validateSignUp = (): string => {
@@ -70,44 +82,99 @@ export default function CreateAccount() {
     return "Success";
   };
 
-  const goToConfirmation = () => {
-    const validationResult = validateSignUp();
-    if (validationResult !== "Success") {
-      Toast.show({
-        type: "error",
-        text1: "Sign Up Failed",
-        text2: validationResult,
-        position: "top",
-        autoHide: false,
-        topOffset: 60,
-      });
+  // const onChange = (_event: any, selectedDate: any) => {
+  //   const currentDate = selectedDate;
+  //   setShow(false);
+  //   setDate(currentDate);
+  // };
 
-      return;
+  // const showDatepicker = () => {
+  //   setShow(true);
+  //   setMode("date");
+  // };
+
+  const handleCompleteSignUp = async () => {
+    console.log("WHATSUPPP");
+
+    // const validatedForm = validateSignUp();
+
+    // if (validatedForm !== "Success") {
+    //   Toast.show({
+    //     type: "error",
+    //     autoHide: true,
+    //     visibilityTime: 2000,
+    //     text1: "Cannot complete Sign Up",
+    //     text2: "Some inputs are not valid!",
+    //   });
+    //   return;
+    // }
+    console.log(email);
+    const RequestBody: CompleteSignUp = {
+      password: password,
+      password_confirmation: confirmPassword,
+      first_name: firstName,
+      last_name: lastName,
+      gender_id: selectedGender,
+      terms: 1,
+      email: email,
+    };
+
+    try {
+      setLoading(true);
+      await axiosApi
+        .post(
+          `https://api-gocami-test.gocami.com/api/register/complete`,
+          RequestBody
+        )
+        .then(async (response) => {
+          console.log(response.data);
+          if (response.status === 200) {
+            Toast.show({
+              type: "success",
+              text1: "Register Successful",
+              text2: "Please enter verification code",
+              position: "top",
+              autoHide: true,
+              topOffset: 60,
+            });
+
+            const LoginBody = {
+              email,
+              password,
+            };
+
+            await axiosApi
+              .post("https://api-gocami-test.gocami.com/api/login", LoginBody)
+              .then(async (response) => {
+                if (response.data.status) {
+                  loginOneSignal(response.data.data.user.id);
+                  await Promise.all([
+                    AsyncStorage.setItem("token", response.data.data.token),
+                    AsyncStorage.setItem(
+                      "user",
+                      JSON.stringify(response.data.data.user)
+                    ),
+                  ]);
+                  setIsLogged(true);
+                  router.replace("/(tabs)/home");
+                }
+              });
+          } else {
+            Toast.show({
+              type: "error",
+              text1: "Register Failed",
+              text2: "Account Already Exists",
+              position: "top",
+              autoHide: false,
+              topOffset: 60,
+            });
+          }
+        });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-
-    router.push({
-      pathname: "/auth/confirmation",
-      params: {
-        verificationType: "email",
-        email,
-        firstName,
-        lastName,
-        password,
-        selectedGender,
-        date: date.toISOString(),
-      },
-    });
-  };
-
-  const onChange = (_event: any, selectedDate: any) => {
-    const currentDate = selectedDate;
-    setShow(false);
-    setDate(currentDate);
-  };
-
-  const showDatepicker = () => {
-    setShow(true);
-    setMode("date");
   };
 
   return (
@@ -126,7 +193,7 @@ export default function CreateAccount() {
 
           <View className="mt-8">
             <Text className="text-3xl font-bold text-gray-800">
-              Create Account
+              Complete Sign Up
             </Text>
             <Text className="text-gray-500 mt-2">
               Join GoCami and start your journey
@@ -139,7 +206,7 @@ export default function CreateAccount() {
                 <Text className="text-sm font-medium text-gray-700 mb-2">
                   {createInput.label}
                 </Text>
-                {createInput.isCalendar ? (
+                {/* {createInput.isCalendar ? (
                   <Pressable onPress={showDatepicker}>
                     <View className="flex flex-row justify-between items-center w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 shadow-sm">
                       <Text className="text-gray-700">
@@ -163,7 +230,8 @@ export default function CreateAccount() {
                       />
                     )}
                   </Pressable>
-                ) : createInput.isGender ? (
+                ) :  */}
+                {createInput.isGender ? (
                   <View className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden w-full">
                     <Picker
                       selectedValue={selectedGender}
@@ -232,7 +300,7 @@ export default function CreateAccount() {
                         setFirstName(text);
                       else if (createInput.label === "Last Name")
                         setLastName(text);
-                      else if (createInput.label === "Email") setEmail(text);
+                      // else if (createInput.label === "Email") setEmail(text);
                       else if (createInput.label === "Password")
                         setPassword(text);
                     }}
@@ -285,12 +353,16 @@ export default function CreateAccount() {
                 }}
                 className={`py-4 text-center mt-2 rounded-xl shadow-md`}
                 onPress={() => {
-                  goToConfirmation();
+                  handleCompleteSignUp();
                 }}
               >
-                <Text className="text-center text-white font-semibold">
-                  Create Account
-                </Text>
+                {loading ? (
+                  <ActivityIndicator />
+                ) : (
+                  <Text className="text-center text-white font-semibold">
+                    Create Account
+                  </Text>
+                )}
               </TouchableOpacity>
             )}
 

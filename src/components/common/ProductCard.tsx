@@ -1,9 +1,9 @@
+// components/common/ProductCard.tsx
 import { View, Text, Image, TouchableOpacity } from "react-native";
 import React, { useMemo, useCallback } from "react";
 import type { Product } from "@/types/globalTypes";
-import { Heart, Star, ShoppingBag } from "lucide-react-native";
+import { Heart, ShoppingBag } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 
 interface Props {
   product: Product;
@@ -13,6 +13,7 @@ interface Props {
   onPress?: () => void;
   onAddToCart?: () => void;
   onAddToWishlist?: () => void;
+  simplified?: boolean; // New prop for performance mode
 }
 
 const ProductCard = React.memo(
@@ -21,12 +22,12 @@ const ProductCard = React.memo(
     innerColor = "#5e3ebd",
     containerColor = "white",
     variant = "default",
+    simplified = false,
     onAddToCart,
     onAddToWishlist,
   }: Props) => {
     const router = useRouter();
 
-    // Memoize computed values to prevent recalculation on every render
     const productData = useMemo(() => {
       if (!product) return null;
 
@@ -56,41 +57,6 @@ const ProductCard = React.memo(
       };
     }, [product]);
 
-    // Memoize styles to prevent recreation
-    const cardShadowStyle = useMemo(
-      () => ({
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 6,
-      }),
-      []
-    );
-
-    const discountBadgeStyle = useMemo(
-      () => ({
-        shadowColor: "#FF4757",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 3,
-      }),
-      []
-    );
-
-    const cartButtonStyle = useMemo(
-      () => ({
-        backgroundColor: innerColor,
-        shadowColor: innerColor,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-        elevation: 6,
-      }),
-      [innerColor]
-    );
-
     const onPress = useCallback(() => {
       router.push({
         pathname: "/ProductDetails",
@@ -118,11 +84,11 @@ const ProductCard = React.memo(
       discount,
     } = productData;
 
-    if (variant === "grid") {
+    // Simplified version for grid/infinite list
+    if (simplified || variant === "grid") {
       return (
         <TouchableOpacity
           className="rounded-2xl overflow-hidden bg-white"
-          style={cardShadowStyle}
           activeOpacity={0.95}
           onPress={onPress}
         >
@@ -132,26 +98,13 @@ const ProductCard = React.memo(
               source={{ uri: productImage }}
               className="w-full h-full"
               resizeMode="cover"
-              // Performance optimization for images
               defaultSource={{ uri: "https://via.placeholder.com/150" }}
               fadeDuration={0}
             />
 
-            {/* Gradient overlay */}
-            <LinearGradient
-              colors={["transparent", "rgba(0,0,0,0.1)"]}
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: 40,
-              }}
-            />
-
             {/* Wishlist button */}
             <TouchableOpacity
-              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 items-center justify-center shadow-sm"
+              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 items-center justify-center"
               onPress={handleAddToWishlist}
               hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
               activeOpacity={0.7}
@@ -159,42 +112,31 @@ const ProductCard = React.memo(
               <Heart size={16} color="#666" stroke="#666" fill="transparent" />
             </TouchableOpacity>
 
-            {/* Discount badge */}
-            {hasSpecialPrice && discount > 0 && (
-              <LinearGradient
-                colors={["#FF4757", "#FF3742"]}
-                className="absolute top-3 left-3 px-2 py-1 rounded-full"
-                style={discountBadgeStyle}
-              >
+            {/* Discount badge - simplified */}
+            {!simplified && hasSpecialPrice && discount > 0 && (
+              <View className="absolute top-3 left-3 px-2 py-1 rounded-full bg-red-500">
                 <Text className="text-white text-xs font-bold">
                   -{discount}%
                 </Text>
-              </LinearGradient>
+              </View>
             )}
           </View>
 
           {/* Product details */}
           <View className="p-4">
-            {/* Rating */}
-            {productRating > 0 && (
+            {/* Rating - removed in simplified mode */}
+            {!simplified && productRating > 0 && (
               <View className="flex-row items-center mb-2">
-                <Star size={14} color="#FFB800" fill="#FFB800" />
                 <Text className="text-xs text-gray-600 ml-1 font-medium">
                   {productRating.toFixed(1)}
                 </Text>
-                <View className="flex-1" />
-                <View className="bg-green-100 px-2 py-0.5 rounded-full">
-                  <Text className="text-green-700 text-xs font-semibold">
-                    In Stock
-                  </Text>
-                </View>
               </View>
             )}
 
             {/* Product name */}
             <Text
               className="text-base font-semibold text-gray-900 mb-3"
-              numberOfLines={2}
+              numberOfLines={simplified ? 1 : 2}
             >
               {productName}
             </Text>
@@ -210,9 +152,11 @@ const ProductCard = React.memo(
                     >
                       ${specialPrice}
                     </Text>
-                    <Text className="text-sm text-gray-400 line-through">
-                      ${price}
-                    </Text>
+                    {!simplified && (
+                      <Text className="text-sm text-gray-400 line-through">
+                        ${price}
+                      </Text>
+                    )}
                   </View>
                 ) : (
                   <Text className="text-lg font-bold text-gray-900">
@@ -223,7 +167,7 @@ const ProductCard = React.memo(
 
               <TouchableOpacity
                 className="w-10 h-10 rounded-xl items-center justify-center"
-                style={cartButtonStyle}
+                style={{ backgroundColor: innerColor }}
                 activeOpacity={0.8}
                 onPress={handleAddToCart}
               >
@@ -277,7 +221,6 @@ const ProductCard = React.memo(
           {/* Rating */}
           {productRating > 0 && (
             <View className="flex-row items-center mb-1">
-              <Star size={12} color="#FFB800" fill="#FFB800" />
               <Text className="text-xs text-gray-600 ml-0.5 font-medium">
                 {productRating.toFixed(1)}
               </Text>
@@ -325,27 +268,12 @@ const ProductCard = React.memo(
     );
   },
   (prevProps, nextProps) => {
-    if (
-      prevProps.innerColor !== nextProps.innerColor ||
-      prevProps.containerColor !== nextProps.containerColor ||
-      prevProps.variant !== nextProps.variant
-    ) {
-      return false;
-    }
-
-    const prevProduct = prevProps.product;
-    const nextProduct = nextProps.product;
-
-    if (prevProduct === nextProduct) return true;
-    if (!prevProduct || !nextProduct) return false;
-
     return (
-      prevProduct.id === nextProduct.id &&
-      prevProduct.name === nextProduct.name &&
-      prevProduct.price === nextProduct.price &&
-      prevProduct.special_price === nextProduct.special_price &&
-      prevProduct.image === nextProduct.image &&
-      prevProduct.rating === nextProduct.rating
+      prevProps.product.id === nextProps.product.id &&
+      prevProps.product.price === nextProps.product.price &&
+      prevProps.product.special_price === nextProps.product.special_price &&
+      prevProps.variant === nextProps.variant &&
+      prevProps.simplified === nextProps.simplified
     );
   }
 );

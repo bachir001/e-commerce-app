@@ -1,3 +1,4 @@
+// src/app/(tabs)/categories/[slug]/[catProds].tsx
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -15,12 +16,12 @@ import type { SubCategory } from "./(tabs)/categories";
 import CategoryItem from "@/components/categories/CategoryItem";
 import MegaHeader from "@/components/categories/MegaHeader";
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
-import ProductCard from "@/components/common/ProductCard";
 import { Product, RelatedCategory } from "@/types/globalTypes";
 import { Colors } from "@/constants/Colors";
 import useGetCategoryRelatedCategories from "@/hooks/categories/useGetCategory";
 import DotsLoader from "@/components/common/AnimatedLayout";
 import InfiniteList from "@/components/common/InfiniteList";
+import ProductCard from "@/components/common/ProductCard";
 
 enum Tab {
   Overview = "Overview",
@@ -53,25 +54,19 @@ export default function Mega() {
     );
 
   const renderSubCategories = useCallback(
-    ({ item, index }: { item: RelatedCategory; index: number }) => {
-      if (!item) {
-        return null;
-      }
-
-      return (
-        <View className="mr-4">
-          <CategoryItem item={item} color={color as string} />
-        </View>
-      );
-    },
-    []
+    ({ item, index }: { item: RelatedCategory; index: number }) => (
+      <View className="mr-4">
+        <CategoryItem item={item} color={color as string} />
+      </View>
+    ),
+    [color]
   );
 
   const renderBestSellers = useCallback(
     ({ item, index }: { item: Product; index: number }) => (
-      <ProductCard product={item} innerColor={color as string} />
+      <ProductCard product={item} innerColor={color as string} simplified />
     ),
-    []
+    [color]
   );
 
   const keyExtractor = useCallback((item: any) => item.id.toString(), []);
@@ -176,17 +171,6 @@ export default function Mega() {
                 onLoadEnd={() => setImageLoading(false)}
               />
 
-              <LinearGradient
-                colors={["transparent", "rgba(0,0,0,0.3)"]}
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: 80,
-                }}
-              />
-
               {imageLoading && (
                 <View className="absolute inset-0 bg-gray-200 items-center justify-center">
                   <FontAwesome5 name="image" size={32} color="#9CA3AF" />
@@ -219,16 +203,13 @@ export default function Mega() {
                 contentContainerStyle={{ paddingRight: 24 }}
                 initialNumToRender={3}
                 maxToRenderPerBatch={3}
-                removeClippedSubviews={true}
+                removeClippedSubviews
               />
             ) : (
               <View className="bg-gray-50 rounded-2xl p-8 items-center">
                 <FontAwesome5 name="folder-open" size={32} color="#9CA3AF" />
                 <Text className="text-gray-500 font-medium mt-3">
                   No subcategories available
-                </Text>
-                <Text className="text-gray-400 text-sm text-center mt-1">
-                  Check back later for more options
                 </Text>
               </View>
             )}
@@ -264,16 +245,13 @@ export default function Mega() {
                 contentContainerStyle={{ paddingRight: 24 }}
                 initialNumToRender={3}
                 maxToRenderPerBatch={3}
-                removeClippedSubviews={true}
+                removeClippedSubviews
               />
             ) : (
               <View className="bg-gray-50 rounded-2xl p-8 items-center">
                 <FontAwesome5 name="star" size={32} color="#9CA3AF" />
                 <Text className="text-gray-500 font-medium mt-3">
                   No popular items yet
-                </Text>
-                <Text className="text-gray-400 text-sm text-center mt-1">
-                  Be the first to discover great products
                 </Text>
               </View>
             )}

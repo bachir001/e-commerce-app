@@ -1,89 +1,127 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
-import { FlatList, Dimensions, View, Text } from "react-native";
+// components/common/InfiniteList.tsx
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  FlatList,
+  Dimensions,
+  View,
+  Text,
+  ActivityIndicator,
+  StyleSheet,
+} from "react-native";
 import ProductCard from "./ProductCard";
 import type { Product } from "@/types/globalTypes";
-import axiosApi from "@/apis/axiosApi";
+import axios from "axios";
 import DotsLoader from "./AnimatedLayout";
-import { LinearGradient } from "expo-linear-gradient";
 
 const { width } = Dimensions.get("window");
 const ITEM_WIDTH = (width - 48) / 2;
-const ITEM_HEIGHT = 280;
+const ITEM_HEIGHT = 340;
+const ITEM_MARGIN = 16;
 
-const contentContainerStyle = {
-  paddingHorizontal: 16,
-  paddingTop: 16,
-  paddingBottom: 32,
-};
-
-const columnWrapperStyle = {
-  justifyContent: "space-between" as const,
-  marginBottom: 8,
-};
+const styles = StyleSheet.create({
+  contentContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 32,
+  },
+  columnWrapper: {
+    justifyContent: "space-between",
+    marginBottom: ITEM_MARGIN,
+  },
+  footerContainer: {
+    paddingVertical: 20,
+    alignItems: "center",
+  },
+  loadingFooter: {
+    marginVertical: 20,
+  },
+  endMessage: {
+    padding: 16,
+    backgroundColor: "#10B981",
+    borderRadius: 16,
+    alignItems: "center",
+  },
+  endMessageText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+});
 
 const InfiniteList = ({ slug, color }: { slug: string; color: string }) => {
-  const {
-    data,
-    status,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["infinite", slug],
-    queryFn: async ({ pageParam }: { pageParam: number }) => {
-      const response = await axiosApi.get(
-        `getCategoryData/${slug}?page=${pageParam}&per_page=20`
+  const [products, setProducts] = useState<Product[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const latestFetchId = useRef(0);
+
+  const fetchProducts = useCallback(async () => {
+    const fetchId = ++latestFetchId.current;
+    page === 1 ? setIsLoading(true) : setIsLoadingMore(true);
+
+    try {
+      const response = await axios.get(
+        `https://api-gocami-test.gocami.com/api/getCategoryData/${encodeURIComponent(
+          slug
+        )}/`,
+        { params: { page, per_page: 20 } }
       );
 
-      console.log(
-        "CURRENT PAGE: " +
-          response.data.data.relatedProducts.current_page +
-          " vs TOTAL PAGES: " +
-          response.data.data.relatedProducts.total_pages
-      );
+      if (fetchId !== latestFetchId.current) return;
 
-      if (response.status === 200) {
-        return {
-          data: response.data.data.relatedProducts.results,
-          currentPage: response.data.data.relatedProducts.current_page,
-          totalPages: response.data.data.relatedProducts.total_pages,
-        };
+      if (response.data.status) {
+        const newProducts = response.data.data.relatedProducts.results;
+        setProducts((prev) =>
+          page === 1 ? newProducts : [...prev, ...newProducts]
+        );
+        setTotalPages(response.data.data.relatedProducts.total_pages);
       }
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
-      if (!lastPage || lastPage.currentPage + 1 > lastPage.totalPages) {
-        return null;
-      }
-      return lastPage.currentPage + 1;
-    },
-  });
+    } catch (e: any) {
+      setError(e.message || "Error fetching products");
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  }, [slug, page]);
 
-  const allItems = useMemo(
-    () => data?.pages.flatMap((page) => page?.data || []) || [],
-    [data]
-  );
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const loadMore = useCallback(() => {
+    if (!isLoadingMore && page < totalPages) {
+      setPage((prev) => prev + 1);
+    }
+  }, [isLoadingMore, page, totalPages]);
 
   const renderItem = useCallback(
-    ({ item, index }: { item: Product; index: number }) => {
-      return (
-        <View style={{ width: ITEM_WIDTH, marginBottom: 16 }} key={item.id}>
-          <ProductCard product={item} variant="grid" innerColor={color} />
-        </View>
-      );
-    },
+    ({ item }: { item: Product }) => (
+      <View style={{ width: ITEM_WIDTH, marginBottom: ITEM_MARGIN }}>
+        <ProductCard
+          product={item}
+          variant="grid"
+          innerColor={color}
+          simplified
+        />
+      </View>
+    ),
     [color]
   );
 
-  // const keyExtractor = useCallback(
-  //   (item: Product, index: number) => `${item.id}-${index}`,
-  //   []
-  // );
+  const keyExtractor = useCallback(
+    (item: Product) => `${item.id}-${item.slug}`,
+    []
+  );
 
   const getItemLayout = useCallback(
-    (data: any, index: number) => ({
+    (_: any, index: number) => ({
       length: ITEM_HEIGHT,
       offset: ITEM_HEIGHT * Math.floor(index / 2),
       index,
@@ -91,100 +129,68 @@ const InfiniteList = ({ slug, color }: { slug: string; color: string }) => {
     []
   );
 
-  const renderListFooter = useCallback(() => {
-    if (isFetchingNextPage) {
+  const renderFooter = useCallback(() => {
+    if (isLoadingMore) {
       return (
-        <View className="py-8 items-center">
-          <DotsLoader />
+        <View style={styles.footerContainer}>
+          <ActivityIndicator size="large" color={color} />
         </View>
       );
     }
 
-    if (!hasNextPage && allItems.length > 0) {
+    if (!isLoading && page >= totalPages && products.length > 0) {
       return (
-        <View className="py-8 items-center">
-          <LinearGradient
-            colors={["#10B981", "#059669"]}
-            className="px-8 py-6 rounded-2xl items-center"
-            style={{
-              shadowColor: "#10B981",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 8,
-            }}
-          >
-            <Text className="text-white font-bold text-base">
-              🎉 All Caught Up!
-            </Text>
-            <Text className="text-white/80 text-sm mt-1">
+        <View style={styles.footerContainer}>
+          <View style={styles.endMessage}>
+            <Text style={styles.endMessageText}>🎉 All Caught Up!</Text>
+            <Text style={[styles.endMessageText, { marginTop: 4 }]}>
               You've seen our entire collection
             </Text>
-          </LinearGradient>
+          </View>
         </View>
       );
     }
 
-    return <View className="h-4" />;
-  }, [isFetchingNextPage, hasNextPage, allItems.length]);
+    return null;
+  }, [isLoadingMore, isLoading, page, totalPages, products.length, color]);
 
-  const onEndReached = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  if (status === "error") {
+  if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center py-20">
-        <LinearGradient
-          colors={["#EF4444", "#DC2626", "#B91C1C"]}
-          className="px-12 py-8 rounded-3xl items-center"
-          style={{
-            shadowColor: "#EF4444",
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.4,
-            shadowRadius: 12,
-            elevation: 12,
-          }}
-        >
-          <Text className="text-white text-xl font-bold">Oops!</Text>
-          <Text className="text-white/90 text-base mt-2 text-center">
-            {error?.message || "Something went wrong"}
+      <View style={styles.footerContainer}>
+        <DotsLoader color={color} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <View style={styles.endMessage}>
+          <Text style={styles.endMessageText}>Oops!</Text>
+          <Text style={styles.endMessageText}>
+            {error || "Something went wrong"}
           </Text>
-        </LinearGradient>
+        </View>
       </View>
     );
   }
 
   return (
     <FlatList
-      data={allItems}
+      data={products}
       renderItem={renderItem}
-      // keyExtractor={keyExtractor}
-      showsVerticalScrollIndicator={false}
-      // Optimized rendering settings
-      initialNumToRender={6}
-      maxToRenderPerBatch={6}
-      windowSize={10}
-      removeClippedSubviews={true}
-      updateCellsBatchingPeriod={1000}
-      // Performance optimizations
-      disableVirtualization={false}
-      legacyImplementation={false}
-      // Layout settings
+      keyExtractor={keyExtractor}
       numColumns={2}
-      onEndReached={onEndReached}
-      onEndReachedThreshold={0.5}
-      ListFooterComponent={renderListFooter}
-      contentContainerStyle={contentContainerStyle}
-      columnWrapperStyle={columnWrapperStyle}
-      getItemLayout={getItemLayout}
-      scrollEnabled={true}
-      maintainVisibleContentPosition={{
-        minIndexForVisible: 0,
-        autoscrollToTopThreshold: 10,
-      }}
+      columnWrapperStyle={styles.columnWrapper}
+      contentContainerStyle={styles.contentContainer}
+      onEndReached={loadMore}
+      onEndReachedThreshold={0.3}
+      ListFooterComponent={renderFooter}
+      // getItemLayout={getItemLayout}
+      initialNumToRender={8}
+      maxToRenderPerBatch={8}
+      windowSize={7}
+      removeClippedSubviews
     />
   );
 };

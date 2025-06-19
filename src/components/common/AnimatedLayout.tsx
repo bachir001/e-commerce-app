@@ -51,7 +51,6 @@ export default function DotsLoader({
 
   return (
     <View className="py-6 items-center justify-center">
-      {/* Three bouncing dots */}
       <View className="flex-row items-center mb-4">
         {[dot1Anim, dot2Anim, dot3Anim].map((anim, index) => (
           <Animated.View
@@ -80,8 +79,6 @@ export default function DotsLoader({
           />
         ))}
       </View>
-
-      <Text className="text-gray-600 text-sm font-medium">{text}</Text>
     </View>
   );
 }
