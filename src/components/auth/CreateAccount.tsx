@@ -147,7 +147,7 @@ export default function CreateAccount({ email }: { email: string }) {
               .post("https://api-gocami-test.gocami.com/api/login", LoginBody)
               .then(async (response) => {
                 if (response.data.status) {
-                  loginOneSignal(response.data.data.user.id);
+                  loginOneSignal(response.data.data.user.id.toString());
                   await Promise.all([
                     AsyncStorage.setItem("token", response.data.data.token),
                     AsyncStorage.setItem(
