@@ -2,11 +2,8 @@ import { View, Text, FlatList, TouchableOpacity } from "react-native";
 import React, { useCallback, useEffect } from "react";
 import { ChevronRight } from "lucide-react-native";
 import ProductCard from "@/components/common/ProductCard";
-import AnimatedLoader from "@/components/common/AnimatedLayout";
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import type { HomePageSectionProp } from "@/constants/HomePageSections";
-
-import { router } from "expo-router";
 import { useAppDataStore } from "@/store/useAppDataStore";
 import DotsLoader from "@/components/common/AnimatedLayout";
 
@@ -26,12 +23,6 @@ const MemoizedProductItem = React.memo(
         innerColor={innerColor}
         onAddToCart={() => console.log("Add to cart:", item.id)}
         onAddToWishlist={() => console.log("Add to wishlist:", item.id)}
-        onPress={() => {
-          router.push({
-            pathname: "/(tabs)/home/ProductDetails",
-            params: { productJSON: JSON.stringify(item) },
-          });
-        }}
       />
     </View>
   ),

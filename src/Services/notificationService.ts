@@ -1,6 +1,6 @@
-import {OneSignal} from 'react-native-onesignal';
-import { UserContextType } from '@/types/globalTypes';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { OneSignal } from "react-native-onesignal";
+import { UserContextType } from "@/types/globalTypes";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface UserData {
   id: string;
@@ -8,12 +8,14 @@ interface UserData {
   gender_id: number;
 }
 
-
 const getGenderString = (genderId: number): string => {
   switch (genderId) {
-    case 1: return 'male';
-    case 2: return 'female';
-    default: return 'male'; 
+    case 1:
+      return "male";
+    case 2:
+      return "female";
+    default:
+      return "male";
   }
 };
 
@@ -23,9 +25,14 @@ let lastUserId: string | null = null;
 export async function addExternalUserID(userParam: UserContextType) {
   try {
     if (!userParam) return;
+
     const userIdString = String(userParam.id);
     // 2. Perform login
-    OneSignal.login(userIdString);
+    const result = await OneSignal.login(userIdString);
+    console.log(result, "result");
+
+    console.log("Login called for:", userIdString);
+
     // 4. Update tags
     await updateUserTags(userParam);
   } catch (error) {
@@ -43,54 +50,54 @@ export async function sendBirthdayNotification(
   imageUrl?: string
 ): Promise<boolean> {
   try {
-    const userString = await AsyncStorage.getItem('user');
-    
+    const userString = await AsyncStorage.getItem("user");
+
     if (!userString) {
       // console.log("No user found in AsyncStorage");
       return false;
     }
-    
-    const currentUser: UserData = JSON.parse(userString); 
-    
+
+    const currentUser: UserData = JSON.parse(userString);
+
     const today = new Date();
     const birthDate = new Date(currentUser.date_of_birth);
-    
+
     // Verify it's user's birthday today
     if (
-      birthDate.getDate() !== today.getDate() || 
+      birthDate.getDate() !== today.getDate() ||
       birthDate.getMonth() !== today.getMonth()
     ) {
       // console.log("Not user's birthday today");
       return false;
     }
-    
+
     const sendAfter = new Date(today);
     sendAfter.setHours(10, 0, 0, 0); // Set to 10 AM
-    
+
     const notificationBody = {
       app_id: ONESIGNAL_APP_ID,
       include_aliases: {
-        external_id: [userId]
+        external_id: [userId],
       },
       target_channel: "push",
       headings: { en: "🎂 Happy Birthday!" },
       contents: { en: message },
       ...(imageUrl && { big_picture: imageUrl }),
-      send_after: sendAfter.toISOString()
+      send_after: sendAfter.toISOString(),
     };
 
-    const response = await fetch('https://onesignal.com/api/v1/notifications', {
-      method: 'POST',
+    const response = await fetch("https://onesignal.com/api/v1/notifications", {
+      method: "POST",
       headers: {
-        'Authorization': `Basic ${ONESIGNAL_REST_API_KEY}`,
-        'Content-Type': 'application/json'
+        Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(notificationBody)
+      body: JSON.stringify(notificationBody),
     });
 
     return response.ok;
   } catch (error) {
-    console.error('Error sending birthday notification:', error);
+    console.error("Error sending birthday notification:", error);
     return false;
   }
 }
@@ -105,11 +112,11 @@ export async function sendGenderNotification(
 ): Promise<boolean> {
   try {
     const currentUser = user;
-    
+
     const notificationBody = {
       app_id: ONESIGNAL_APP_ID,
       filters: [
-        {"field": "tag", "key": "gender", "relation": "=", "value": gender},
+        { field: "tag", key: "gender", relation: "=", value: gender },
         // ...(currentUser ? [
         //   {"field": "tag", "key": "user_id", "relation": "!=", "value": currentUser.id}
         // ] : [])
@@ -117,21 +124,21 @@ export async function sendGenderNotification(
       target_channel: "push",
       headings: { en: title },
       contents: { en: message },
-      ...(imageUrl && { big_picture: imageUrl })
+      ...(imageUrl && { big_picture: imageUrl }),
     };
 
-    const response = await fetch('https://onesignal.com/api/v1/notifications', {
-      method: 'POST',
+    const response = await fetch("https://onesignal.com/api/v1/notifications", {
+      method: "POST",
       headers: {
-        'Authorization': `Basic ${ONESIGNAL_REST_API_KEY}`,
-        'Content-Type': 'application/json'
+        Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(notificationBody)
+      body: JSON.stringify(notificationBody),
     });
 
     return response.ok;
   } catch (error) {
-    console.error('Error sending gender notification:', error);
+    console.error("Error sending gender notification:", error);
     return false;
   }
 }
@@ -142,19 +149,15 @@ export async function updateUserTags(user: UserContextType) {
   try {
     
     if (!user) return;
-    
+
     const birthDate = new Date(user.date_of_birth);
-    try {
-      OneSignal.User.addTag('user_id', String(user.id));
-      OneSignal.User.addTag('gender', getGenderString(user.gender_id));
-      OneSignal.User.addTag('birth_month', String(birthDate.getMonth() + 1));
-      OneSignal.User.addTag('birth_day', String(birthDate.getDate()));
-      // console.log('OneSignal tags added successfully!');
-      } catch (error) {
-        console.error('Error adding OneSignal tags:', error);
-      }
-    
+    OneSignal.User.addTags({
+      user_id: String(user.id),
+      gender: getGenderString(user.gender_id),
+      birth_month: String(birthDate.getMonth() + 1), // Convert to string
+      birth_day: String(birthDate.getDate()), // Convert to string
+    });
   } catch (error) {
-    console.error('Error updating user tags:', error);
+    console.error("Error updating user tags:", error);
   }
 }

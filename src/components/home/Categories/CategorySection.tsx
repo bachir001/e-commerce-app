@@ -6,6 +6,7 @@ import CircularCategorylist from "./CircularCategoryList";
 import CategoryHeader from "./CategoryHeader";
 import { useAppDataStore } from "@/store/useAppDataStore";
 import type { Slider } from "@/types/globalTypes";
+import { useMegaCategories, useSliders } from "@/hooks/home/topSection";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("screen");
 const ITEM_WIDTH = SCREEN_WIDTH;
@@ -52,7 +53,9 @@ const SliderComponent = ({ sliders }: SliderComponentProps) => {
 };
 
 const CategorySection = React.memo(() => {
-  const { sliders, megaCategories } = useAppDataStore();
+  // const { sliders, megaCategories } = useAppDataStore();
+  const { data: sliders } = useSliders();
+  const { data: megaCategories } = useMegaCategories();
 
   return (
     <View style={{ backgroundColor: "#FFF8E1" }} className="max-h-max pb-5">

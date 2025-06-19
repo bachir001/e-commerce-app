@@ -3,7 +3,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { getOrCreateSessionId } from "@/lib/session";
-import { initOneSignal } from "@/Services/oneSignal";
 import { Stack } from "expo-router";
 import Toast from "react-native-toast-message";
 import { ImageBackground } from "react-native";
@@ -15,7 +14,7 @@ import {
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useAppDataStore } from "@/store/useAppDataStore";
-import { addExternalUserID } from "@/Services/notificationService";
+import { initOneSignalNew } from "@/Services/OneSignalService";
 export const queryClient = new QueryClient({});
 
 const newArrivalsOptions = {
@@ -45,14 +44,7 @@ function AppWithProviders() {
         const userString = await AsyncStorage.getItem("user");
         const userParsed = userString ? JSON.parse(userString) : null;
         setSessionId(id);
-        
-        console.log("This is me hello: ", userParsed)
-        initOneSignal();
 
-        console.log("User parsed:", userParsed);
-        
-        await addExternalUserID(userParsed);
-        
         if (brands && !loadingBrands) setBrands(brands);
         if (sliders && !loadingSliders) setSliders(sliders);
         if (megaCategories && !loadingMega) {
@@ -60,7 +52,6 @@ function AppWithProviders() {
           setMegaCategories(megaCategories);
         }
         if (newArrivals && !loadingNewArrivals) setNewArrivals(newArrivals);
-
       } catch (error) {
         console.error("Initialization error:", error);
       }
@@ -77,6 +68,10 @@ function AppWithProviders() {
     // loadingMega,
     // loadingNewArrivals,
   ]);
+
+  useEffect(() => {
+    initOneSignalNew();
+  }, []);
 
   const appNotReady = loadingBrands || loadingSliders || loadingMega;
 
@@ -96,13 +91,7 @@ function AppWithProviders() {
         headerShown: false,
         animation: "fade_from_bottom",
       }}
-    >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="auth/signInAccount"
-        options={{ headerShown: true, title: "Sign In" }}
-      />
-    </Stack>
+    />
   );
 }
 

@@ -18,6 +18,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Colors } from "@/constants/Colors";
 import { useSessionStore } from "@/store/useSessionStore";
 import DotsLoader from "@/components/common/AnimatedLayout";
+import { loginOneSignal } from "@/Services/OneSignalService";
 
 interface LoginBody {
   email?: string;
@@ -49,8 +50,8 @@ export default function loginAccount() {
       await axiosApi
         .post("https://api-gocami-test.gocami.com/api/login", RequestBody)
         .then(async (response) => {
-          console.log(response);
           if (response.data.status) {
+            loginOneSignal(response.data.data.user.id.toString());
             await Promise.all([
               AsyncStorage.setItem("token", response.data.data.token),
               AsyncStorage.setItem(
@@ -58,6 +59,7 @@ export default function loginAccount() {
                 JSON.stringify(response.data.data.user)
               ),
             ]);
+
             setIsLogged(true);
             Toast.show({
               type: "success",

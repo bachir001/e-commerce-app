@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  Image,
   TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,8 +11,6 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import useGetCategoriesData from "@/hooks/categories/useGetCategoriesData";
 import CategoryItem from "@/components/categories/CategoryItem";
 import DotsLoader from "@/components/common/AnimatedLayout";
-import { router } from "expo-router";
-import { Colors } from "@/constants/Colors";
 
 export interface Category {
   id: number;
@@ -23,6 +20,8 @@ export interface Category {
   main_image: string;
   category_cover_image: string;
   description: string | null;
+  mega_primary?: boolean | null;
+  level?: string | null;
 }
 
 export interface MainCategory extends Category {
@@ -32,21 +31,6 @@ export interface MainCategory extends Category {
 export interface SubCategory extends Category {
   children: Category[];
 }
-
-type niche =
-  | "garden-tools"
-  | "sports-outdoor"
-  | "hardware-and-fasteners"
-  | "home-living"
-  | "beauty-health";
-
-const allowedNiches: niche[] = [
-  "garden-tools",
-  "sports-outdoor",
-  "hardware-and-fasteners",
-  "home-living",
-  "beauty-health",
-];
 
 const useDebounce = (value: string, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -75,12 +59,7 @@ const EmptyComponent = React.memo(() => (
 ));
 
 const LoadingComponent = React.memo(() => (
-  <SafeAreaView className="flex-1 bg-white">
-    <View className="px-6 py-4">
-      <View className="w-32 h-8 bg-gray-200 rounded mb-2" />
-      <View className="w-48 h-4 bg-gray-200 rounded mb-6" />
-      <View className="w-full h-12 bg-gray-200 rounded-xl" />
-    </View>
+  <SafeAreaView className="flex-1 bg-white justify-center items-center">
     <DotsLoader size="large" />
   </SafeAreaView>
 ));
@@ -102,35 +81,11 @@ export default function CategoriesScreen() {
     );
   }, [categories, debouncedSearchQuery]);
 
-  const handleCategoryPress = useCallback((category: MainCategory) => {
-    router.push({
-      pathname: `(tabs)/categories/${category.slug}/${
-        allowedNiches.includes(category.slug as niche) ? "mega" : "category"
-      }`,
-      params: {
-        categoryJSON: category ? JSON.stringify(category) : null,
-
-        color:
-          category.slug === "beauty-health"
-            ? Colors.beautyAndHealth
-            : category.slug === "home-living"
-            ? Colors.homeAndLiving
-            : category.slug === "hardware-and-fasteners"
-            ? Colors.hardware
-            : category.slug === "garden-tools"
-            ? Colors.agriculture
-            : category.slug === "sports-outdoor"
-            ? Colors.sportsAndOutdoors
-            : null,
-      },
-    });
-  }, []);
-
   const renderItem = useCallback(
     ({ item }: { item: MainCategory }) => (
-      <CategoryItem item={item} onPress={handleCategoryPress} />
+      <CategoryItem item={item} color="#5e3ebd" />
     ),
-    [handleCategoryPress]
+    []
   );
 
   const keyExtractor = useCallback(
