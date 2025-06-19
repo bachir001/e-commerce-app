@@ -94,8 +94,6 @@ export default function CreateAccount({ email }: { email: string }) {
   // };
 
   const handleCompleteSignUp = async () => {
-    console.log("WHATSUPPP");
-
     // const validatedForm = validateSignUp();
 
     // if (validatedForm !== "Success") {

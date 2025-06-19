@@ -70,7 +70,7 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
                 Phone
               </Text>
             </Pressable>
-            <Pressable
+            <TouchableOpacity
               onPress={() => setActiveTab("email")}
               className={`py-3 px-6 rounded-r-xl ${
                 activeTab === "email" ? "bg-gray-200" : "bg-gray-100"
@@ -83,7 +83,7 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
               >
                 Email
               </Text>
-            </Pressable>
+            </TouchableOpacity>
           </View>
 
           <View className="flex flex-col gap-5">
@@ -115,6 +115,7 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
                 className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-gray-700 shadow-sm"
                 placeholderTextColor="#9CA3AF"
                 autoCapitalize="none"
+                onChangeText={setEmail}
               />
             )}
             <TouchableOpacity
@@ -124,7 +125,7 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
               className={`py-4 rounded-xl shadow-sm`}
               onPress={() => {
                 if (activeTab === "email") {
-                  if (email.length > 0) {
+                  if (email !== "") {
                     router.push({
                       pathname: "/auth/confirmation",
                       params: {
@@ -176,12 +177,14 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
       {authType === "sign-in" && <View className="mt-10" />}
 
       <View className="flex flex-col gap-6">
-        <AuthButton
-          text="Phone/Email"
-          icon="mail-outline"
-          iconColor="#4B5563"
-          href={"/auth/signInAccount"}
-        />
+        {authType === "sign-in" && (
+          <AuthButton
+            text="Phone/Email"
+            icon="mail-outline"
+            iconColor="#4B5563"
+            href={"/auth/signInAccount"}
+          />
+        )}
         <AuthButton text="Sign In with Google" icon="logo-google" />
         <AuthButton text="Sign In with Facebook" icon="logo-facebook" />
       </View>
