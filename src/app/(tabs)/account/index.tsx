@@ -12,6 +12,7 @@ import ContactModal from "@/components/account/ContactModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Colors } from "@/constants/Colors";
 import { useSessionStore } from "@/store/useSessionStore";
+import { logoutOneSignal } from "@/Services/OneSignalService";
 
 const serviceItems = [
   {
@@ -129,6 +130,8 @@ export default function AccountScreen() {
   );
 
   const handleSignOut = async () => {
+    logoutOneSignal();
+
     await Promise.all([
       AsyncStorage.removeItem("token"),
       AsyncStorage.removeItem("user"),

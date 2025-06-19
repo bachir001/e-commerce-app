@@ -3,7 +3,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { getOrCreateSessionId } from "@/lib/session";
-import { initOneSignal } from "@/Services/oneSignal";
 import { Stack } from "expo-router";
 import Toast from "react-native-toast-message";
 import { ImageBackground } from "react-native";
@@ -15,6 +14,7 @@ import {
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useAppDataStore } from "@/store/useAppDataStore";
+import { initOneSignalNew } from "@/Services/OneSignalService";
 export const queryClient = new QueryClient({});
 
 const newArrivalsOptions = {
@@ -44,7 +44,6 @@ function AppWithProviders() {
         const userString = await AsyncStorage.getItem("user");
         const userParsed = userString ? JSON.parse(userString) : null;
         setSessionId(id);
-        initOneSignal(userParsed);
 
         if (brands && !loadingBrands) setBrands(brands);
         if (sliders && !loadingSliders) setSliders(sliders);
@@ -69,6 +68,10 @@ function AppWithProviders() {
     // loadingMega,
     // loadingNewArrivals,
   ]);
+
+  useEffect(() => {
+    initOneSignalNew();
+  }, []);
 
   const appNotReady = loadingBrands || loadingSliders || loadingMega;
 
