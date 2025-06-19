@@ -15,6 +15,7 @@ import {
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useAppDataStore } from "@/store/useAppDataStore";
+import { addExternalUserID } from "@/Services/notificationService";
 export const queryClient = new QueryClient({});
 
 const newArrivalsOptions = {
@@ -44,12 +45,18 @@ function AppWithProviders() {
         const userString = await AsyncStorage.getItem("user");
         const userParsed = userString ? JSON.parse(userString) : null;
         setSessionId(id);
-        initOneSignal(userParsed);
+        
+        console.log("This is me hello: ", userParsed)
+        initOneSignal();
 
+        console.log("User parsed:", userParsed);
+        
+        await addExternalUserID(userParsed);
+        
         if (brands && !loadingBrands) setBrands(brands);
         if (sliders && !loadingSliders) setSliders(sliders);
         if (megaCategories && !loadingMega) {
-          console.log(megaCategories);
+          // console.log(megaCategories);
           setMegaCategories(megaCategories);
         }
         if (newArrivals && !loadingNewArrivals) setNewArrivals(newArrivals);

@@ -23,15 +23,9 @@ let lastUserId: string | null = null;
 export async function addExternalUserID(userParam: UserContextType) {
   try {
     if (!userParam) return;
-    
     const userIdString = String(userParam.id);
-
     // 2. Perform login
-    const result = await OneSignal.login(userIdString);
-    console.log(result,'result');
-    
-    console.log("Login called for:", userIdString);
-
+    OneSignal.login(userIdString);
     // 4. Update tags
     await updateUserTags(userParam);
   } catch (error) {
@@ -52,7 +46,7 @@ export async function sendBirthdayNotification(
     const userString = await AsyncStorage.getItem('user');
     
     if (!userString) {
-      console.log("No user found in AsyncStorage");
+      // console.log("No user found in AsyncStorage");
       return false;
     }
     
@@ -66,7 +60,7 @@ export async function sendBirthdayNotification(
       birthDate.getDate() !== today.getDate() || 
       birthDate.getMonth() !== today.getMonth()
     ) {
-      console.log("Not user's birthday today");
+      // console.log("Not user's birthday today");
       return false;
     }
     
@@ -146,7 +140,6 @@ export async function sendGenderNotification(
 
 export async function updateUserTags(user: UserContextType) {
   try {
-    console.log("user updateUserTags", user);
     
     if (!user) return;
     
@@ -156,7 +149,7 @@ export async function updateUserTags(user: UserContextType) {
       OneSignal.User.addTag('gender', getGenderString(user.gender_id));
       OneSignal.User.addTag('birth_month', String(birthDate.getMonth() + 1));
       OneSignal.User.addTag('birth_day', String(birthDate.getDate()));
-      console.log('OneSignal tags added successfully!');
+      // console.log('OneSignal tags added successfully!');
       } catch (error) {
         console.error('Error adding OneSignal tags:', error);
       }
