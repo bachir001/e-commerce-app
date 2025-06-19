@@ -147,15 +147,16 @@ export async function sendGenderNotification(
 
 export async function updateUserTags(user: UserContextType) {
   try {
+    console.log(user);
     
     if (!user) return;
 
-    const birthDate = new Date(user.date_of_birth);
+    // const birthDate = new Date(user.date_of_birth);
     OneSignal.User.addTags({
       user_id: String(user.id),
       gender: getGenderString(user.gender_id),
-      birth_month: String(birthDate.getMonth() + 1), // Convert to string
-      birth_day: String(birthDate.getDate()), // Convert to string
+      // birth_month: String(birthDate.getMonth() + 1), // Convert to string
+      // birth_day: String(birthDate.getDate()), // Convert to string
     });
   } catch (error) {
     console.error("Error updating user tags:", error);

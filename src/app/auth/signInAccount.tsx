@@ -19,6 +19,7 @@ import { Colors } from "@/constants/Colors";
 import { useSessionStore } from "@/store/useSessionStore";
 import DotsLoader from "@/components/common/AnimatedLayout";
 import { loginOneSignal } from "@/Services/OneSignalService";
+import { updateUserTags } from "@/Services/notificationService";
 
 interface LoginBody {
   email?: string;
@@ -52,6 +53,9 @@ export default function loginAccount() {
         .then(async (response) => {
           if (response.data.status) {
             loginOneSignal(response.data.data.user.id.toString());
+            console.log(response.data.data.user,"userData");
+
+            updateUserTags(response.data.data.user);
             await Promise.all([
               AsyncStorage.setItem("token", response.data.data.token),
               AsyncStorage.setItem(

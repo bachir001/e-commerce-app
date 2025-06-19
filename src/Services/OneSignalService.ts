@@ -36,12 +36,14 @@ export const initOneSignalNew = () => {
 };
 
 export const loginOneSignal = async (userId: string) => {
+ 
   if (!userId) {
     console.warn("OneSignal login skipped: userId is undefined");
     return;
   }
 
   OneSignal.login(userId);
+
   console.log("OneSignal: External User ID set:", userId);
 };
 
