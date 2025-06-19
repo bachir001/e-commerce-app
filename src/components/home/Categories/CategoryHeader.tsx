@@ -1,6 +1,7 @@
 import { View, Text, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
+import { router } from "expo-router";
 
 interface Props {
   title: string;
@@ -53,7 +54,9 @@ export default function CategoryHeader({
           style={{
             backgroundColor: `${accentColor}20`,
           }}
-          onPress={onViewAllPress}
+          onPress={() => {
+            router.push("/(tabs)/categories");
+          }}
         >
           <Text style={{ color: accentColor }} className="font-bold text-base">
             View All

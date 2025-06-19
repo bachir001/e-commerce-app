@@ -1,5 +1,5 @@
 import { View, Text, Image, TouchableOpacity } from "react-native";
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import type { Product } from "@/types/globalTypes";
 import { Heart, Star, ShoppingBag } from "lucide-react-native";
 import { useRouter } from "expo-router";
@@ -25,41 +25,104 @@ const ProductCard = React.memo(
     onAddToWishlist,
   }: Props) => {
     const router = useRouter();
-    if (!product) return null;
 
-    const onPress = () => {
+    // Memoize computed values to prevent recalculation on every render
+    const productData = useMemo(() => {
+      if (!product) return null;
+
+      const productName = product.name || "Untitled Product";
+      const productImage = product.image || "https://via.placeholder.com/150";
+      const productRating = product.rating ? Number(product.rating) : 0;
+      const price = product.price ? String(product.price) : "0.00";
+      const specialPrice = product.special_price
+        ? String(product.special_price)
+        : undefined;
+
+      const hasSpecialPrice = specialPrice !== undefined;
+      const discount = hasSpecialPrice
+        ? Math.round(
+            ((Number(price) - Number(specialPrice)) / Number(price)) * 100
+          )
+        : 0;
+
+      return {
+        productName,
+        productImage,
+        productRating,
+        price,
+        specialPrice,
+        hasSpecialPrice,
+        discount,
+      };
+    }, [product]);
+
+    // Memoize styles to prevent recreation
+    const cardShadowStyle = useMemo(
+      () => ({
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 6,
+      }),
+      []
+    );
+
+    const discountBadgeStyle = useMemo(
+      () => ({
+        shadowColor: "#FF4757",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 3,
+      }),
+      []
+    );
+
+    const cartButtonStyle = useMemo(
+      () => ({
+        backgroundColor: innerColor,
+        shadowColor: innerColor,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+        elevation: 6,
+      }),
+      [innerColor]
+    );
+
+    const onPress = useCallback(() => {
       router.push({
         pathname: "/ProductDetails",
         params: { productJSON: JSON.stringify(product) },
       });
-    };
+    }, [router, product]);
 
-    const productName = product.name || "Untitled Product";
-    const productImage = product.image || "https://via.placeholder.com/150";
-    const productRating = product.rating ? Number(product.rating) : 0;
-    const price = product.price ? String(product.price) : "0.00";
-    const specialPrice = product.special_price
-      ? String(product.special_price)
-      : undefined;
+    const handleAddToCart = useCallback(() => {
+      onAddToCart?.();
+    }, [onAddToCart]);
 
-    const hasSpecialPrice = specialPrice !== undefined;
-    const discount = hasSpecialPrice
-      ? Math.round(
-          ((Number(price) - Number(specialPrice)) / Number(price)) * 100
-        )
-      : 0;
+    const handleAddToWishlist = useCallback(() => {
+      onAddToWishlist?.();
+    }, [onAddToWishlist]);
+
+    if (!productData) return null;
+
+    const {
+      productName,
+      productImage,
+      productRating,
+      price,
+      specialPrice,
+      hasSpecialPrice,
+      discount,
+    } = productData;
 
     if (variant === "grid") {
       return (
         <TouchableOpacity
           className="rounded-2xl overflow-hidden bg-white"
-          style={{
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 6,
-          }}
+          style={cardShadowStyle}
           activeOpacity={0.95}
           onPress={onPress}
         >
@@ -69,6 +132,9 @@ const ProductCard = React.memo(
               source={{ uri: productImage }}
               className="w-full h-full"
               resizeMode="cover"
+              // Performance optimization for images
+              defaultSource={{ uri: "https://via.placeholder.com/150" }}
+              fadeDuration={0}
             />
 
             {/* Gradient overlay */}
@@ -86,8 +152,9 @@ const ProductCard = React.memo(
             {/* Wishlist button */}
             <TouchableOpacity
               className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 items-center justify-center shadow-sm"
-              onPress={onAddToWishlist}
+              onPress={handleAddToWishlist}
               hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+              activeOpacity={0.7}
             >
               <Heart size={16} color="#666" stroke="#666" fill="transparent" />
             </TouchableOpacity>
@@ -97,13 +164,7 @@ const ProductCard = React.memo(
               <LinearGradient
                 colors={["#FF4757", "#FF3742"]}
                 className="absolute top-3 left-3 px-2 py-1 rounded-full"
-                style={{
-                  shadowColor: "#FF4757",
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 4,
-                  elevation: 3,
-                }}
+                style={discountBadgeStyle}
               >
                 <Text className="text-white text-xs font-bold">
                   -{discount}%
@@ -162,16 +223,9 @@ const ProductCard = React.memo(
 
               <TouchableOpacity
                 className="w-10 h-10 rounded-xl items-center justify-center"
-                style={{
-                  backgroundColor: innerColor,
-                  shadowColor: innerColor,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 6,
-                  elevation: 6,
-                }}
+                style={cartButtonStyle}
                 activeOpacity={0.8}
-                onPress={onAddToCart}
+                onPress={handleAddToCart}
               >
                 <ShoppingBag size={18} color="#fff" />
               </TouchableOpacity>
@@ -195,12 +249,15 @@ const ProductCard = React.memo(
             source={{ uri: productImage }}
             className="w-full h-full bg-gray-100"
             resizeMode="cover"
+            defaultSource={{ uri: "https://via.placeholder.com/150" }}
+            fadeDuration={0}
           />
 
           <TouchableOpacity
             className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 items-center justify-center z-10 shadow-sm"
-            onPress={onAddToWishlist}
+            onPress={handleAddToWishlist}
             hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+            activeOpacity={0.7}
           >
             <Heart size={18} color="#111" stroke="#111" fill="transparent" />
           </TouchableOpacity>
@@ -260,7 +317,7 @@ const ProductCard = React.memo(
           className="absolute bottom-2.5 right-2.5 w-8 h-8 rounded-full items-center justify-center shadow-sm"
           style={{ backgroundColor: innerColor }}
           activeOpacity={0.8}
-          onPress={onAddToCart}
+          onPress={handleAddToCart}
         >
           <ShoppingBag size={16} color="#fff" />
         </TouchableOpacity>
@@ -292,5 +349,7 @@ const ProductCard = React.memo(
     );
   }
 );
+
+ProductCard.displayName = "ProductCard";
 
 export default ProductCard;

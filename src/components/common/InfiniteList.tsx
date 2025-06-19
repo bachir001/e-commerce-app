@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { FlatList, Dimensions, View, Text } from "react-native";
 import ProductCard from "./ProductCard";
 import type { Product } from "@/types/globalTypes";
@@ -9,8 +9,20 @@ import { LinearGradient } from "expo-linear-gradient";
 
 const { width } = Dimensions.get("window");
 const ITEM_WIDTH = (width - 48) / 2;
+const ITEM_HEIGHT = 280;
 
-const InfiniteList = ({ slug }: { slug: string }) => {
+const contentContainerStyle = {
+  paddingHorizontal: 16,
+  paddingTop: 16,
+  paddingBottom: 32,
+};
+
+const columnWrapperStyle = {
+  justifyContent: "space-between" as const,
+  marginBottom: 8,
+};
+
+const InfiniteList = ({ slug, color }: { slug: string; color: string }) => {
   const {
     data,
     status,
@@ -22,7 +34,14 @@ const InfiniteList = ({ slug }: { slug: string }) => {
     queryKey: ["infinite", slug],
     queryFn: async ({ pageParam }: { pageParam: number }) => {
       const response = await axiosApi.get(
-        `getCategoryData/${slug}?page=${pageParam}&per_page=10`
+        `getCategoryData/${slug}?page=${pageParam}&per_page=20`
+      );
+
+      console.log(
+        "CURRENT PAGE: " +
+          response.data.data.relatedProducts.current_page +
+          " vs TOTAL PAGES: " +
+          response.data.data.relatedProducts.total_pages
       );
 
       if (response.status === 200) {
@@ -42,16 +61,33 @@ const InfiniteList = ({ slug }: { slug: string }) => {
     },
   });
 
-  const allItems = data?.pages.flatMap((page) => page?.data || []) || [];
+  const allItems = useMemo(
+    () => data?.pages.flatMap((page) => page?.data || []) || [],
+    [data]
+  );
 
   const renderItem = useCallback(
     ({ item, index }: { item: Product; index: number }) => {
       return (
-        <View style={{ width: ITEM_WIDTH, marginBottom: 16 }}>
-          <ProductCard product={item} variant="grid" />
+        <View style={{ width: ITEM_WIDTH, marginBottom: 16 }} key={item.id}>
+          <ProductCard product={item} variant="grid" innerColor={color} />
         </View>
       );
     },
+    [color]
+  );
+
+  // const keyExtractor = useCallback(
+  //   (item: Product, index: number) => `${item.id}-${index}`,
+  //   []
+  // );
+
+  const getItemLayout = useCallback(
+    (data: any, index: number) => ({
+      length: ITEM_HEIGHT,
+      offset: ITEM_HEIGHT * Math.floor(index / 2),
+      index,
+    }),
     []
   );
 
@@ -125,32 +161,30 @@ const InfiniteList = ({ slug }: { slug: string }) => {
     <FlatList
       data={allItems}
       renderItem={renderItem}
-      keyExtractor={(item: Product, index: number) => `${item.id}-${index}`}
+      // keyExtractor={keyExtractor}
       showsVerticalScrollIndicator={false}
-      initialNumToRender={10}
-      maxToRenderPerBatch={8}
+      // Optimized rendering settings
+      initialNumToRender={6}
+      maxToRenderPerBatch={6}
       windowSize={10}
       removeClippedSubviews={true}
-      updateCellsBatchingPeriod={50}
+      updateCellsBatchingPeriod={1000}
+      // Performance optimizations
+      disableVirtualization={false}
+      legacyImplementation={false}
+      // Layout settings
       numColumns={2}
       onEndReached={onEndReached}
-      onEndReachedThreshold={0.3}
+      onEndReachedThreshold={0.5}
       ListFooterComponent={renderListFooter}
-      contentContainerStyle={{
-        paddingHorizontal: 16,
-        paddingTop: 16,
-        paddingBottom: 32,
+      contentContainerStyle={contentContainerStyle}
+      columnWrapperStyle={columnWrapperStyle}
+      getItemLayout={getItemLayout}
+      scrollEnabled={true}
+      maintainVisibleContentPosition={{
+        minIndexForVisible: 0,
+        autoscrollToTopThreshold: 10,
       }}
-      columnWrapperStyle={{
-        justifyContent: "space-between",
-        marginBottom: 8,
-      }}
-      getItemLayout={(data, index) => ({
-        length: 280,
-        offset: 280 * Math.floor(index / 2),
-        index,
-      })}
-      scrollEnabled={false}
     />
   );
 };

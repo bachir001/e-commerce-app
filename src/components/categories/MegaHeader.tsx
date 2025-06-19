@@ -17,7 +17,7 @@ export default function MegaHeader({
       colors={[bgColor, `${bgColor}CC`, `${bgColor}99`]}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
-      style={{ height: 200 }}
+      style={{ height: 160 }}
       className="px-6 py-8 justify-center items-center relative"
     >
       <TouchableOpacity
