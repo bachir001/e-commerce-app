@@ -29,16 +29,11 @@ export const CREATE_INPUTS: CreateInputs[] = [
     placeholder: "Enter your Last Name",
     label: "Last Name",
   },
-  {
-    placeholder: "Enter your Email",
-    label: "Email",
-    keyboardType: "email-address",
-  },
-  {
-    placeholder: "Enter date of birth",
-    label: "Date of Birth",
-    isCalendar: true,
-  },
+  // {
+  //   placeholder: "Enter your Email",
+  //   label: "Email",
+  //   keyboardType: "email-address",
+  // },
   {
     placeholder: "Enter gender",
     label: "Gender",

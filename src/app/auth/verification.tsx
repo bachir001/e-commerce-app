@@ -90,43 +90,53 @@ export default function Verification() {
       setLoading(true);
       const RequestBody = {
         verification_code: code,
+        email: email,
       };
 
-      const signUpToken = await AsyncStorage.getItem("signUpToken");
+      // const signUpToken = await AsyncStorage.getItem("signUpToken");
 
       await axiosApi
-        .post("verify", RequestBody, {
-          headers: {
-            Authorization: `Bearer ${signUpToken}`,
-          },
-        })
-        .then(async (response) => {
+        .post("verify-code", RequestBody)
+        // .then(async (response) => {
+        //   if (response.status === 200) {
+        //     await AsyncStorage.removeItem("signUpToken");
+        //   }
+        // })
+        // .then(async () => {
+        //   //automatic login by taking his information
+        //   //pass email and body
+        //   const RequestBody = {
+        //     email,
+        //     password,
+        //   };
+        //   await axiosApi
+        //     .post("https://api-gocami-test.gocami.com/api/login", RequestBody)
+        //     .then(async (response) => {
+        //       if (response.data.status) {
+        //         await Promise.all([
+        //           AsyncStorage.setItem("token", response.data.data.token),
+        //           AsyncStorage.setItem(
+        //             "user",
+        //             JSON.stringify(response.data.data.user)
+        //           ),
+        //         ]);
+        //         setIsLogged(true);
+        //         router.replace("/(tabs)/home");
+        //       }
+        //     });
+        // })
+        .then((response) => {
+          console.log(response.data);
+          console.log(email);
+          console.log(code);
           if (response.status === 200) {
-            await AsyncStorage.removeItem("signUpToken");
-          }
-        })
-        .then(async () => {
-          //automatic login by taking his information
-          //pass email and body
-          const RequestBody = {
-            email,
-            password,
-          };
-          await axiosApi
-            .post("https://api-gocami-test.gocami.com/api/login", RequestBody)
-            .then(async (response) => {
-              if (response.data.status) {
-                await Promise.all([
-                  AsyncStorage.setItem("token", response.data.data.token),
-                  AsyncStorage.setItem(
-                    "user",
-                    JSON.stringify(response.data.data.user)
-                  ),
-                ]);
-                setIsLogged(true);
-                router.replace("/(tabs)/home");
-              }
+            router.push({
+              pathname: "/auth/createAccount",
+              params: {
+                email: email.toString(),
+              },
             });
+          }
         })
         .finally(() => {
           setLoading(false);

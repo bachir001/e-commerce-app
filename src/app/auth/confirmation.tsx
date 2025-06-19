@@ -13,12 +13,12 @@ export default function Confirmation() {
   const [loading, setLoading] = useState<boolean>(false);
   const {
     email,
-    firstName,
-    lastName,
-    verificationType,
-    password,
-    selectedGender,
-    date,
+    // firstName,
+    // lastName,
+    // verificationType,
+    // password,
+    // selectedGender,
+    // password_confirmation,
   } = useLocalSearchParams();
 
   const handleBack = () => {
@@ -29,27 +29,21 @@ export default function Confirmation() {
     try {
       setLoading(true);
 
-      const formattedDate =
-        typeof date === "string"
-          ? new Date(date).toISOString().split("T")[0]
-          : "";
-
       const RequestBody = {
-        first_name: firstName,
-        last_name: lastName,
+        // first_name: firstName,
+        // last_name: lastName,
         email,
-        password,
-        gender_id: "1",
-        terms: 1,
-        date_of_birth: formattedDate,
-        verification_method: verificationType,
+        // password,
+        // password_confirmation: password_confirmation,
+        // gender_id: "1",
+        // terms: 1,
+        // verification_method: verificationType,
       };
 
       await axiosApi
         .post(`https://api-gocami-test.gocami.com/api/register`, RequestBody)
         .then(async (response) => {
-          if (response.data.status) {
-            await AsyncStorage.setItem("signUpToken", response.data.data.token);
+          if (response.status === 200) {
             Toast.show({
               type: "success",
               text1: "Register Successful",
@@ -62,13 +56,13 @@ export default function Confirmation() {
             router.push({
               pathname: "/auth/verification",
               params: {
-                firstName,
-                lastName,
+                // firstName,
+                // lastName,
                 email,
-                selectedGender,
-                date: formattedDate,
-                verification_method: verificationType,
-                password,
+                // selectedGender,
+                // verification_method: verificationType,
+                // password,
+                // password_confirmation,
               },
             });
           } else {
@@ -83,7 +77,7 @@ export default function Confirmation() {
           }
         })
         .catch((response) => {
-          console.log(response.status);
+          console.log("HELLO");
         })
         .finally(() => {
           setLoading(false);
@@ -112,7 +106,7 @@ export default function Confirmation() {
         </Text>
 
         <Text
-          style={{ backgroundColor: Colors.PRIMARY }}
+          style={{ color: Colors.PRIMARY }}
           className={`text-lg font-semibold mb-4 text-center`}
         >
           {email}
