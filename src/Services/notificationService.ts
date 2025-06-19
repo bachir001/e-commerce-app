@@ -27,7 +27,6 @@ export async function addExternalUserID(userParam: UserContextType) {
     if (!userParam) return;
 
     const userIdString = String(userParam.id);
-
     // 2. Perform login
     const result = await OneSignal.login(userIdString);
     console.log(result, "result");
@@ -54,7 +53,7 @@ export async function sendBirthdayNotification(
     const userString = await AsyncStorage.getItem("user");
 
     if (!userString) {
-      console.log("No user found in AsyncStorage");
+      // console.log("No user found in AsyncStorage");
       return false;
     }
 
@@ -68,7 +67,7 @@ export async function sendBirthdayNotification(
       birthDate.getDate() !== today.getDate() ||
       birthDate.getMonth() !== today.getMonth()
     ) {
-      console.log("Not user's birthday today");
+      // console.log("Not user's birthday today");
       return false;
     }
 
@@ -148,6 +147,7 @@ export async function sendGenderNotification(
 
 export async function updateUserTags(user: UserContextType) {
   try {
+    
     if (!user) return;
 
     const birthDate = new Date(user.date_of_birth);
