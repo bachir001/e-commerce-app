@@ -31,6 +31,7 @@ export default function CircularCategorylist({
         renderItem={({ item }: { item: MegaCategory[] }) => (
           <View className="flex-col gap-6">
             {item &&
+              item.length > 0 &&
               item.map((subItem) => (
                 <CircularCategory key={subItem.id} props={subItem} />
               ))}
