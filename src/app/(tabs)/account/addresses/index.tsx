@@ -57,6 +57,7 @@ export default function AddressPage() {
   } = useQuery({
     queryKey: ["addresses"],
     enabled: typeof token === "string" && token.length > 0,
+    retry: 0,
     queryFn: async () => {
       const response = await axiosApi.get("addresses", {
         headers: {
