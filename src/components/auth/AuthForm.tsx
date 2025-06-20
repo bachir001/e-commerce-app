@@ -12,6 +12,7 @@ import AuthHeader from "./AuthHeader";
 import AuthButton from "./AuthButton";
 import { Link, router } from "expo-router";
 import { Colors } from "@/constants/Colors";
+import Toast from "react-native-toast-message";
 
 interface AuthParams {
   authType: string;
@@ -20,6 +21,8 @@ interface AuthParams {
 const _paddingHorizontal = 30;
 const separatorGap = 4;
 const OR_WIDTH = 14;
+
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 export default function AuthForm({ authType = "sign-up" }: AuthParams) {
   const { linesWidth } = React.useMemo(() => {
@@ -125,12 +128,20 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
               className={`py-4 rounded-xl shadow-sm`}
               onPress={() => {
                 if (activeTab === "email") {
-                  if (email !== "") {
+                  if (email !== "" && emailRegex.test(email)) {
                     router.push({
                       pathname: "/auth/confirmation",
                       params: {
                         email,
                       },
+                    });
+                  } else {
+                    Toast.show({
+                      type: "error",
+                      autoHide: true,
+                      visibilityTime: 2500,
+                      text1: "Invalid Email Address",
+                      text2: "Please check the format and try again.",
                     });
                   }
                 }
