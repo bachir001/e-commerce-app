@@ -1,33 +1,32 @@
-import React from "react";
+import type React from "react";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useLocalSearchParams } from "expo-router";
 import {
   View,
   Text,
-  ActivityIndicator,
   ScrollView,
-  FlatList,
+  type FlatList,
   Alert,
   TouchableOpacity,
   Share,
 } from "react-native";
-import axios, { type AxiosResponse } from "axios";
 import { useCartStore } from "@/store/cartStore";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ShoppingBag } from "lucide-react-native";
+import { ShoppingBag, Clock } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { FontAwesome5 } from "@expo/vector-icons";
 import QuantitySelector from "@/components/product/QuantitySelector";
-import { Brand, Product } from "@/types/globalTypes";
+import type { Brand, Product } from "@/types/globalTypes";
 import ProductHeader from "@/components/product/ProductHeader";
 import MainImageCarousel from "@/components/product/MainImageCarousel";
 import ThumbnailCarousel from "@/components/product/ThumbnailCarousel";
 import ProductInformation from "@/components/product/ProductInformation";
 import SimilarProductsSection from "@/components/product/SimilarProductsSection";
 import useGetRelatedProducts from "@/hooks/products/useGetRelatedProducts";
-import useGetProductDetails from "@/hooks/products/useGetProductDetails";
 import axiosApi from "@/apis/axiosApi";
 import DotsLoader from "@/components/common/AnimatedLayout";
-import { MainCategory } from "./(tabs)/categories";
+import type { MainCategory } from "./(tabs)/categories";
+
 interface MainDetail extends Product {
   sku: string;
   video_url: string | null;
@@ -51,15 +50,9 @@ export default function ProductDetailsScreen(): React.ReactElement {
     isError: relatedProductsError,
   } = useGetRelatedProducts(product?.slug || "");
 
-  // const {
-  //   data: productDetail,
-  //   isLoading: productDetailLoading,
-  //   isError: productDetailError,
-  // } = useGetProductDetails(product?.slug || "");
-
-  //Product Detail
   const [productDetail, setProductDetail] = useState<MainDetail | null>(null);
   const [productDetailLoading, setProductDetailLoading] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<string>("");
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const mainCarouselReference = useRef<FlatList<string>>(null);
@@ -82,10 +75,68 @@ export default function ProductDetailsScreen(): React.ReactElement {
     () => (productDetail?.quantity || 0) > 0,
     [productDetail?.quantity]
   );
-  const totalPrice = useMemo(
-    () => (productDetail?.price || 0) * quantity,
-    [productDetail?.price, quantity]
-  );
+
+  const priceData = useMemo(() => {
+    const currentProduct = productDetail || product;
+    if (!currentProduct) return null;
+
+    const regularPrice = currentProduct.price || 0;
+    const specialPrice = currentProduct.special_price;
+    const hasSpecialPrice = specialPrice !== undefined && specialPrice !== null;
+    const finalPrice = hasSpecialPrice ? specialPrice : regularPrice;
+    const discount = hasSpecialPrice
+      ? Math.round(((regularPrice - specialPrice) / regularPrice) * 100)
+      : 0;
+
+    return {
+      regularPrice,
+      specialPrice,
+      hasSpecialPrice,
+      finalPrice,
+      discount,
+      totalPrice: finalPrice * quantity,
+    };
+  }, [productDetail, product, quantity]);
+
+  const purchasePoints = useMemo(() => {
+    return productDetail?.purchase_points || product?.purchase_points || null;
+  }, [productDetail?.purchase_points, product?.purchase_points]);
+
+  useEffect(() => {
+    const endDate = productDetail?.end_date || product?.end_date;
+    if (!endDate) return;
+
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const endTime = new Date(endDate).getTime();
+      const difference = endTime - now;
+
+      if (difference > 0) {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor(
+          (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+        );
+        const minutes = Math.floor(
+          (difference % (1000 * 60 * 60)) / (1000 * 60)
+        );
+
+        if (days > 0) {
+          setTimeLeft(`${days} days ${hours} hours left`);
+        } else if (hours > 0) {
+          setTimeLeft(`${hours} hours ${minutes} minutes left`);
+        } else {
+          setTimeLeft(`${minutes} minutes left`);
+        }
+      } else {
+        setTimeLeft("");
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 60000);
+
+    return () => clearInterval(interval);
+  }, [productDetail?.end_date, product?.end_date]);
 
   const handleThumbnailPress = useCallback(
     (index: number): void => {
@@ -103,7 +154,7 @@ export default function ProductDetailsScreen(): React.ReactElement {
         viewPosition: 0.5,
       });
     },
-    [activeImageIndex]
+    [activeImageIndex, product?.id]
   );
 
   const handleAddToCartPress = useCallback(async (): Promise<void> => {
@@ -179,26 +230,6 @@ export default function ProductDetailsScreen(): React.ReactElement {
     };
   }, []);
 
-  // if (productLoadingError !== null || product === null) {
-  //   return (
-  //     <View className="flex-1 justify-center items-center bg-white px-4">
-  //       <Text className="text-red-500 text-lg font-semibold mb-2">
-  //         Oops! Something went wrong
-  //       </Text>
-  //       <Text className="text-gray-500 text-center mb-6">
-  //         {productLoadingError ?? "Product not found"}
-  //       </Text>
-  //       <TouchableOpacity
-  //         className="bg-[#5E3EBD] py-3 px-6 rounded-lg"
-  //         onPress={() => setIsLoadingProduct(true)}
-  //         activeOpacity={0.8}
-  //       >
-  //         <Text className="text-white font-semibold">Try Again</Text>
-  //       </TouchableOpacity>
-  //     </View>
-  //   );
-  // }
-
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView
@@ -241,6 +272,66 @@ export default function ProductDetailsScreen(): React.ReactElement {
           productDetailLoading={productDetailLoading}
         />
 
+        {/* Price and Discount Information */}
+        <View className="px-4 py-4 bg-white">
+          {/* Purchase Points */}
+          {purchasePoints && (
+            <View className="flex-row items-center mb-3 bg-purple-50 px-3 py-2 rounded-lg">
+              <FontAwesome5 name="diamond" size={16} color="#5E3EBD" />
+              <Text className="text-purple-700 font-semibold ml-2">
+                Earn {purchasePoints} points with this purchase
+              </Text>
+            </View>
+          )}
+
+          {/* Discount Timer */}
+          {timeLeft && priceData?.hasSpecialPrice && (
+            <View className="flex-row items-center mb-3 bg-red-50 px-3 py-2 rounded-lg">
+              <Clock size={16} color="#EF4444" />
+              <Text className="text-red-600 font-semibold ml-2">
+                🔥 Limited Time: {timeLeft}
+              </Text>
+            </View>
+          )}
+
+          {/* Price Display */}
+          <View className="flex-row items-center justify-between mb-4">
+            <View className="flex-1">
+              {priceData?.hasSpecialPrice ? (
+                <View>
+                  <View className="flex-row items-center mb-1">
+                    <Text className="text-3xl font-bold text-red-500">
+                      ${priceData.specialPrice?.toFixed(2)}
+                    </Text>
+                    {priceData.discount > 0 && (
+                      <View className="ml-3 bg-red-500 px-2 py-1 rounded">
+                        <Text className="text-white text-sm font-bold">
+                          -{priceData.discount}% OFF
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text className="text-lg text-gray-400 line-through">
+                    ${priceData.regularPrice.toFixed(2)}
+                  </Text>
+                  {priceData?.specialPrice && (
+                    <Text className="text-green-600 font-semibold">
+                      You save $
+                      {(
+                        priceData.regularPrice - priceData.specialPrice
+                      ).toFixed(2)}
+                    </Text>
+                  )}
+                </View>
+              ) : (
+                <Text className="text-3xl font-bold text-[#5E3EBD]">
+                  ${priceData?.regularPrice.toFixed(2)}
+                </Text>
+              )}
+            </View>
+          </View>
+        </View>
+
         {/* Product Information */}
         <ProductInformation
           brand={productDetail?.brand}
@@ -261,7 +352,7 @@ export default function ProductDetailsScreen(): React.ReactElement {
         <SimilarProductsSection similarProducts={relatedProducts} />
       </ScrollView>
 
-      {/* Bottom Action Bar with Skeletons */}
+      {/* Bottom Action Bar */}
       {!productDetail ? (
         <View className="bg-white border-t border-gray-200 px-4 py-4">
           <View className="flex-row items-center justify-between mb-4">
@@ -287,9 +378,22 @@ export default function ProductDetailsScreen(): React.ReactElement {
               onDecrement={decrementQuantity}
             />
 
-            <Text className="text-xl font-bold text-[#5E3EBD]">
-              ${totalPrice.toFixed(2)}
-            </Text>
+            <View className="items-end">
+              {priceData?.hasSpecialPrice ? (
+                <View className="items-end">
+                  <Text className="text-xl font-bold text-red-500">
+                    ${priceData.totalPrice.toFixed(2)}
+                  </Text>
+                  <Text className="text-sm text-gray-400 line-through">
+                    ${(priceData.regularPrice * quantity).toFixed(2)}
+                  </Text>
+                </View>
+              ) : (
+                <Text className="text-xl font-bold text-[#5E3EBD]">
+                  ${priceData?.totalPrice.toFixed(2)}
+                </Text>
+              )}
+            </View>
           </View>
 
           <TouchableOpacity

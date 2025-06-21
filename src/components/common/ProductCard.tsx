@@ -1,9 +1,9 @@
-// components/common/ProductCard.tsx
 import { View, Text, Image, TouchableOpacity } from "react-native";
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useEffect, useState } from "react";
 import type { Product } from "@/types/globalTypes";
-import { Heart, ShoppingBag } from "lucide-react-native";
+import { Heart, ShoppingBag, Clock } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { FontAwesome5 } from "@expo/vector-icons";
 
 interface Props {
   product: Product;
@@ -13,7 +13,7 @@ interface Props {
   onPress?: () => void;
   onAddToCart?: () => void;
   onAddToWishlist?: () => void;
-  simplified?: boolean; // New prop for performance mode
+  simplified?: boolean;
 }
 
 const ProductCard = React.memo(
@@ -27,6 +27,7 @@ const ProductCard = React.memo(
     onAddToWishlist,
   }: Props) => {
     const router = useRouter();
+    const [timeLeft, setTimeLeft] = useState<string>("");
 
     const productData = useMemo(() => {
       if (!product) return null;
@@ -38,8 +39,11 @@ const ProductCard = React.memo(
       const specialPrice = product.special_price
         ? String(product.special_price)
         : undefined;
+      const purchasePoints = product.purchase_points || null;
+      const endDate = product.end_date;
 
-      const hasSpecialPrice = specialPrice !== undefined;
+      const hasSpecialPrice =
+        specialPrice !== undefined && specialPrice !== null;
       const discount = hasSpecialPrice
         ? Math.round(
             ((Number(price) - Number(specialPrice)) / Number(price)) * 100
@@ -54,8 +58,45 @@ const ProductCard = React.memo(
         specialPrice,
         hasSpecialPrice,
         discount,
+        purchasePoints,
+        endDate,
       };
     }, [product]);
+
+    useEffect(() => {
+      if (!productData?.endDate) return;
+
+      const updateTimer = () => {
+        const now = new Date().getTime();
+        const endTime = new Date(productData.endDate).getTime();
+        const difference = endTime - now;
+
+        if (difference > 0) {
+          const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+          const hours = Math.floor(
+            (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+          );
+          const minutes = Math.floor(
+            (difference % (1000 * 60 * 60)) / (1000 * 60)
+          );
+
+          if (days > 0) {
+            setTimeLeft(`${days}d ${hours}h`);
+          } else if (hours > 0) {
+            setTimeLeft(`${hours}h ${minutes}m`);
+          } else {
+            setTimeLeft(`${minutes}m`);
+          }
+        } else {
+          setTimeLeft("");
+        }
+      };
+
+      updateTimer();
+      const interval = setInterval(updateTimer, 60000);
+
+      return () => clearInterval(interval);
+    }, [productData?.endDate]);
 
     const onPress = useCallback(() => {
       router.push({
@@ -82,9 +123,9 @@ const ProductCard = React.memo(
       specialPrice,
       hasSpecialPrice,
       discount,
+      purchasePoints,
     } = productData;
 
-    // Simplified version for grid/infinite list
     if (simplified || variant === "grid") {
       return (
         <TouchableOpacity
@@ -112,7 +153,7 @@ const ProductCard = React.memo(
               <Heart size={16} color="#666" stroke="#666" fill="transparent" />
             </TouchableOpacity>
 
-            {/* Discount badge - simplified */}
+            {/* Discount badge */}
             {!simplified && hasSpecialPrice && discount > 0 && (
               <View className="absolute top-3 left-3 px-2 py-1 rounded-full bg-red-500">
                 <Text className="text-white text-xs font-bold">
@@ -120,13 +161,37 @@ const ProductCard = React.memo(
                 </Text>
               </View>
             )}
+
+            {/* Timer badge */}
+            {!simplified && timeLeft && (
+              <View className="absolute bottom-3 left-3 px-2 py-1 rounded-full bg-black/70 flex-row items-center">
+                <Clock size={10} color="white" />
+                <Text className="text-white text-xs font-bold ml-1">
+                  {timeLeft}
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Product details */}
           <View className="p-4">
-            {/* Rating - removed in simplified mode */}
+            {/* Purchase Points */}
+            {!simplified && purchasePoints && (
+              <View className="flex-row items-center mb-2">
+                <FontAwesome5 name="diamond" size={12} color={innerColor} />
+                <Text
+                  className="text-xs font-semibold ml-1"
+                  style={{ color: innerColor }}
+                >
+                  {purchasePoints} points
+                </Text>
+              </View>
+            )}
+
+            {/* Rating */}
             {!simplified && productRating > 0 && (
               <View className="flex-row items-center mb-2">
+                <FontAwesome5 name="star" size={12} color="#FFD700" />
                 <Text className="text-xs text-gray-600 ml-1 font-medium">
                   {productRating.toFixed(1)}
                 </Text>
@@ -179,7 +244,6 @@ const ProductCard = React.memo(
       );
     }
 
-    // Default variant (original design)
     return (
       <TouchableOpacity
         className="w-40 rounded-lg overflow-hidden shadow-md mx-1 my-2 border border-gray-100"
@@ -187,7 +251,6 @@ const ProductCard = React.memo(
         activeOpacity={0.9}
         onPress={onPress}
       >
-        {/* Image container with wishlist button and discount badge */}
         <View className="w-full h-48 relative bg-gray-50">
           <Image
             source={{ uri: productImage }}
@@ -214,13 +277,37 @@ const ProductCard = React.memo(
               <Text className="text-white text-xs font-bold">-{discount}%</Text>
             </View>
           )}
+
+          {/* Timer badge */}
+          {timeLeft && (
+            <View className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded bg-black/70 flex-row items-center">
+              <Clock size={8} color="white" />
+              <Text className="text-white text-xs font-bold ml-1">
+                {timeLeft}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Product details */}
         <View className="p-2.5">
+          {/* Purchase Points */}
+          {purchasePoints && (
+            <View className="flex-row items-center mb-1">
+              <FontAwesome5 name="diamond" size={10} color={innerColor} />
+              <Text
+                className="text-xs font-semibold ml-1"
+                style={{ color: innerColor }}
+              >
+                {purchasePoints} pts
+              </Text>
+            </View>
+          )}
+
           {/* Rating */}
           {productRating > 0 && (
             <View className="flex-row items-center mb-1">
+              <FontAwesome5 name="star" size={10} color="#FFD700" />
               <Text className="text-xs text-gray-600 ml-0.5 font-medium">
                 {productRating.toFixed(1)}
               </Text>
@@ -272,6 +359,8 @@ const ProductCard = React.memo(
       prevProps.product.id === nextProps.product.id &&
       prevProps.product.price === nextProps.product.price &&
       prevProps.product.special_price === nextProps.product.special_price &&
+      prevProps.product.end_date === nextProps.product.end_date &&
+      prevProps.product.purchase_points === nextProps.product.purchase_points &&
       prevProps.variant === nextProps.variant &&
       prevProps.simplified === nextProps.simplified
     );

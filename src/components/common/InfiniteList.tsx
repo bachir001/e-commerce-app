@@ -53,7 +53,15 @@ const styles = StyleSheet.create({
   },
 });
 
-const InfiniteList = ({ slug, color }: { slug: string; color: string }) => {
+const InfiniteList = ({
+  slug,
+  color,
+  paramsProp,
+}: {
+  slug: string;
+  color: string;
+  paramsProp?: any;
+}) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -71,7 +79,13 @@ const InfiniteList = ({ slug, color }: { slug: string; color: string }) => {
         `https://api-gocami-test.gocami.com/api/getCategoryData/${encodeURIComponent(
           slug
         )}/`,
-        { params: { page, per_page: 20 } }
+        {
+          params: {
+            page,
+            per_page: 20,
+            sort: paramsProp ? paramsProp.sort : "default",
+          },
+        }
       );
 
       if (fetchId !== latestFetchId.current) return;
@@ -89,11 +103,19 @@ const InfiniteList = ({ slug, color }: { slug: string; color: string }) => {
       setIsLoading(false);
       setIsLoadingMore(false);
     }
-  }, [slug, page]);
+  }, [slug, page, paramsProp]);
 
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    let ignore = false;
+
+    if (!ignore) {
+      fetchProducts();
+    }
+
+    return () => {
+      ignore = true;
+    };
+  }, [fetchProducts, paramsProp]);
 
   const loadMore = useCallback(() => {
     if (!isLoadingMore && page < totalPages) {
@@ -120,15 +142,6 @@ const InfiniteList = ({ slug, color }: { slug: string; color: string }) => {
     []
   );
 
-  const getItemLayout = useCallback(
-    (_: any, index: number) => ({
-      length: ITEM_HEIGHT,
-      offset: ITEM_HEIGHT * Math.floor(index / 2),
-      index,
-    }),
-    []
-  );
-
   const renderFooter = useCallback(() => {
     if (isLoadingMore) {
       return (
@@ -141,12 +154,20 @@ const InfiniteList = ({ slug, color }: { slug: string; color: string }) => {
     if (!isLoading && page >= totalPages && products.length > 0) {
       return (
         <View style={styles.footerContainer}>
-          <View style={styles.endMessage}>
-            <Text style={styles.endMessageText}>🎉 All Caught Up!</Text>
-            <Text style={[styles.endMessageText, { marginTop: 4 }]}>
-              You've seen our entire collection
-            </Text>
-          </View>
+          <Text
+            style={[
+              styles.endMessageText,
+              {
+                color: "#5e3ebd",
+                textAlign: "center",
+                paddingVertical: 20,
+                fontSize: 16,
+                fontWeight: "600",
+              },
+            ]}
+          >
+            You're all caught up!
+          </Text>
         </View>
       );
     }

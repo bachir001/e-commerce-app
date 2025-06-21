@@ -12,10 +12,6 @@ export default function AuthHeader() {
         className="w-28 h-28"
         resizeMode="contain"
       />
-
-      <Pressable onPress={() => router.back()}>
-        <Ionicons name="close-outline" size={32}></Ionicons>
-      </Pressable>
     </View>
   );
 }

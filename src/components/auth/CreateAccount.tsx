@@ -183,31 +183,7 @@ export default function CreateAccount({ email }: { email: string }) {
                 <Text className="text-sm font-medium text-gray-700 mb-2">
                   {createInput.label}
                 </Text>
-                {/* {createInput.isCalendar ? (
-                  <Pressable onPress={showDatepicker}>
-                    <View className="flex flex-row justify-between items-center w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 shadow-sm">
-                      <Text className="text-gray-700">
-                        {date.toLocaleDateString()}
-                      </Text>
-                      <Ionicons
-                        name="calendar-outline"
-                        size={20}
-                        color="#6366F1"
-                      />
-                    </View>
 
-                    {show && (
-                      <DateTimePicker
-                        testID="dateTimePicker"
-                        value={date}
-                        mode={mode}
-                        is24Hour={true}
-                        onChange={onChange}
-                        display={Platform.OS === "ios" ? "spinner" : "default"}
-                      />
-                    )}
-                  </Pressable>
-                ) :  */}
                 {createInput.isGender ? (
                   <View className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden w-full">
                     <Picker
