@@ -31,9 +31,6 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     alignItems: "center",
   },
-  loadingFooter: {
-    marginVertical: 20,
-  },
   endMessage: {
     padding: 16,
     backgroundColor: "#10B981",
@@ -68,10 +65,17 @@ const InfiniteList = ({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const latestFetchId = useRef(0);
+  const isMountedRef = useRef(true);
 
   const fetchProducts = useCallback(async () => {
     const fetchId = ++latestFetchId.current;
-    page === 1 ? setIsLoading(true) : setIsLoadingMore(true);
+
+    // Show loading state for initial page load
+    if (page === 1) {
+      setIsLoading(true);
+    } else if (page > 1) {
+      setIsLoadingMore(true);
+    }
 
     try {
       const response = await axios.get(
@@ -87,42 +91,61 @@ const InfiniteList = ({
         }
       );
 
-      if (fetchId !== latestFetchId.current) return;
+      if (!isMountedRef.current || fetchId !== latestFetchId.current) return;
 
       if (response.data.status) {
-        console.log(response.request);
         const newProducts = response.data.data.relatedProducts.results;
-        setProducts((prev) =>
-          page === 1 ? newProducts : [...prev, ...newProducts]
-        );
+        if (page === 1) {
+          setProducts(newProducts);
+        } else {
+          setProducts((prev) => [...prev, ...newProducts]);
+        }
         setTotalPages(response.data.data.relatedProducts.total_pages);
       }
     } catch (e: any) {
-      setError(e.message || "Error fetching products");
+      if (isMountedRef.current && fetchId === latestFetchId.current) {
+        setError(e.message || "Error fetching products");
+      }
     } finally {
-      setIsLoading(false);
-      setIsLoadingMore(false);
+      if (isMountedRef.current && fetchId === latestFetchId.current) {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
     }
   }, [slug, page, paramsProp]);
 
   useEffect(() => {
-    console.log(paramsProp);
-    let ignore = false;
+    isMountedRef.current = true;
 
-    if (!ignore) {
-      fetchProducts();
-    }
+    // Reset state for new fetch
+    setPage(1);
+    setProducts([]);
+    setTotalPages(1);
+    setError(null);
 
     return () => {
-      ignore = true;
+      isMountedRef.current = false;
     };
-  }, [fetchProducts, paramsProp]);
+  }, [slug, paramsProp]);
+
+  useEffect(() => {
+    if (isMountedRef.current) {
+      fetchProducts();
+    }
+  }, [page]);
+
+  // Trigger fetch when params change and page is 1
+  useEffect(() => {
+    if (isMountedRef.current && page === 1 && products.length === 0) {
+      fetchProducts();
+    }
+  }, [paramsProp, products.length]);
 
   const loadMore = useCallback(() => {
-    if (!isLoadingMore && page < totalPages) {
+    if (!isLoading && !isLoadingMore && page < totalPages) {
       setPage((prev) => prev + 1);
     }
-  }, [isLoadingMore, page, totalPages]);
+  }, [isLoading, isLoadingMore, page, totalPages]);
 
   const renderItem = useCallback(
     ({ item }: { item: Product }) => (
@@ -157,7 +180,6 @@ const InfiniteList = ({
         <View style={styles.footerContainer}>
           <Text
             style={[
-              styles.endMessageText,
               {
                 color: "#5e3ebd",
                 textAlign: "center",
@@ -176,23 +198,10 @@ const InfiniteList = ({
     return null;
   }, [isLoadingMore, isLoading, page, totalPages, products.length, color]);
 
-  if (isLoading) {
+  if (isLoading && products.length === 0) {
     return (
       <View style={styles.footerContainer}>
         <DotsLoader color={color} />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.errorContainer}>
-        <View style={styles.endMessage}>
-          <Text style={styles.endMessageText}>Oops!</Text>
-          <Text style={styles.endMessageText}>
-            {error || "Something went wrong"}
-          </Text>
-        </View>
       </View>
     );
   }
@@ -208,7 +217,6 @@ const InfiniteList = ({
       onEndReached={loadMore}
       onEndReachedThreshold={0.3}
       ListFooterComponent={renderFooter}
-      // getItemLayout={getItemLayout}
       initialNumToRender={8}
       maxToRenderPerBatch={8}
       windowSize={7}

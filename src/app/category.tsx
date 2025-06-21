@@ -44,6 +44,8 @@ export default function Category() {
 
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [minValue, setMinValue] = useState(0);
+  const [maxValue, setMaxValue] = useState(1);
 
   //selected Filters
   const [categoryIds, setCategoryIds] = useState<any[]>([]);
@@ -76,6 +78,8 @@ export default function Category() {
 
         if (response.status === 200) {
           setCategories(response.data.data.categories);
+          setMinValue(response.data.data.prices.min);
+          setMaxValue(response.data.data.prices.max);
         }
       } catch (err) {
         Toast.show({
@@ -249,6 +253,8 @@ export default function Category() {
         }}
         categories={categories}
         setCategoryIds={setCategoryIds}
+        minVal={minValue}
+        maxVal={maxValue}
       />
     </SafeAreaView>
   );

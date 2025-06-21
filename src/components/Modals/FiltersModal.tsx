@@ -1,14 +1,27 @@
 import { useEffect, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Modal from "react-native-modal";
+import { Slider } from "expo-av";
 
 export default function FiltersModal({
   isVisible,
   onClose,
   categories,
   setCategoryIds,
+  minVal,
+  maxVal,
+}: {
+  isVisible: boolean;
+  onClose: () => void;
+  categories: any[];
+  setCategoryIds: (ids: number[]) => void;
+  minVal: number;
+  maxVal: number;
 }) {
-  const [selectedCategoriesId, setSelectedCategoriesId] = useState<any[]>([]);
+  const [selectedCategoriesId, setSelectedCategoriesId] = useState<number[]>(
+    []
+  );
+  const [sliderValue, setSliderValue] = useState(minVal);
 
   const handleCategoryPress = (categoryId: number) => {
     const categoryIdIndex = selectedCategoriesId.findIndex(
@@ -39,42 +52,112 @@ export default function FiltersModal({
       animationIn="slideInUp"
       animationOut="slideOutDown"
     >
-      <View className="bg-white py-10 px-10">
-        <View className="flex flex-row justify-center">
-          <View className="h-2 w-16 bg-gray-300 rounded-xl justify-center" />
-        </View>
-        {/*Categories*/}
+      <View style={styles.container}>
+        <View style={styles.handleIndicator} />
+
+        {/* Categories */}
         {categories && categories.length > 0 && (
-          <View className="mt-5">
-            <Text className="font-bold text-xl mb-3">Categories</Text>
-            <View className="flex flex-row flex-wrap gap-2">
-              {categories.map((category: any) => (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Categories</Text>
+            <View style={styles.categoriesContainer}>
+              {categories.map((category) => (
                 <TouchableOpacity
                   key={category.id}
-                  className="py-2 px-4 rounded-full border border-gray-200"
-                  style={{
-                    backgroundColor: selectedCategoriesId.includes(category.id)
-                      ? "#facc15"
-                      : "#f8f9fa",
-                    borderColor: "#e9ecef",
-                  }}
+                  style={[
+                    styles.categoryButton,
+                    selectedCategoriesId.includes(category.id) &&
+                      styles.selectedCategory,
+                  ]}
                   activeOpacity={0.7}
-                  onPress={() => {
-                    handleCategoryPress(category.id);
-                  }}
+                  onPress={() => handleCategoryPress(category.id)}
                 >
-                  <Text
-                    className="text-sm font-medium"
-                    style={{ color: "#6e3ebd" }}
-                  >
-                    {category.name}
-                  </Text>
+                  <Text style={styles.categoryText}>{category.name}</Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
         )}
+
+        {/* Price Range */}
+        {/* <View style={styles.section}>
+          <Text style={styles.label}>Price Range:</Text>
+          <Text style={styles.valueText}>
+            Current Value: {sliderValue.toFixed(2)}
+          </Text>
+          <Slider
+            style={styles.slider}
+            minimumValue={minVal}
+            maximumValue={maxVal}
+            value={sliderValue}
+            onValueChange={setSliderValue}
+            thumbTintColor="#facc15"
+            minimumTrackTintColor="#5e3ebd"
+            maximumTrackTintColor="#e9ecef"
+          />
+        </View> */}
       </View>
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: "white",
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  handleIndicator: {
+    alignSelf: "center",
+    width: 40,
+    height: 5,
+    backgroundColor: "#ccc",
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "#343a40",
+  },
+  categoriesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  categoryButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: "#f8f9fa",
+    borderWidth: 1,
+    borderColor: "#e9ecef",
+  },
+  selectedCategory: {
+    backgroundColor: "#facc15",
+  },
+  categoryText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#5e3ebd",
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+    color: "#495057",
+  },
+  valueText: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 15,
+    color: "#5e3ebd",
+  },
+  slider: {
+    width: "100%",
+    height: 40,
+  },
+});
