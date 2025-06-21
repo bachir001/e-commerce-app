@@ -1,20 +1,12 @@
 import axiosApi from "@/apis/axiosApi";
-import SortOptions from "@/components/categories/SortOptions";
 import InfiniteList from "@/components/common/InfiniteList";
 import FiltersModal from "@/components/Modals/FiltersModal";
-import type {
-  AttributesFilter,
-  BrandFilter,
-  CategoryFilter,
-  ColorFilter,
-  DiscountFilter,
-  PriceFilter,
-  SizeFilter,
-} from "@/types/filters";
+import createCategoryIdsParams from "@/Services/parameterObjectCreator";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Platform,
   SafeAreaView,
   StatusBar,
@@ -22,166 +14,78 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  ScrollView,
-  ActivityIndicator,
 } from "react-native";
-import Modal from "react-native-modal";
+import Toast from "react-native-toast-message";
+
+const sortOptions = [
+  { id: "default", label: "Default", icon: "list", paramValue: "default" },
+  {
+    id: "price-low",
+    label: "Price: Low to High",
+    icon: "sort-amount-up",
+    paramValue: "price_low_high",
+  },
+  {
+    id: "price-high",
+    label: "Price: High to Low",
+    icon: "sort-amount-down",
+    paramValue: "price_high_low",
+  },
+  { id: "rating", label: "Highest Rating", icon: "star", paramValue: "rating" },
+  { id: "newest", label: "Newest First", icon: "clock", paramValue: "newest" },
+];
 
 export default function Category() {
-  const { slug, id, color } = useLocalSearchParams();
+  const { slug, color, id } = useLocalSearchParams();
   const [query, setQuery] = useState("");
 
   const [activeTab, setActiveTab] = useState<"sort" | "filters" | null>(null);
   const [selectedSortOption, setSelectedSortOption] = useState("default");
 
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
 
-  const [brands, setBrands] = useState<BrandFilter[]>([
-    { id: 1, name: "Apple", total: 45 },
-    { id: 2, name: "Samsung", total: 32 },
-    { id: 3, name: "Nike", total: 28 },
-  ]);
-  const [categories, setCategories] = useState<CategoryFilter[]>([
-    {
-      id: 1,
-      name: "Electronics",
-      total: 120,
-      subcategories: [
-        { id: 11, name: "Phones", total: 45, children: [] },
-        { id: 12, name: "Laptops", total: 30, children: [] },
-      ],
-    },
-  ]);
-  const [prices, setPrices] = useState<PriceFilter>({ min: "", max: "" });
-  const [discounts, setDiscounts] = useState<DiscountFilter>({
-    min: "",
-    max: "",
-  });
-
-  const [colors, setColors] = useState<ColorFilter[]>([
-    { id: 1, name: "Red", code: "#FF0000" },
-    { id: 2, name: "Blue", code: "#0000FF" },
-    { id: 3, name: "Green", code: "#00FF00" },
-  ]);
-  const [sizes, setSizes] = useState<SizeFilter[]>([
-    { id: 1, name: "Small", code: "S" },
-    { id: 2, name: "Medium", code: "M" },
-    { id: 3, name: "Large", code: "L" },
-  ]);
-  const [attributes, setAttributes] = useState<AttributesFilter[]>([
-    {
-      id: 1,
-      name: "Material",
-      options: [
-        { id: 1, name: "Cotton", code: "cotton" },
-        { id: 2, name: "Polyester", code: "polyester" },
-      ],
-    },
-  ]);
-  const [availableRatings] = useState<number[]>([5, 4, 3, 2, 1]);
-  const [selectedRatings, setSelectedRatings] = useState<number[]>([]);
-
-  const [isVisible, setIsVisible] = useState(false);
-  const [selectedBrands, setSelectedBrands] = useState<number[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
-  const [selectedColors, setSelectedColors] = useState<number[]>([]);
-  const [selectedSizes, setSelectedSizes] = useState<number[]>([]);
-  const [selectedAttributes, setSelectedAttributes] = useState<{
-    [key: number]: number[];
-  }>({});
+  //selected Filters
+  const [categoryIds, setCategoryIds] = useState<any[]>([]);
 
   const handleSortOptionPress = (paramValue: string) => {
     setSelectedSortOption(paramValue);
     setActiveTab(null);
   };
 
-  const handleApplyFilters = () => {
-    console.log("Applying Filters:", {
-      prices,
-      discounts,
-      selectedRatings,
-      selectedBrands,
-      selectedCategories,
-      selectedColors,
-      selectedSizes,
-      selectedAttributes,
-    });
-    setIsVisible(false);
-  };
-
-  const handleClearAllFilters = () => {
-    setPrices({ min: "", max: "" });
-    setDiscounts({ min: "", max: "" });
-    setSelectedRatings([]);
-    setSelectedBrands([]);
-    setSelectedCategories([]);
-    setSelectedColors([]);
-    setSelectedSizes([]);
-    setSelectedAttributes({});
-    console.log("All filters cleared.");
-  };
-
   const paramsProp = useMemo(() => {
-    const params: { [key: string]: any } = {
-      sort: selectedSortOption,
+    const categoryIdParams = createCategoryIdsParams(categoryIds);
+    const params = {
+      sort: selectedSortOption ? selectedSortOption : "default",
+      categories: categoryIdParams.categories ? categoryIdParams.categories : 0,
+      category_id: categoryIdParams.categoryId
+        ? categoryIdParams.categoryId
+        : 0,
     };
 
-    if (prices.min) params.price_min = prices.min;
-    if (prices.max) params.price_max = prices.max;
-    if (discounts.min) params.discount_min = discounts.min;
-    if (discounts.max) params.discount_max = discounts.max;
-    if (selectedRatings.length > 0) params.ratings = selectedRatings.join(",");
-    if (selectedBrands.length > 0) params.brands = selectedBrands.join(",");
-    if (selectedCategories.length > 0)
-      params.categories = selectedCategories.join(",");
-    if (selectedColors.length > 0) params.colors = selectedColors.join(",");
-    if (selectedSizes.length > 0) params.sizes = selectedSizes.join(",");
-
-    const attributeParams = Object.entries(selectedAttributes)
-      .map(([attrId, optionIds]) =>
-        optionIds.length > 0 ? `attr_${attrId}=${optionIds.join(",")}` : ""
-      )
-      .filter(Boolean)
-      .join("&");
-
-    if (attributeParams) {
-      params.attributes = attributeParams;
-    }
-
     return params;
-  }, [
-    selectedSortOption,
-    prices,
-    discounts,
-    selectedRatings,
-    selectedBrands,
-    selectedCategories,
-    selectedColors,
-    selectedSizes,
-    selectedAttributes,
-  ]);
+  }, [selectedSortOption, categoryIds]);
 
   useEffect(() => {
     const fetchFilters = async () => {
-      setLoading(true);
       try {
+        setLoading(true);
         const response = await axiosApi.get(
-          `filters?model_id=${Number(id)}&model_type=category`
+          `filters?model_id=${id}&model_type=category`
         );
 
-        console.log(response);
-
         if (response.status === 200) {
-          setBrands(response.data.data.brands);
           setCategories(response.data.data.categories);
-          setPrices(response.data.data.prices);
-          setDiscounts(response.data.data.discounts);
-          setColors(response.data.data.colors);
-          setSizes(response.data.data.sizes);
-          setAttributes(response.data.data.attributes);
-          // setRatings(response.data.data.ratings);
         }
       } catch (err) {
+        Toast.show({
+          type: "error",
+          text1: "Failed to fetch Filters",
+          text2:
+            err && typeof err === "object" && "message" in err
+              ? String((err as any).message)
+              : "An unknown error occurred",
+        });
         console.error(err);
       } finally {
         setLoading(false);
@@ -272,19 +176,21 @@ export default function Category() {
               elevation: 2,
             }}
             onPress={() => {
-              setIsVisible(true);
+              setActiveTab((prev) => (prev === "filters" ? null : "filters"));
             }}
           >
-            {!loading ? (
-              <View className="flex-row items-center justify-center py-3 px-4">
-                <FontAwesome5 name="filter" size={14} color="white" />
-                <Text className="text-white font-bold text-sm ml-2">
-                  Filters
-                </Text>
-              </View>
-            ) : (
-              <ActivityIndicator color="white" size="small" />
-            )}
+            <View className="flex-row items-center justify-center py-3 px-4">
+              {loading ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <>
+                  <FontAwesome5 name="filter" size={14} color="white" />
+                  <Text className="text-white font-bold text-sm ml-2">
+                    Filters
+                  </Text>
+                </>
+              )}
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -292,10 +198,42 @@ export default function Category() {
       </View>
 
       {activeTab === "sort" && (
-        <SortOptions
-          handleSortOptionPress={handleSortOptionPress}
-          selectedSortOption={selectedSortOption}
-        />
+        <View
+          className=" bg-white rounded-b-lg shadow-lg mx-4"
+          style={{
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 5,
+          }}
+        >
+          {sortOptions.map((option) => (
+            <TouchableOpacity
+              key={option.id}
+              onPress={() => handleSortOptionPress(option.paramValue)}
+              className={`flex-row items-center py-3 px-6 ${
+                selectedSortOption === option.id ? "bg-gray-100" : ""
+              }`}
+            >
+              <FontAwesome5
+                name={option.icon as any}
+                size={16}
+                color={selectedSortOption === option.id ? "#5E3EBD" : "#6B7280"}
+                style={{ marginRight: 12 }}
+              />
+              <Text
+                className={`text-base ${
+                  selectedSortOption === option.id
+                    ? "font-semibold text-[#5E3EBD]"
+                    : "text-gray-800"
+                }`}
+              >
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       )}
 
       <InfiniteList
@@ -305,32 +243,12 @@ export default function Category() {
       />
 
       <FiltersModal
-        isVisible={isVisible && !loading}
-        setIsVisible={setIsVisible}
-        prices={prices}
-        setPrices={setPrices}
-        discounts={discounts}
-        setDiscounts={setDiscounts}
-        ratings={availableRatings}
-        selectedRatings={selectedRatings}
-        setSelectedRatings={setSelectedRatings}
-        brands={brands}
-        selectedBrands={selectedBrands}
-        setSelectedBrands={setSelectedBrands}
+        isVisible={activeTab === "filters" && !loading}
+        onClose={() => {
+          setActiveTab(null);
+        }}
         categories={categories}
-        selectedCategories={selectedCategories}
-        setSelectedCategories={setSelectedCategories}
-        colors={colors}
-        selectedColors={selectedColors}
-        setSelectedColors={setSelectedColors}
-        sizes={sizes}
-        selectedSizes={selectedSizes}
-        setSelectedSizes={setSelectedSizes} // <--- Add this line!
-        attributes={attributes}
-        selectedAttributes={selectedAttributes}
-        setSelectedAttributes={setSelectedAttributes}
-        onApplyFilters={handleApplyFilters}
-        onClearAll={handleClearAllFilters}
+        setCategoryIds={setCategoryIds}
       />
     </SafeAreaView>
   );

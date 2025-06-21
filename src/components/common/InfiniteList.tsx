@@ -1,4 +1,3 @@
-// components/common/InfiniteList.tsx
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
@@ -83,7 +82,7 @@ const InfiniteList = ({
           params: {
             page,
             per_page: 20,
-            sort: paramsProp ? paramsProp.sort : "default",
+            ...(paramsProp || {}),
           },
         }
       );
@@ -91,6 +90,7 @@ const InfiniteList = ({
       if (fetchId !== latestFetchId.current) return;
 
       if (response.data.status) {
+        console.log(response.request);
         const newProducts = response.data.data.relatedProducts.results;
         setProducts((prev) =>
           page === 1 ? newProducts : [...prev, ...newProducts]
@@ -106,6 +106,7 @@ const InfiniteList = ({
   }, [slug, page, paramsProp]);
 
   useEffect(() => {
+    console.log(paramsProp);
     let ignore = false;
 
     if (!ignore) {

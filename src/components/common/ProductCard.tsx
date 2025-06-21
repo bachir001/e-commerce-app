@@ -129,7 +129,7 @@ const ProductCard = React.memo(
     if (simplified || variant === "grid") {
       return (
         <TouchableOpacity
-          className="rounded-2xl overflow-hidden bg-white"
+          className="rounded-lg overflow-hidden bg-white"
           activeOpacity={0.95}
           onPress={onPress}
         >
