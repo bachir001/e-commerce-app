@@ -53,9 +53,8 @@ export default function loginAccount() {
         .then(async (response) => {
           if (response.data.status) {
             loginOneSignal(response.data.data.user.id.toString());
-            console.log(response.data.data.user,"userData");
-
-            updateUserTags(response.data.data.user);
+            await new Promise(resolve => setTimeout(resolve, 300)); // 300ms delay
+            await updateUserTags(response.data.data.user);
             await Promise.all([
               AsyncStorage.setItem("token", response.data.data.token),
               AsyncStorage.setItem(

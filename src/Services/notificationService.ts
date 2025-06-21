@@ -45,16 +45,13 @@ const ONESIGNAL_REST_API_KEY = process.env.EXPO_PUBLIC_ONESIGNAL_REST_API_KEY!;
 
 // Type 1: Send to specific user on their birthday
 export async function sendBirthdayNotification(
-  userId: string,
   message: string = "Happy Birthday! Enjoy your special day!",
   imageUrl?: string
 ): Promise<boolean> {
   try {
     const userString = await AsyncStorage.getItem("user");
-
-    if (!userString) {
-      // console.log("No user found in AsyncStorage");
-      return false;
+    if (!userString ) {
+        return false;
     }
 
     const currentUser: UserData = JSON.parse(userString);
@@ -63,13 +60,6 @@ export async function sendBirthdayNotification(
     const birthDate = new Date(currentUser.date_of_birth);
 
     // Verify it's user's birthday today
-    if (
-      birthDate.getDate() !== today.getDate() ||
-      birthDate.getMonth() !== today.getMonth()
-    ) {
-      // console.log("Not user's birthday today");
-      return false;
-    }
 
     const sendAfter = new Date(today);
     sendAfter.setHours(10, 0, 0, 0); // Set to 10 AM
@@ -77,7 +67,7 @@ export async function sendBirthdayNotification(
     const notificationBody = {
       app_id: ONESIGNAL_APP_ID,
       include_aliases: {
-        external_id: [userId],
+        // external_id: [userId],
       },
       target_channel: "push",
       headings: { en: "🎂 Happy Birthday!" },
@@ -107,19 +97,13 @@ export async function sendGenderNotification(
   gender: string,
   title: string,
   message: string,
-  user: UserContextType,
   imageUrl?: string
 ): Promise<boolean> {
   try {
-    const currentUser = user;
-
     const notificationBody = {
       app_id: ONESIGNAL_APP_ID,
       filters: [
         { field: "tag", key: "gender", relation: "=", value: gender },
-        // ...(currentUser ? [
-        //   {"field": "tag", "key": "user_id", "relation": "!=", "value": currentUser.id}
-        // ] : [])
       ],
       target_channel: "push",
       headings: { en: title },
@@ -143,13 +127,44 @@ export async function sendGenderNotification(
   }
 }
 
+
+export const sendUserNotification = async (
+  externalId: string, // Changed to externalId, and it should not be null for targeting
+  title: string,
+  message: string
+) => {
+  try {
+    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
+      },
+      body: JSON.stringify({
+        app_id: ONESIGNAL_APP_ID,
+        // Use include_external_user_ids for targeting by External ID
+        include_external_user_ids: [externalId],
+        headings: { en: title },
+        contents: { en: message },
+      }),
+    });
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error sending user notification:', error);
+    throw error;
+  }
+};
+
+
+
 // Update user tags in OneSignal (call this after login)
 
 export async function updateUserTags(user: UserContextType) {
   try {
-    console.log(user);
     
     if (!user) return;
+    console.log(user,"user");
 
     // const birthDate = new Date(user.date_of_birth);
     OneSignal.User.addTags({

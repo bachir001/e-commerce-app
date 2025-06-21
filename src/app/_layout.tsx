@@ -1,10 +1,9 @@
 import "../../global.css";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getOrCreateSessionId } from "@/lib/session";
 import { Stack } from "expo-router";
-import Toast from "react-native-toast-message";
 import { ImageBackground } from "react-native";
 import {
   useBrands,
@@ -15,6 +14,7 @@ import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useAppDataStore } from "@/store/useAppDataStore";
 import { initOneSignalNew } from "@/Services/OneSignalService";
+import { sendGenderNotification, sendUserNotification } from "@/Services/notificationService";
 export const queryClient = new QueryClient({});
 
 const newArrivalsOptions = {
@@ -28,15 +28,14 @@ const newArrivalsOptions = {
 function AppWithProviders() {
   const { setSessionId } = useSessionStore();
   const { setBrands, setSliders, setMegaCategories, setNewArrivals } =
-    useAppDataStore();
-
+  useAppDataStore();
   const { data: brands, isLoading: loadingBrands } = useBrands();
   const { data: sliders, isLoading: loadingSliders } = useSliders();
   const { data: megaCategories, isLoading: loadingMega } = useMegaCategories();
-
   const { data: newArrivals, isLoading: loadingNewArrivals } =
-    useFeaturedSection("new-arrivals", newArrivalsOptions);
-
+  useFeaturedSection("new-arrivals", newArrivalsOptions);
+  
+    
   useEffect(() => {
     const initializeApp = async () => {
       try {
@@ -71,6 +70,8 @@ function AppWithProviders() {
 
   useEffect(() => {
     initOneSignalNew();
+    // sendUserNotification('1374',"Welcome","Hello");
+    // sendGenderNotification("male", "Welcome", "Hello");
   }, []);
 
   const appNotReady = loadingBrands || loadingSliders || loadingMega;

@@ -25,6 +25,7 @@ import axiosApi from "@/apis/axiosApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSessionStore } from "@/store/useSessionStore";
 import { loginOneSignal } from "@/Services/OneSignalService";
+import { updateUserTags } from "@/Services/notificationService";
 
 interface CompleteSignUp {
   password: string;
@@ -75,37 +76,13 @@ export default function CreateAccount({ email }: { email: string }) {
     if (!termAccepted)
       messages.push("You cannot sign up without accepting to the terms!");
 
-    // if(mobile.length < )
-
     if (messages.length >= 1) return messages[0];
 
     return "Success";
   };
 
-  // const onChange = (_event: any, selectedDate: any) => {
-  //   const currentDate = selectedDate;
-  //   setShow(false);
-  //   setDate(currentDate);
-  // };
-
-  // const showDatepicker = () => {
-  //   setShow(true);
-  //   setMode("date");
-  // };
 
   const handleCompleteSignUp = async () => {
-    // const validatedForm = validateSignUp();
-
-    // if (validatedForm !== "Success") {
-    //   Toast.show({
-    //     type: "error",
-    //     autoHide: true,
-    //     visibilityTime: 2000,
-    //     text1: "Cannot complete Sign Up",
-    //     text2: "Some inputs are not valid!",
-    //   });
-    //   return;
-    // }
     console.log(email);
     const RequestBody: CompleteSignUp = {
       password: password,
@@ -145,7 +122,9 @@ export default function CreateAccount({ email }: { email: string }) {
               .post("https://api-gocami-test.gocami.com/api/login", LoginBody)
               .then(async (response) => {
                 if (response.data.status) {
-                  loginOneSignal(response.data.data.user.id.toString());
+                  await loginOneSignal(response.data.data.user.id.toString());
+                  await updateUserTags(response.data.data.user);
+
                   await Promise.all([
                     AsyncStorage.setItem("token", response.data.data.token),
                     AsyncStorage.setItem(
