@@ -149,7 +149,6 @@ const SpecificSection = React.memo(
       },
     });
 
-    // Memoize render functions
     const renderProductItem = useCallback(
       ({ item }: { item: any }) => (
         <MemoizedProductItem item={item} innerColor={color} />
@@ -161,7 +160,16 @@ const SpecificSection = React.memo(
       ({ item }: { item: any }) => (
         <MemoizedCategoryItem
           item={item}
-          onPress={() => console.log("Category pressed:", item.name)}
+          onPress={() => {
+            router.push({
+              pathname: "category",
+              params: {
+                slug: String(item.slug),
+                color: color,
+                id: String(item.id),
+              },
+            });
+          }}
         />
       ),
       []

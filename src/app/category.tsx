@@ -1,8 +1,12 @@
+import axiosApi from "@/apis/axiosApi";
 import InfiniteList from "@/components/common/InfiniteList";
+import FiltersModal from "@/components/Modals/FiltersModal";
+import createCategoryIdsParams from "@/Services/parameterObjectCreator";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Platform,
   SafeAreaView,
   StatusBar,
@@ -11,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 
 const sortOptions = [
   { id: "default", label: "Default", icon: "list", paramValue: "default" },
@@ -31,11 +36,17 @@ const sortOptions = [
 ];
 
 export default function Category() {
-  const { slug, color } = useLocalSearchParams();
+  const { slug, color, id } = useLocalSearchParams();
   const [query, setQuery] = useState("");
 
   const [activeTab, setActiveTab] = useState<"sort" | "filters" | null>(null);
   const [selectedSortOption, setSelectedSortOption] = useState("default");
+
+  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
+
+  //selected Filters
+  const [categoryIds, setCategoryIds] = useState<any[]>([]);
 
   const handleSortOptionPress = (paramValue: string) => {
     setSelectedSortOption(paramValue);
@@ -43,12 +54,46 @@ export default function Category() {
   };
 
   const paramsProp = useMemo(() => {
+    const categoryIdParams = createCategoryIdsParams(categoryIds);
     const params = {
-      sort: selectedSortOption,
+      sort: selectedSortOption ? selectedSortOption : "default",
+      categories: categoryIdParams.categories ? categoryIdParams.categories : 0,
+      category_id: categoryIdParams.categoryId
+        ? categoryIdParams.categoryId
+        : 0,
     };
 
     return params;
-  }, [selectedSortOption]);
+  }, [selectedSortOption, categoryIds]);
+
+  useEffect(() => {
+    const fetchFilters = async () => {
+      try {
+        setLoading(true);
+        const response = await axiosApi.get(
+          `filters?model_id=${id}&model_type=category`
+        );
+
+        if (response.status === 200) {
+          setCategories(response.data.data.categories);
+        }
+      } catch (err) {
+        Toast.show({
+          type: "error",
+          text1: "Failed to fetch Filters",
+          text2:
+            err && typeof err === "object" && "message" in err
+              ? String((err as any).message)
+              : "An unknown error occurred",
+        });
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFilters();
+  }, []);
 
   return (
     <SafeAreaView
@@ -135,8 +180,16 @@ export default function Category() {
             }}
           >
             <View className="flex-row items-center justify-center py-3 px-4">
-              <FontAwesome5 name="filter" size={14} color="white" />
-              <Text className="text-white font-bold text-sm ml-2">Filters</Text>
+              {loading ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <>
+                  <FontAwesome5 name="filter" size={14} color="white" />
+                  <Text className="text-white font-bold text-sm ml-2">
+                    Filters
+                  </Text>
+                </>
+              )}
             </View>
           </TouchableOpacity>
         </View>
@@ -187,6 +240,15 @@ export default function Category() {
         slug={Array.isArray(slug) ? slug[0] : slug ?? ""}
         color={Array.isArray(color) ? color[0] : color ?? ""}
         paramsProp={paramsProp}
+      />
+
+      <FiltersModal
+        isVisible={activeTab === "filters" && !loading}
+        onClose={() => {
+          setActiveTab(null);
+        }}
+        categories={categories}
+        setCategoryIds={setCategoryIds}
       />
     </SafeAreaView>
   );

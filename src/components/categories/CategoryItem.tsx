@@ -62,6 +62,7 @@ export default function CategoryItem({
       params: {
         slug: String(categoryData.slug),
         color: computedValues.categoryColor,
+        id: String(categoryData.id),
       },
     });
   }, [item, computedValues]);
