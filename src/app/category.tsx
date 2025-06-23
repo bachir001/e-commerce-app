@@ -38,8 +38,8 @@ const sortOptions = [
 
 interface Params {
   sort: string;
-  categories: string | number;
-  category_id: number;
+  categories?: string | number;
+  category_id?: number;
   brand_id?: string | number;
   color_id?: string | number;
   size_id?: string | number;
@@ -53,6 +53,7 @@ export default function Category() {
   const [selectedSortOption, setSelectedSortOption] = useState("default");
 
   const [loading, setLoading] = useState(false);
+  const [automaticVisibleFilter, setAutomaticVisibleFilter] = useState(false);
 
   //filters
   const [categories, setCategories] = useState([]);
@@ -82,9 +83,15 @@ export default function Category() {
 
     const params: Params = {
       sort: selectedSortOption ? selectedSortOption : "default",
-      categories: categoryIdParams.categories ? categoryIdParams.categories : 0,
-      category_id: categoryIdParams.id ? categoryIdParams.id : 0,
     };
+
+    if (categoryIdParams?.categories) {
+      params.categories = categoryIdParams.categories;
+    }
+
+    if (categoryIdParams?.id) {
+      params.category_id = categoryIdParams.id;
+    }
 
     if (brandIdParams?.brand_id) {
       params.brand_id = brandIdParams.brand_id ? brandIdParams.brand_id : 0;
@@ -284,6 +291,9 @@ export default function Category() {
         slug={Array.isArray(slug) ? slug[0] : slug ?? ""}
         color={Array.isArray(color) ? color[0] : color ?? ""}
         paramsProp={paramsProp}
+        setActiveTab={(tab: string) =>
+          setActiveTab(tab as "sort" | "filters" | null)
+        }
       />
 
       <FiltersModal

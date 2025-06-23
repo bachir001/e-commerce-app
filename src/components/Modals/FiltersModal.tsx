@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Modal from "react-native-modal";
 
 function FiltersModal({
@@ -37,7 +37,6 @@ function FiltersModal({
   const [selectedColorIds, setSelectedColorIds] = useState<number[]>([]);
   const [selectedSizeIds, setSelectedSizeIds] = useState<number[]>([]);
 
-  // Memoize handler functions using useCallback
   const handleCategoryPress = useCallback(
     (categoryId: number) => {
       setSelectedCategoriesId((prevSelected) => {
@@ -54,7 +53,7 @@ function FiltersModal({
         } else {
           newSelected = [...prevSelected, categoryId];
         }
-        setCategoryIds(newSelected); // Update parent state
+        setCategoryIds(newSelected);
         return newSelected;
       });
     },
@@ -100,7 +99,7 @@ function FiltersModal({
         } else {
           newSelected = [...prevSelected, colorId];
         }
-        setColorIds(newSelected); // Update parent state
+        setColorIds(newSelected);
         return newSelected;
       });
     },
@@ -134,16 +133,19 @@ function FiltersModal({
     <Modal
       isVisible={isVisible}
       onBackdropPress={onClose}
-      onSwipeComplete={onClose}
-      swipeDirection={["down"]}
+      // onSwipeComplete={onClose}
+      // swipeDirection={["down"]}
       style={{ justifyContent: "flex-end", margin: 0 }}
       backdropOpacity={0.6}
       animationIn="slideInUp"
       animationOut="slideOutDown"
     >
-      <View className="bg-white p-5 rounded-t-xl">
-        <View className="self-center w-10 h-1.5 bg-gray-300 rounded-full mb-4" />
-
+      <ScrollView
+        className="bg-white p-5 rounded-t-xl"
+        style={{
+          maxHeight: 600,
+        }}
+      >
         {/*Categories*/}
         {categories && categories.length > 0 && (
           <View className="mb-5">
@@ -244,7 +246,7 @@ function FiltersModal({
             </View>
           </View>
         )}
-      </View>
+      </ScrollView>
     </Modal>
   );
 }
