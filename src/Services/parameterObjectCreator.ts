@@ -1,14 +1,14 @@
-export default function createCategoryIdsParams(categoryIds: number[]) {
+export default function createIdParams(idList: number[], paramName: string) {
   const categoriesObj: {
-    categories?: string;
+    [paramName]?: string;
   } = {};
 
-  if (categoryIds.length > 0) {
-    categoriesObj.categories = categoryIds.join(",");
+  if (idList.length > 0) {
+    categoriesObj[paramName] = idList.join(",");
   }
 
   return {
-    categories: categoriesObj.categories,
-    categoryId: categoryIds[0],
+    [paramName]: categoriesObj[paramName],
+    id: idList[0],
   };
 }

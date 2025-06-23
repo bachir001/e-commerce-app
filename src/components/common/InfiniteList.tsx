@@ -5,49 +5,18 @@ import {
   View,
   Text,
   ActivityIndicator,
-  StyleSheet,
+  TouchableOpacity,
 } from "react-native";
 import ProductCard from "./ProductCard";
 import type { Product } from "@/types/globalTypes";
 import axios from "axios";
 import DotsLoader from "./AnimatedLayout";
+import EmptyState from "./EmptyList";
+import ErrorState from "./ErrorState";
 
 const { width } = Dimensions.get("window");
 const ITEM_WIDTH = (width - 48) / 2;
-const ITEM_HEIGHT = 340;
 const ITEM_MARGIN = 16;
-
-const styles = StyleSheet.create({
-  contentContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 32,
-  },
-  columnWrapper: {
-    justifyContent: "space-between",
-    marginBottom: ITEM_MARGIN,
-  },
-  footerContainer: {
-    paddingVertical: 20,
-    alignItems: "center",
-  },
-  endMessage: {
-    padding: 16,
-    backgroundColor: "#10B981",
-    borderRadius: 16,
-    alignItems: "center",
-  },
-  endMessageText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-});
 
 const InfiniteList = ({
   slug,
@@ -63,6 +32,7 @@ const InfiniteList = ({
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const latestFetchId = useRef(0);
   const isMountedRef = useRef(true);
@@ -70,12 +40,15 @@ const InfiniteList = ({
   const fetchProducts = useCallback(async () => {
     const fetchId = ++latestFetchId.current;
 
-    // Show loading state for initial page load
-    if (page === 1) {
+    if (isRefreshing) {
+    } else if (page === 1) {
       setIsLoading(true);
-    } else if (page > 1) {
+      setIsLoadingMore(false);
+    } else {
       setIsLoadingMore(true);
+      setIsLoading(false);
     }
+    setError(null);
 
     try {
       const response = await axios.get(
@@ -94,58 +67,68 @@ const InfiniteList = ({
       if (!isMountedRef.current || fetchId !== latestFetchId.current) return;
 
       if (response.data.status) {
-        const newProducts = response.data.data.relatedProducts.results;
+        const newProducts = response.data.data.relatedProducts?.results || [];
+        const newTotalPages =
+          response.data.data.relatedProducts?.total_pages || 1;
+
         if (page === 1) {
           setProducts(newProducts);
         } else {
           setProducts((prev) => [...prev, ...newProducts]);
         }
-        setTotalPages(response.data.data.relatedProducts.total_pages);
+        setTotalPages(newTotalPages);
+      } else {
+        setError(response.data.message || "Failed to load products.");
+        setProducts([]);
+        setTotalPages(1);
       }
-    } catch (e: any) {
+    } catch (e) {
       if (isMountedRef.current && fetchId === latestFetchId.current) {
-        setError(e.message || "Error fetching products");
+        setError((e as Error).message || "An unexpected error occurred.");
+        setProducts([]);
+        setTotalPages(1);
       }
     } finally {
       if (isMountedRef.current && fetchId === latestFetchId.current) {
         setIsLoading(false);
         setIsLoadingMore(false);
+        setIsRefreshing(false);
       }
     }
-  }, [slug, page, paramsProp]);
+  }, [slug, page, paramsProp, isRefreshing]);
 
   useEffect(() => {
     isMountedRef.current = true;
-
-    // Reset state for new fetch
     setPage(1);
     setProducts([]);
     setTotalPages(1);
     setError(null);
-
+    latestFetchId.current = 0;
+    fetchProducts();
     return () => {
       isMountedRef.current = false;
     };
   }, [slug, paramsProp]);
 
   useEffect(() => {
-    if (isMountedRef.current) {
+    if (page > 1) {
       fetchProducts();
     }
-  }, [page]);
-
-  // Trigger fetch when params change and page is 1
-  useEffect(() => {
-    if (isMountedRef.current && page === 1 && products.length === 0) {
-      fetchProducts();
-    }
-  }, [paramsProp, products.length]);
+  }, [page, fetchProducts]);
 
   const loadMore = useCallback(() => {
-    if (!isLoading && !isLoadingMore && page < totalPages) {
+    if (!isLoading && !isLoadingMore && !isRefreshing && page < totalPages) {
       setPage((prev) => prev + 1);
     }
-  }, [isLoading, isLoadingMore, page, totalPages]);
+  }, [isLoading, isLoadingMore, isRefreshing, page, totalPages]);
+
+  const handleRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    setPage(1);
+    setProducts([]);
+    setError(null);
+    latestFetchId.current = 0;
+  }, []);
 
   const renderItem = useCallback(
     ({ item }: { item: Product }) => (
@@ -169,26 +152,16 @@ const InfiniteList = ({
   const renderFooter = useCallback(() => {
     if (isLoadingMore) {
       return (
-        <View style={styles.footerContainer}>
+        <View className="py-5 items-center">
           <ActivityIndicator size="large" color={color} />
         </View>
       );
     }
 
-    if (!isLoading && page >= totalPages && products.length > 0) {
+    if (!isLoading && products.length > 0 && page >= totalPages) {
       return (
-        <View style={styles.footerContainer}>
-          <Text
-            style={[
-              {
-                color: "#5e3ebd",
-                textAlign: "center",
-                paddingVertical: 20,
-                fontSize: 16,
-                fontWeight: "600",
-              },
-            ]}
-          >
+        <View className="py-5 items-center">
+          <Text className="text-[#5e3ebd] text-center py-5 text-base font-semibold">
             You're all caught up!
           </Text>
         </View>
@@ -198,12 +171,20 @@ const InfiniteList = ({
     return null;
   }, [isLoadingMore, isLoading, page, totalPages, products.length, color]);
 
-  if (isLoading && products.length === 0) {
+  if (error) {
+    return <ErrorState onRetry={handleRefresh} subtitle={error} />;
+  }
+
+  if (isLoading && products.length === 0 && !isRefreshing) {
     return (
-      <View style={styles.footerContainer}>
+      <View className="py-5 items-center">
         <DotsLoader color={color} />
       </View>
     );
+  }
+
+  if (!isLoading && !isRefreshing && products.length === 0) {
+    return <EmptyState />;
   }
 
   return (
@@ -212,8 +193,15 @@ const InfiniteList = ({
       renderItem={renderItem}
       keyExtractor={keyExtractor}
       numColumns={2}
-      columnWrapperStyle={styles.columnWrapper}
-      contentContainerStyle={styles.contentContainer}
+      columnWrapperStyle={{
+        justifyContent: "space-between",
+        marginBottom: ITEM_MARGIN,
+      }}
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+        paddingTop: 16,
+        paddingBottom: 32,
+      }}
       onEndReached={loadMore}
       onEndReachedThreshold={0.3}
       ListFooterComponent={renderFooter}
@@ -221,6 +209,8 @@ const InfiniteList = ({
       maxToRenderPerBatch={8}
       windowSize={7}
       removeClippedSubviews
+      refreshing={isRefreshing}
+      onRefresh={handleRefresh}
     />
   );
 };

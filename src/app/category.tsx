@@ -1,6 +1,7 @@
 import axiosApi from "@/apis/axiosApi";
 import InfiniteList from "@/components/common/InfiniteList";
 import FiltersModal from "@/components/Modals/FiltersModal";
+import createIdParams from "@/Services/parameterObjectCreator";
 import createCategoryIdsParams from "@/Services/parameterObjectCreator";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
@@ -35,6 +36,15 @@ const sortOptions = [
   { id: "newest", label: "Newest First", icon: "clock", paramValue: "newest" },
 ];
 
+interface Params {
+  sort: string;
+  categories: string | number;
+  category_id: number;
+  brand_id?: string | number;
+  color_id?: string | number;
+  size_id?: string | number;
+}
+
 export default function Category() {
   const { slug, color, id } = useLocalSearchParams();
   const [query, setQuery] = useState("");
@@ -43,12 +53,21 @@ export default function Category() {
   const [selectedSortOption, setSelectedSortOption] = useState("default");
 
   const [loading, setLoading] = useState(false);
+
+  //filters
   const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [colors, setColors] = useState([]);
+  const [sizes, setSizes] = useState([]);
+
   const [minValue, setMinValue] = useState(0);
   const [maxValue, setMaxValue] = useState(1);
 
   //selected Filters
   const [categoryIds, setCategoryIds] = useState<any[]>([]);
+  const [brandIds, setBrandIds] = useState<any[]>([]);
+  const [colorIds, setColorIds] = useState<any[]>([]);
+  const [sizeIds, setSizeIds] = useState<any[]>([]);
 
   const handleSortOptionPress = (paramValue: string) => {
     setSelectedSortOption(paramValue);
@@ -56,17 +75,31 @@ export default function Category() {
   };
 
   const paramsProp = useMemo(() => {
-    const categoryIdParams = createCategoryIdsParams(categoryIds);
-    const params = {
+    const categoryIdParams = createIdParams(categoryIds, "categories");
+    const brandIdParams = createIdParams(brandIds, "brand_id");
+    const colorIdParams = createIdParams(colorIds, "color_id");
+    const sizeIdParams = createIdParams(sizeIds, "size_id");
+
+    const params: Params = {
       sort: selectedSortOption ? selectedSortOption : "default",
       categories: categoryIdParams.categories ? categoryIdParams.categories : 0,
-      category_id: categoryIdParams.categoryId
-        ? categoryIdParams.categoryId
-        : 0,
+      category_id: categoryIdParams.id ? categoryIdParams.id : 0,
     };
 
+    if (brandIdParams?.brand_id) {
+      params.brand_id = brandIdParams.brand_id ? brandIdParams.brand_id : 0;
+    }
+
+    if (colorIdParams?.color_id) {
+      params.color_id = colorIdParams.color_id ? colorIdParams.color_id : 0;
+    }
+
+    if (sizeIdParams?.size_id) {
+      params.size_id = sizeIdParams.size_id ? sizeIdParams.size_id : 0;
+    }
+
     return params;
-  }, [selectedSortOption, categoryIds]);
+  }, [selectedSortOption, categoryIds, brandIds, colorIds, sizeIds]);
 
   useEffect(() => {
     const fetchFilters = async () => {
@@ -80,6 +113,9 @@ export default function Category() {
           setCategories(response.data.data.categories);
           setMinValue(response.data.data.prices.min);
           setMaxValue(response.data.data.prices.max);
+          setBrands(response.data.data.brands);
+          setColors(response.data.data.colors);
+          setSizes(response.data.data.sizes);
         }
       } catch (err) {
         Toast.show({
@@ -98,6 +134,10 @@ export default function Category() {
 
     fetchFilters();
   }, []);
+
+  useEffect(() => {
+    setActiveTab(null);
+  }, [categoryIds, brandIds, colorIds, sizeIds]);
 
   return (
     <SafeAreaView
@@ -255,6 +295,12 @@ export default function Category() {
         setCategoryIds={setCategoryIds}
         minVal={minValue}
         maxVal={maxValue}
+        brands={brands}
+        setBrandIds={setBrandIds}
+        colors={colors}
+        setColorIds={setColorIds}
+        sizes={sizes}
+        setSizeIds={setSizeIds}
       />
     </SafeAreaView>
   );

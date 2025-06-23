@@ -1,15 +1,20 @@
-import { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
 import Modal from "react-native-modal";
-import { Slider } from "expo-av";
 
-export default function FiltersModal({
+function FiltersModal({
   isVisible,
   onClose,
   categories,
   setCategoryIds,
   minVal,
   maxVal,
+  brands,
+  setBrandIds,
+  colors,
+  setColorIds,
+  sizes,
+  setSizeIds,
 }: {
   isVisible: boolean;
   onClose: () => void;
@@ -17,29 +22,113 @@ export default function FiltersModal({
   setCategoryIds: (ids: number[]) => void;
   minVal: number;
   maxVal: number;
+  brands: any[];
+  setBrandIds: (ids: number[]) => void;
+  colors: any[];
+  setColorIds: (ids: number[]) => void;
+  sizes: any[];
+  setSizeIds: (ids: number[]) => void;
 }) {
   const [selectedCategoriesId, setSelectedCategoriesId] = useState<number[]>(
     []
   );
-  const [sliderValue, setSliderValue] = useState(minVal);
 
-  const handleCategoryPress = (categoryId: number) => {
-    const categoryIdIndex = selectedCategoriesId.findIndex(
-      (selected) => selected === categoryId
-    );
+  const [selectedBrandIds, setSelectedBrandIds] = useState<number[]>([]);
+  const [selectedColorIds, setSelectedColorIds] = useState<number[]>([]);
+  const [selectedSizeIds, setSelectedSizeIds] = useState<number[]>([]);
 
-    if (categoryIdIndex > -1) {
-      const newSelected = [
-        ...selectedCategoriesId.slice(0, categoryIdIndex),
-        ...selectedCategoriesId.slice(categoryIdIndex + 1),
-      ];
-      setSelectedCategoriesId(newSelected);
-      setCategoryIds(newSelected);
-    } else {
-      setSelectedCategoriesId([...selectedCategoriesId, categoryId]);
-      setCategoryIds([...selectedCategoriesId, categoryId]);
-    }
-  };
+  // Memoize handler functions using useCallback
+  const handleCategoryPress = useCallback(
+    (categoryId: number) => {
+      setSelectedCategoriesId((prevSelected) => {
+        const categoryIdIndex = prevSelected.findIndex(
+          (selected) => selected === categoryId
+        );
+
+        let newSelected: number[];
+        if (categoryIdIndex > -1) {
+          newSelected = [
+            ...prevSelected.slice(0, categoryIdIndex),
+            ...prevSelected.slice(categoryIdIndex + 1),
+          ];
+        } else {
+          newSelected = [...prevSelected, categoryId];
+        }
+        setCategoryIds(newSelected); // Update parent state
+        return newSelected;
+      });
+    },
+    [setCategoryIds]
+  );
+
+  const handleBrandPress = useCallback(
+    (brandId: number) => {
+      setSelectedBrandIds((prevSelected) => {
+        const brandIdIndex = prevSelected.findIndex(
+          (selected) => selected === brandId
+        );
+
+        let newSelected: number[];
+        if (brandIdIndex > -1) {
+          newSelected = [
+            ...prevSelected.slice(0, brandIdIndex),
+            ...prevSelected.slice(brandIdIndex + 1),
+          ];
+        } else {
+          newSelected = [...prevSelected, brandId];
+        }
+        setBrandIds(newSelected); // Update parent state
+        return newSelected;
+      });
+    },
+    [setBrandIds]
+  );
+
+  const handleColorPress = useCallback(
+    (colorId: number) => {
+      setSelectedColorIds((prevSelected) => {
+        const colorIdIndex = prevSelected.findIndex(
+          (selected) => selected === colorId
+        );
+
+        let newSelected: number[];
+        if (colorIdIndex > -1) {
+          newSelected = [
+            ...prevSelected.slice(0, colorIdIndex),
+            ...prevSelected.slice(colorIdIndex + 1),
+          ];
+        } else {
+          newSelected = [...prevSelected, colorId];
+        }
+        setColorIds(newSelected); // Update parent state
+        return newSelected;
+      });
+    },
+    [setColorIds]
+  );
+
+  const handleSizePress = useCallback(
+    (sizeId: number) => {
+      setSelectedSizeIds((prevSelected) => {
+        const sizeIdIndex = prevSelected.findIndex(
+          (selected) => selected === sizeId
+        );
+
+        let newSelected: number[];
+        if (sizeIdIndex > -1) {
+          newSelected = [
+            ...prevSelected.slice(0, sizeIdIndex),
+            ...prevSelected.slice(sizeIdIndex + 1),
+          ];
+        } else {
+          newSelected = [...prevSelected, sizeId];
+        }
+        setSizeIds(newSelected);
+        return newSelected;
+      });
+    },
+    [setSizeIds]
+  );
 
   return (
     <Modal
@@ -52,112 +141,112 @@ export default function FiltersModal({
       animationIn="slideInUp"
       animationOut="slideOutDown"
     >
-      <View style={styles.container}>
-        <View style={styles.handleIndicator} />
+      <View className="bg-white p-5 rounded-t-xl">
+        <View className="self-center w-10 h-1.5 bg-gray-300 rounded-full mb-4" />
 
-        {/* Categories */}
+        {/*Categories*/}
         {categories && categories.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Categories</Text>
-            <View style={styles.categoriesContainer}>
+          <View className="mb-5">
+            <Text className="text-lg font-bold mb-2.5 text-gray-800">
+              Categories
+            </Text>
+            <View className="flex flex-row flex-wrap gap-2">
               {categories.map((category) => (
                 <TouchableOpacity
                   key={category.id}
-                  style={[
-                    styles.categoryButton,
-                    selectedCategoriesId.includes(category.id) &&
-                      styles.selectedCategory,
-                  ]}
+                  className={`py-2 px-4 rounded-full bg-gray-50 border border-gray-200 ${
+                    selectedCategoriesId.includes(category.id)
+                      ? "bg-yellow-400"
+                      : ""
+                  }`}
                   activeOpacity={0.7}
                   onPress={() => handleCategoryPress(category.id)}
                 >
-                  <Text style={styles.categoryText}>{category.name}</Text>
+                  <Text className="text-sm font-medium text-violet-700">
+                    {category.name}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
         )}
 
-        {/* Price Range */}
-        {/* <View style={styles.section}>
-          <Text style={styles.label}>Price Range:</Text>
-          <Text style={styles.valueText}>
-            Current Value: {sliderValue.toFixed(2)}
-          </Text>
-          <Slider
-            style={styles.slider}
-            minimumValue={minVal}
-            maximumValue={maxVal}
-            value={sliderValue}
-            onValueChange={setSliderValue}
-            thumbTintColor="#facc15"
-            minimumTrackTintColor="#5e3ebd"
-            maximumTrackTintColor="#e9ecef"
-          />
-        </View> */}
+        {/*Brands*/}
+        {brands && brands.length > 0 && (
+          <View className="mb-5">
+            <Text className="text-lg font-bold mb-2.5 text-gray-800">
+              Brands
+            </Text>
+            <View className="flex flex-row flex-wrap gap-2">
+              {brands.map((brand) => (
+                <TouchableOpacity
+                  key={brand.id}
+                  className={`py-2 px-4 rounded-full bg-gray-50 border border-gray-200 ${
+                    selectedBrandIds.includes(brand.id) ? "bg-yellow-400" : ""
+                  }`}
+                  activeOpacity={0.7}
+                  onPress={() => handleBrandPress(brand.id)}
+                >
+                  <Text className="text-sm font-medium text-violet-700">
+                    {brand.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/*Colors*/}
+        {colors && colors.length > 0 && (
+          <View className="mb-5">
+            <Text className="text-lg font-bold mb-2.5 text-gray-800">
+              Colors
+            </Text>
+            <View className="flex flex-row flex-wrap gap-2 mt-2.5">
+              {colors.map((color) => (
+                <TouchableOpacity
+                  key={color.id}
+                  className={`w-10 h-10 rounded-full border border-gray-300 items-center justify-center transition-transform duration-200 ${
+                    selectedColorIds.includes(color.id)
+                      ? "scale-125 border-2 "
+                      : ""
+                  }`}
+                  style={{ backgroundColor: color.code }}
+                  activeOpacity={0.7}
+                  onPress={() => handleColorPress(color.id)}
+                />
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/*Sizes*/}
+        {sizes && sizes.length > 0 && (
+          <View className="mb-5">
+            <Text className="text-lg font-bold mb-2.5 text-gray-800">
+              Sizes
+            </Text>
+            <View className="flex flex-row flex-wrap gap-2">
+              {sizes.map((size) => (
+                <TouchableOpacity
+                  key={size.id}
+                  className={`py-2 px-4 rounded-full bg-gray-50 border border-gray-200 ${
+                    selectedSizeIds.includes(size.id) ? "bg-yellow-400" : ""
+                  }`}
+                  activeOpacity={0.7}
+                  onPress={() => handleSizePress(size.id)}
+                >
+                  <Text className="text-sm font-medium text-violet-700">
+                    {size.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
       </View>
     </Modal>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "white",
-    padding: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  handleIndicator: {
-    alignSelf: "center",
-    width: 40,
-    height: 5,
-    backgroundColor: "#ccc",
-    borderRadius: 5,
-    marginBottom: 15,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#343a40",
-  },
-  categoriesContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  categoryButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: "#f8f9fa",
-    borderWidth: 1,
-    borderColor: "#e9ecef",
-  },
-  selectedCategory: {
-    backgroundColor: "#facc15",
-  },
-  categoryText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#5e3ebd",
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 5,
-    color: "#495057",
-  },
-  valueText: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 15,
-    color: "#5e3ebd",
-  },
-  slider: {
-    width: "100%",
-    height: 40,
-  },
-});
+export default React.memo(FiltersModal);

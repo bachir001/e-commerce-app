@@ -14,7 +14,11 @@ import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useAppDataStore } from "@/store/useAppDataStore";
 import { initOneSignalNew } from "@/Services/OneSignalService";
-import { sendGenderNotification, sendUserNotification } from "@/Services/notificationService";
+import {
+  sendGenderNotification,
+  sendUserNotification,
+} from "@/Services/notificationService";
+import ErrorState from "@/components/common/ErrorState";
 export const queryClient = new QueryClient({});
 
 const newArrivalsOptions = {
@@ -28,14 +32,31 @@ const newArrivalsOptions = {
 function AppWithProviders() {
   const { setSessionId } = useSessionStore();
   const { setBrands, setSliders, setMegaCategories, setNewArrivals } =
-  useAppDataStore();
-  const { data: brands, isLoading: loadingBrands } = useBrands();
-  const { data: sliders, isLoading: loadingSliders } = useSliders();
-  const { data: megaCategories, isLoading: loadingMega } = useMegaCategories();
+    useAppDataStore();
+  const {
+    data: brands,
+    isLoading: loadingBrands,
+    isError: brandErrorBool,
+    error: brandError,
+    refetch: refetchBrands,
+  } = useBrands();
+  const {
+    data: sliders,
+    isLoading: loadingSliders,
+    isError: sliderErrorBool,
+    error: sliderError,
+    refetch: refetchSliders,
+  } = useSliders();
+  const {
+    data: megaCategories,
+    isLoading: loadingMega,
+    isError: megaErrorBool,
+    error: megaError,
+    refetch: refetchMega,
+  } = useMegaCategories();
   const { data: newArrivals, isLoading: loadingNewArrivals } =
-  useFeaturedSection("new-arrivals", newArrivalsOptions);
-  
-    
+    useFeaturedSection("new-arrivals", newArrivalsOptions);
+
   useEffect(() => {
     const initializeApp = async () => {
       try {
@@ -75,6 +96,19 @@ function AppWithProviders() {
   }, []);
 
   const appNotReady = loadingBrands || loadingSliders || loadingMega;
+
+  if (megaErrorBool || sliderErrorBool || brandErrorBool) {
+    return (
+      <ErrorState
+        onRetry={() => {
+          refetchBrands();
+          refetchSliders();
+          refetchMega();
+        }}
+        subtitle={megaError?.message}
+      />
+    );
+  }
 
   if (appNotReady) {
     return (

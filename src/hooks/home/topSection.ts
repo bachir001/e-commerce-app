@@ -6,6 +6,7 @@ export function useBrands() {
     queryKey: ["brands"],
     queryFn: () => axiosApi.get("get-brand-data").then((res) => res.data.data),
     staleTime: 24 * 1000 * 60 * 60,
+    retry: 2,
   });
 }
 
@@ -15,6 +16,7 @@ export function useSliders() {
     queryFn: () =>
       axiosApi.get("getSlider/home-slider").then((res) => res.data.data.slides),
     staleTime: 24 * 1000 * 60 * 60,
+    retry: 2,
   });
 }
 
@@ -24,5 +26,6 @@ export function useMegaCategories() {
     queryFn: () =>
       axiosApi.get("getMegaCategories").then((res) => res.data.data),
     staleTime: 24 * 1000 * 60 * 60,
+    retry: 2,
   });
 }
