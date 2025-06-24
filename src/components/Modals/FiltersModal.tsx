@@ -147,120 +147,124 @@ function FiltersModal({
     <Modal
       isVisible={isVisible}
       onBackdropPress={onClose}
-      // onSwipeComplete={onClose}
-      // swipeDirection={["down"]}
       style={{ justifyContent: "flex-end", margin: 0 }}
       backdropOpacity={0.6}
       animationIn="slideInUp"
       animationOut="slideOutDown"
     >
-      <ScrollView
+      <View
         className="bg-white p-5 rounded-t-xl"
         style={{
           maxHeight: 600,
+          flexShrink: 1,
         }}
       >
-        {/*Categories*/}
-        {categories && categories.length > 0 && (
-          <View className="mb-5">
-            <Text className="text-lg font-bold mb-2.5 text-gray-800">
-              Categories
-            </Text>
-            <View className="flex flex-row flex-wrap gap-2">
-              {categories.map((category) => (
-                <TouchableOpacity
-                  key={category.id}
-                  className={`py-2 px-4 rounded-full bg-gray-50 border border-gray-200 ${
-                    selectedCategoriesId.includes(category.id)
-                      ? "bg-yellow-400"
-                      : ""
-                  }`}
-                  activeOpacity={0.7}
-                  onPress={() => handleCategoryPress(category.id)}
-                >
-                  <Text className="text-sm font-medium text-violet-700">
-                    {category.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+        <ScrollView
+          // Remove maxHeight from ScrollView
+          showsVerticalScrollIndicator={false} // Optional: hide scroll indicator if desired
+        >
+          {/*Categories*/}
+          {categories && categories.length > 0 && (
+            <View className="mb-5">
+              <Text className="text-lg font-bold mb-2.5 text-gray-800">
+                Categories
+              </Text>
+              <View className="flex flex-row flex-wrap gap-2">
+                {categories.map((category) => (
+                  <TouchableOpacity
+                    key={category.id}
+                    className={`py-2 px-4 rounded-full bg-gray-50 border border-gray-200 ${
+                      selectedCategoriesId.includes(category.id)
+                        ? "bg-yellow-400"
+                        : ""
+                    }`}
+                    activeOpacity={0.7}
+                    onPress={() => handleCategoryPress(category.id)}
+                  >
+                    <Text className="text-sm font-medium text-violet-700">
+                      {category.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
-        {/*Brands*/}
-        {brands && brands.length > 0 && (
-          <View className="mb-5">
-            <Text className="text-lg font-bold mb-2.5 text-gray-800">
-              Brands
-            </Text>
-            <View className="flex flex-row flex-wrap gap-2">
-              {brands.map((brand) => (
-                <TouchableOpacity
-                  key={brand.id}
-                  className={`py-2 px-4 rounded-full bg-gray-50 border border-gray-200 ${
-                    selectedBrandIds.includes(brand.id) ? "bg-yellow-400" : ""
-                  }`}
-                  activeOpacity={0.7}
-                  onPress={() => handleBrandPress(brand.id)}
-                >
-                  <Text className="text-sm font-medium text-violet-700">
-                    {brand.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+          {/*Brands*/}
+          {brands && brands.length > 0 && (
+            <View className="mb-5">
+              <Text className="text-lg font-bold mb-2.5 text-gray-800">
+                Brands
+              </Text>
+              <View className="flex flex-row flex-wrap gap-2">
+                {brands.map((brand) => (
+                  <TouchableOpacity
+                    key={brand.id}
+                    className={`py-2 px-4 rounded-full bg-gray-50 border border-gray-200 ${
+                      selectedBrandIds.includes(brand.id) ? "bg-yellow-400" : ""
+                    }`}
+                    activeOpacity={0.7}
+                    onPress={() => handleBrandPress(brand.id)}
+                  >
+                    <Text className="text-sm font-medium text-violet-700">
+                      {brand.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
-        {/*Colors*/}
-        {colors && colors.length > 0 && (
-          <View className="mb-5">
-            <Text className="text-lg font-bold mb-2.5 text-gray-800">
-              Colors
-            </Text>
-            <View className="flex flex-row flex-wrap gap-2 mt-2.5">
-              {colors.map((color) => (
-                <TouchableOpacity
-                  key={color.id}
-                  className={`w-10 h-10 rounded-full border border-gray-300 items-center justify-center transition-transform duration-200 ${
-                    selectedColorIds.includes(color.id)
-                      ? "scale-125 border-2 "
-                      : ""
-                  }`}
-                  style={{ backgroundColor: color.code }}
-                  activeOpacity={0.7}
-                  onPress={() => handleColorPress(color.id)}
-                />
-              ))}
+          {/*Colors*/}
+          {colors && colors.length > 0 && (
+            <View className="mb-5">
+              <Text className="text-lg font-bold mb-2.5 text-gray-800">
+                Colors
+              </Text>
+              <View className="flex flex-row flex-wrap gap-2 mt-2.5">
+                {colors.map((color) => (
+                  <TouchableOpacity
+                    key={color.id}
+                    className={`w-10 h-10 rounded-full border border-gray-300 items-center justify-center transition-transform duration-200 ${
+                      selectedColorIds.includes(color.id)
+                        ? "scale-125 border-2 "
+                        : ""
+                    }`}
+                    style={{ backgroundColor: color.code }}
+                    activeOpacity={0.7}
+                    onPress={() => handleColorPress(color.id)}
+                  />
+                ))}
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
-        {/*Sizes*/}
-        {sizes && sizes.length > 0 && (
-          <View className="mb-5">
-            <Text className="text-lg font-bold mb-2.5 text-gray-800">
-              Sizes
-            </Text>
-            <View className="flex flex-row flex-wrap gap-2">
-              {sizes.map((size) => (
-                <TouchableOpacity
-                  key={size.id}
-                  className={`py-2 px-4 rounded-full bg-gray-50 border border-gray-200 ${
-                    selectedSizeIds.includes(size.id) ? "bg-yellow-400" : ""
-                  }`}
-                  activeOpacity={0.7}
-                  onPress={() => handleSizePress(size.id)}
-                >
-                  <Text className="text-sm font-medium text-violet-700">
-                    {size.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+          {/*Sizes*/}
+          {sizes && sizes.length > 0 && (
+            <View className="mb-5">
+              <Text className="text-lg font-bold mb-2.5 text-gray-800">
+                Sizes
+              </Text>
+              <View className="flex flex-row flex-wrap gap-2">
+                {sizes.map((size) => (
+                  <TouchableOpacity
+                    key={size.id}
+                    className={`py-2 px-4 rounded-full bg-gray-50 border border-gray-200 ${
+                      selectedSizeIds.includes(size.id) ? "bg-yellow-400" : ""
+                    }`}
+                    activeOpacity={0.7}
+                    onPress={() => handleSizePress(size.id)}
+                  >
+                    <Text className="text-sm font-medium text-violet-700">
+                      {size.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
-        )}
-      </ScrollView>
+          )}
+        </ScrollView>
+      </View>
     </Modal>
   );
 }
