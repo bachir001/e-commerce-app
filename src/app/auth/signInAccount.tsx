@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, Stack, useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { Colors } from "@/constants/Colors";
 import { useSessionStore } from "@/store/useSessionStore";
 import DotsLoader from "@/components/common/AnimatedLayout";
@@ -53,11 +53,11 @@ export default function loginAccount() {
         .then(async (response) => {
           if (response.data.status) {
             loginOneSignal(response.data.data.user.id.toString());
-            await new Promise(resolve => setTimeout(resolve, 300)); // 300ms delay
+            await new Promise((resolve) => setTimeout(resolve, 300)); // 300ms delay
             await updateUserTags(response.data.data.user);
             await Promise.all([
-              AsyncStorage.setItem("token", response.data.data.token),
-              AsyncStorage.setItem(
+              SecureStore.setItemAsync("token", response.data.data.token),
+              SecureStore.setItemAsync(
                 "user",
                 JSON.stringify(response.data.data.user)
               ),

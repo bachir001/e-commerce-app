@@ -3,8 +3,7 @@ import { create } from "zustand";
 import Toast from "react-native-toast-message";
 import { getOrCreateSessionId } from "@/lib/session";
 import { persist, createJSONStorage } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import * as SecureStore from "expo-secure-store";
 const API_BASE = "https://api-gocami-test.gocami.com/api";
 
 export type CartItem = {
@@ -274,7 +273,11 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: "cart-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => ({
+        getItem: SecureStore.getItemAsync,
+        setItem: SecureStore.setItemAsync,
+        removeItem: SecureStore.deleteItemAsync,
+      })),
       partialize: (state) => ({
         items: state.items,
         lastFetch: state.lastFetch, // Performance: Persist cache timestamp

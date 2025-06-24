@@ -1,7 +1,6 @@
 import { OneSignal } from "react-native-onesignal";
 import { UserContextType } from "@/types/globalTypes";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import * as SecureStore from "expo-secure-store";
 interface UserData {
   id: string;
   date_of_birth: string;
@@ -49,9 +48,9 @@ export async function sendBirthdayNotification(
   imageUrl?: string
 ): Promise<boolean> {
   try {
-    const userString = await AsyncStorage.getItem("user");
-    if (!userString ) {
-        return false;
+    const userString = await SecureStore.getItemAsync("user");
+    if (!userString) {
+      return false;
     }
 
     const currentUser: UserData = JSON.parse(userString);
@@ -59,10 +58,8 @@ export async function sendBirthdayNotification(
     const today = new Date();
     const birthDate = new Date(currentUser.date_of_birth);
 
-    // Verify it's user's birthday today
-
     const sendAfter = new Date(today);
-    sendAfter.setHours(10, 0, 0, 0); // Set to 10 AM
+    sendAfter.setHours(10, 0, 0, 0);
 
     const notificationBody = {
       app_id: ONESIGNAL_APP_ID,
@@ -102,9 +99,7 @@ export async function sendGenderNotification(
   try {
     const notificationBody = {
       app_id: ONESIGNAL_APP_ID,
-      filters: [
-        { field: "tag", key: "gender", relation: "=", value: gender },
-      ],
+      filters: [{ field: "tag", key: "gender", relation: "=", value: gender }],
       target_channel: "push",
       headings: { en: title },
       contents: { en: message },
@@ -127,17 +122,16 @@ export async function sendGenderNotification(
   }
 }
 
-
 export const sendUserNotification = async (
   externalId: string, // Changed to externalId, and it should not be null for targeting
   title: string,
   message: string
 ) => {
   try {
-    const response = await fetch('https://onesignal.com/api/v1/notifications', {
-      method: 'POST',
+    const response = await fetch("https://onesignal.com/api/v1/notifications", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
       },
       body: JSON.stringify({
@@ -151,20 +145,17 @@ export const sendUserNotification = async (
 
     return await response.json();
   } catch (error) {
-    console.error('Error sending user notification:', error);
+    console.error("Error sending user notification:", error);
     throw error;
   }
 };
-
-
 
 // Update user tags in OneSignal (call this after login)
 
 export async function updateUserTags(user: UserContextType) {
   try {
-    
     if (!user) return;
-    console.log(user,"user");
+    console.log(user, "user");
 
     // const birthDate = new Date(user.date_of_birth);
     OneSignal.User.addTags({

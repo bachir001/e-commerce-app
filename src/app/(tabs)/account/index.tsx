@@ -9,7 +9,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { FontAwesome5 } from "@expo/vector-icons";
 import ContactModal from "@/components/account/ContactModal";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { Colors } from "@/constants/Colors";
 import { useSessionStore } from "@/store/useSessionStore";
 import { logoutOneSignal } from "@/Services/OneSignalService";
@@ -133,8 +133,8 @@ export default function AccountScreen() {
     logoutOneSignal();
 
     await Promise.all([
-      AsyncStorage.removeItem("token"),
-      AsyncStorage.removeItem("user"),
+      SecureStore.deleteItemAsync("token"),
+      SecureStore.deleteItemAsync("user"),
     ]);
     setUser(null);
     setToken(null);

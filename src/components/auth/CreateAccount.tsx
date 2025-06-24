@@ -22,10 +22,10 @@ import Checkbox from "expo-checkbox";
 import Toast from "react-native-toast-message";
 import { Colors } from "@/constants/Colors";
 import axiosApi from "@/apis/axiosApi";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSessionStore } from "@/store/useSessionStore";
 import { loginOneSignal } from "@/Services/OneSignalService";
 import { updateUserTags } from "@/Services/notificationService";
+import * as SecureStore from "expo-secure-store";
 
 interface CompleteSignUp {
   password: string;
@@ -81,7 +81,6 @@ export default function CreateAccount({ email }: { email: string }) {
     return "Success";
   };
 
-
   const handleCompleteSignUp = async () => {
     console.log(email);
     const RequestBody: CompleteSignUp = {
@@ -126,8 +125,8 @@ export default function CreateAccount({ email }: { email: string }) {
                   await updateUserTags(response.data.data.user);
 
                   await Promise.all([
-                    AsyncStorage.setItem("token", response.data.data.token),
-                    AsyncStorage.setItem(
+                    SecureStore.setItemAsync("token", response.data.data.token),
+                    SecureStore.setItemAsync(
                       "user",
                       JSON.stringify(response.data.data.user)
                     ),

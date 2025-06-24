@@ -6,7 +6,7 @@ import React, {
   useState,
 } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import Header from "@/components/home/Header";
 import CategorySection from "@/components/home/Categories/CategorySection";
 import { FlatList, View } from "react-native";
@@ -45,8 +45,8 @@ export default function HomeScreen() {
 
   const checkForToken = useCallback(async () => {
     try {
-      const token = await AsyncStorage.getItem("token");
-      const userJSON = await AsyncStorage.getItem("user");
+      const token = await SecureStore.getItemAsync("token");
+      const userJSON = await SecureStore.getItemAsync("user");
 
       if (token) {
         setIsLogged(true);

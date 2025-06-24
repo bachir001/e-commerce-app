@@ -1,5 +1,5 @@
 import "../../global.css";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { getOrCreateSessionId } from "@/lib/session";
@@ -61,7 +61,7 @@ function AppWithProviders() {
     const initializeApp = async () => {
       try {
         const id = await getOrCreateSessionId();
-        const userString = await AsyncStorage.getItem("user");
+        const userString = await SecureStore.getItemAsync("user");
         const userParsed = userString ? JSON.parse(userString) : null;
         setSessionId(id);
 

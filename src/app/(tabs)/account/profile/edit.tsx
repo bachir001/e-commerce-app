@@ -12,7 +12,7 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { Colors } from "@/constants/Colors";
 
 import ChangePasswordModal from "@/components/account/ChangePasswordModal";
@@ -142,7 +142,7 @@ export default function EditProfile() {
 
                 setUser(updatedUserData);
 
-                await AsyncStorage.setItem(
+                await SecureStore.setItemAsync(
                   "user",
                   JSON.stringify(updatedUserData)
                 );

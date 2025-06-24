@@ -12,8 +12,7 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import axiosApi from "@/apis/axiosApi";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import * as SecureStore from "expo-secure-store";
 import { Colors } from "@/constants/Colors";
 import { useSessionStore } from "@/store/useSessionStore";
 import DotsLoader from "@/components/common/AnimatedLayout";
@@ -93,38 +92,8 @@ export default function Verification() {
         email: email,
       };
 
-      // const signUpToken = await AsyncStorage.getItem("signUpToken");
-
       await axiosApi
         .post("verify-code", RequestBody)
-        // .then(async (response) => {
-        //   if (response.status === 200) {
-        //     await AsyncStorage.removeItem("signUpToken");
-        //   }
-        // })
-        // .then(async () => {
-        //   //automatic login by taking his information
-        //   //pass email and body
-        //   const RequestBody = {
-        //     email,
-        //     password,
-        //   };
-        //   await axiosApi
-        //     .post("https://api-gocami-test.gocami.com/api/login", RequestBody)
-        //     .then(async (response) => {
-        //       if (response.data.status) {
-        //         await Promise.all([
-        //           AsyncStorage.setItem("token", response.data.data.token),
-        //           AsyncStorage.setItem(
-        //             "user",
-        //             JSON.stringify(response.data.data.user)
-        //           ),
-        //         ]);
-        //         setIsLogged(true);
-        //         router.replace("/(tabs)/home");
-        //       }
-        //     });
-        // })
         .then((response) => {
           console.log(response.data);
           console.log(email);

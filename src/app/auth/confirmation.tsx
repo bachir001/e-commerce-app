@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { useState } from "react";
 import axiosApi from "@/apis/axiosApi";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { Colors } from "@/constants/Colors";
 import DotsLoader from "@/components/common/AnimatedLayout";
 
