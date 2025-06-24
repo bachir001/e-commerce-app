@@ -1,7 +1,7 @@
 import "../../global.css";
 import * as SecureStore from "expo-secure-store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 import { getOrCreateSessionId } from "@/lib/session";
 import { Stack } from "expo-router";
 import { ImageBackground } from "react-native";
@@ -14,10 +14,7 @@ import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useAppDataStore } from "@/store/useAppDataStore";
 import { initOneSignalNew } from "@/Services/OneSignalService";
-import {
-  sendGenderNotification,
-  sendUserNotification,
-} from "@/Services/notificationService";
+
 import ErrorState from "@/components/common/ErrorState";
 export const queryClient = new QueryClient({});
 

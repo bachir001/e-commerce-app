@@ -6,29 +6,53 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { useCartStore } from "@/store/cartStore";
 import { Home, LayoutGrid, ShoppingBag, User } from "lucide-react-native";
 import { Platform } from "react-native";
-// Corrected Haptics import: Import all as Haptics
 import * as Haptics from "expo-haptics";
-import { ImpactFeedbackStyle } from "expo-haptics"; // Keep this for the style enum
+import { ImpactFeedbackStyle } from "expo-haptics";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme() ?? "light";
   const totalCartQuantity = useCartStore(
     useCallback((state) => state.totalQuantity, [])
   );
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme].tint,
+        tabBarActiveTintColor: "white",
+        tabBarInactiveTintColor: "rgba(255,255,255,0.6)",
         lazy: true,
         tabBarStyle: {
-          backgroundColor: Colors[colorScheme].background,
+          backgroundColor: "#6e3ebd",
+          borderTopWidth: 0,
+          height: 65,
+          paddingBottom: Platform.OS === "ios" ? 15 : 5,
+          paddingTop: 5,
+          marginHorizontal: 16,
+          marginBottom: Platform.OS === "ios" ? 40 : 25,
+          borderRadius: 20,
+          position: "absolute",
+          shadowColor: "#6e3ebd",
+          shadowOffset: {
+            width: 0,
+            height: 10,
+          },
+          shadowOpacity: 0.35,
+          shadowRadius: 25,
+          elevation: 20,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: "600",
+          marginTop: 2,
+        },
+        tabBarIconStyle: {
+          marginBottom: -2,
         },
         animation: "fade",
       }}
       initialRouteName="home"
       screenListeners={{
         tabPress: (e) => {
-          // Add a check to ensure Haptics is available before calling methods
           if (Haptics && (Platform.OS === "ios" || Platform.OS === "android")) {
             Haptics.impactAsync(ImpactFeedbackStyle.Light);
           }
@@ -40,8 +64,12 @@ export default function TabLayout() {
         options={{
           headerShown: false,
           tabBarLabel: "Home",
-          tabBarIcon: ({ color }) => (
-            <Home size={24} color="#5e3ebd" strokeWidth={1.8} />
+          tabBarIcon: ({ focused }) => (
+            <Home
+              size={20}
+              color={focused ? "white" : "rgba(255,255,255,0.6)"}
+              strokeWidth={focused ? 2.2 : 1.8}
+            />
           ),
         }}
       />
@@ -52,7 +80,13 @@ export default function TabLayout() {
           title: "Categories",
           headerShown: false,
           tabBarLabel: "Categories",
-          tabBarIcon: ({ color }) => <LayoutGrid size={24} color="#5e3ebd" />,
+          tabBarIcon: ({ focused }) => (
+            <LayoutGrid
+              size={20}
+              color={focused ? "white" : "rgba(255,255,255,0.6)"}
+              strokeWidth={focused ? 2.2 : 1.8}
+            />
+          ),
         }}
       />
 
@@ -61,13 +95,24 @@ export default function TabLayout() {
         options={{
           title: "Cart",
           tabBarLabel: "Cart",
-          tabBarIcon: ({ color }) => <ShoppingBag size={24} color="#5e3ebd" />,
+          tabBarIcon: ({ focused }) => (
+            <ShoppingBag
+              size={20}
+              color={focused ? "white" : "rgba(255,255,255,0.6)"}
+              strokeWidth={focused ? 2.2 : 1.8}
+            />
+          ),
           tabBarBadge: totalCartQuantity || undefined,
           tabBarBadgeStyle: {
-            minWidth: 20,
-            height: 20,
-            borderRadius: 10,
-            backgroundColor: "#FF6B6B",
+            minWidth: 16,
+            height: 16,
+            borderRadius: 8,
+            backgroundColor: "#FF4757",
+            borderWidth: 1.5,
+            borderColor: "#6e3ebd",
+            fontSize: 10,
+            fontWeight: "700",
+            color: "white",
           },
         }}
       />
@@ -78,7 +123,13 @@ export default function TabLayout() {
           headerShown: false,
           title: "Account",
           tabBarLabel: "Account",
-          tabBarIcon: ({ color }) => <User size={24} color="#5e3ebd" />,
+          tabBarIcon: ({ focused }) => (
+            <User
+              size={20}
+              color={focused ? "white" : "rgba(255,255,255,0.6)"}
+              strokeWidth={focused ? 2.2 : 1.8}
+            />
+          ),
         }}
       />
     </Tabs>
