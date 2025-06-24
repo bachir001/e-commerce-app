@@ -212,6 +212,7 @@ export default function HomeScreen() {
             </View>
           ) : null
         }
+        decelerationRate="fast"
       />
     </SafeAreaView>
   );

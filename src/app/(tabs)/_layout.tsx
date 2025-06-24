@@ -1,14 +1,13 @@
-// app/(tabs)/_layout.tsx
 import React, { useCallback, useRef, useEffect } from "react";
 import { Tabs } from "expo-router";
-import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useCartStore } from "@/store/cartStore";
 import { Home, LayoutGrid, ShoppingBag, User } from "lucide-react-native";
-import { Platform, Animated } from "react-native"; // Import Animated
+import { Platform, Animated } from "react-native";
 import * as Haptics from "expo-haptics";
 import { ImpactFeedbackStyle } from "expo-haptics";
-import { useUiStore } from "@/store/useUiStore"; // Import useUiStore
+import { useUiStore } from "@/store/useUiStore";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme() ?? "light";
@@ -18,19 +17,18 @@ export default function TabLayout() {
 
   const { isTabBarVisible } = useUiStore();
   const tabBarTranslateY = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
 
   const tabBarHeight = 65;
-  const bottomMargin = Platform.OS === "ios" ? 40 : 25;
+  const dynamicBottomMargin = 20 + insets.bottom;
 
   useEffect(() => {
     Animated.timing(tabBarTranslateY, {
-      toValue: isTabBarVisible
-        ? 0
-        : tabBarHeight + bottomMargin + (Platform.OS === "ios" ? 0 : 5),
+      toValue: isTabBarVisible ? 0 : tabBarHeight + dynamicBottomMargin + 5,
       duration: 300,
       useNativeDriver: true,
     }).start();
-  }, [isTabBarVisible, tabBarTranslateY, tabBarHeight, bottomMargin]);
+  }, [isTabBarVisible, tabBarTranslateY, tabBarHeight, dynamicBottomMargin]);
 
   return (
     <Tabs
@@ -42,10 +40,10 @@ export default function TabLayout() {
           backgroundColor: "#6e3ebd",
           borderTopWidth: 0,
           height: tabBarHeight,
-          paddingBottom: Platform.OS === "ios" ? 15 : 5,
+          paddingBottom: 0,
           paddingTop: 5,
           marginHorizontal: 16,
-          marginBottom: bottomMargin,
+          marginBottom: dynamicBottomMargin,
           borderRadius: 20,
           position: "absolute",
           shadowColor: "#6e3ebd",
@@ -64,7 +62,7 @@ export default function TabLayout() {
           marginTop: 2,
         },
         tabBarIconStyle: {
-          marginBottom: -2,
+          marginBottom: 0,
         },
         animation: "fade",
       }}
@@ -112,6 +110,7 @@ export default function TabLayout() {
         name="cart"
         options={{
           title: "Cart",
+          headerShown: false,
           tabBarLabel: "Cart",
           tabBarIcon: ({ focused }) => (
             <ShoppingBag

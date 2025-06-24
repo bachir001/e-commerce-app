@@ -1,4 +1,3 @@
-// Optimized cart.tsx - Key performance improvements
 import React, {
   useCallback,
   useEffect,
@@ -25,8 +24,8 @@ import axios from "axios";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getOrCreateSessionId } from "@/lib/session";
 import DotsLoader from "@/components/common/AnimatedLayout";
+import { useSafeAreaInsets } from "react-native-safe-area-context"; // Import useSafeAreaInsets
 
-// Types remain the same...
 interface BestSellerRaw {
   id: number;
   name: string;
@@ -59,17 +58,14 @@ export default function CartScreen(): React.ReactElement {
     rawColorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(colorScheme);
 
-  // Zustand state
   const cartItems = useCartStore((s) => s.items);
   const isCartLoading = useCartStore((s) => s.loading);
   const cartErrorMessage = useCartStore((s) => s.error);
   const fetchCart = useCartStore((s) => s.fetchCart);
   const addToCart = useCartStore((s) => s.addToCart);
 
-  // Performance improvement: Use ref to track if cart has been fetched
   const hasFetchedCart = useRef(false);
 
-  // Performance improvement: Only fetch cart once per session
   useEffect(() => {
     if (!hasFetchedCart.current) {
       fetchCart();
@@ -77,7 +73,6 @@ export default function CartScreen(): React.ReactElement {
     }
   }, [fetchCart]);
 
-  // Best-sellers state with improved caching
   const [bestSellerItems, setBestSellerItems] = useState<BestSellerItem[]>([]);
   const [isBestSellersLoading, setIsBestSellersLoading] = useState(false);
   const [bestSellersErrorMessage, setBestSellersErrorMessage] = useState<
@@ -85,7 +80,11 @@ export default function CartScreen(): React.ReactElement {
   >(null);
   const bestSellersCache = useRef<BestSellerItem[] | null>(null);
 
-  // Performance improvement: Cache best-sellers and use AbortController
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 65;
+  const aestheticMarginAboveInsets = 20;
+  const tabBarSpace = tabBarHeight + aestheticMarginAboveInsets + insets.bottom;
+
   useEffect(() => {
     let abortController: AbortController | null = null;
 
@@ -112,7 +111,6 @@ export default function CartScreen(): React.ReactElement {
             imageUrl: raw.product_image ?? raw.image,
           }));
 
-          // Cache the results
           bestSellersCache.current = mapped;
           setBestSellerItems(mapped);
         })
@@ -127,7 +125,6 @@ export default function CartScreen(): React.ReactElement {
           setIsBestSellersLoading(false);
         });
     } else if (cartItems.length === 0 && bestSellersCache.current) {
-      // Use cached data
       setBestSellerItems(bestSellersCache.current);
     }
 
@@ -136,9 +133,8 @@ export default function CartScreen(): React.ReactElement {
         abortController.abort();
       }
     };
-  }, [cartItems.length]); // Only depend on cart length, not the full array
+  }, [cartItems.length]);
 
-  // Performance improvement: Memoize handlers with proper dependencies
   const handleRemove = useCallback(
     async (cartItemId: string) => {
       try {
@@ -166,7 +162,6 @@ export default function CartScreen(): React.ReactElement {
     [fetchCart]
   );
 
-  // Performance improvement: Memoize render functions
   const renderCartRow = useCallback(
     ({ item }: { item: CartItem }) => (
       <View style={styles.cartItemContainer}>
@@ -236,26 +231,22 @@ export default function CartScreen(): React.ReactElement {
     [styles, addToCart]
   );
 
-  // Performance improvement: Optimize total calculation
   const totalCartCost = useMemo(
     () => cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0),
     [cartItems]
   );
 
-  // Performance improvement: Memoize key extractor
   const cartKeyExtractor = useCallback((item: CartItem) => item.id, []);
   const bestSellerKeyExtractor = useCallback(
     (item: BestSellerItem) => item.id,
     []
   );
 
-  // Performance improvement: Memoize separator component
   const ItemSeparator = useCallback(
     () => <View style={styles.itemSeparator} />,
     [styles]
   );
 
-  // Rest of the component remains the same...
   if (cartErrorMessage) {
     return (
       <View style={styles.centeredContainer}>
@@ -266,7 +257,9 @@ export default function CartScreen(): React.ReactElement {
 
   if (cartItems.length === 0) {
     return (
-      <SafeAreaView style={styles.mainContainer}>
+      <SafeAreaView
+        style={[styles.mainContainer, { paddingBottom: tabBarSpace }]}
+      >
         <View style={styles.centeredContainer}>
           <Image
             source={require("@/assets/images/empty_basket.png")}
@@ -292,7 +285,6 @@ export default function CartScreen(): React.ReactElement {
               keyExtractor={bestSellerKeyExtractor}
               renderItem={renderBestSellerCard}
               contentContainerStyle={styles.bestSellersListContainer}
-              // Performance improvements for FlatList
               removeClippedSubviews={true}
               maxToRenderPerBatch={5}
               windowSize={10}
@@ -310,7 +302,9 @@ export default function CartScreen(): React.ReactElement {
   }
 
   return (
-    <SafeAreaView style={styles.mainContainer}>
+    <SafeAreaView
+      style={[styles.mainContainer, { paddingBottom: tabBarSpace }]}
+    >
       <FlatList
         data={cartItems}
         keyExtractor={cartKeyExtractor}
@@ -345,7 +339,6 @@ export default function CartScreen(): React.ReactElement {
             </Pressable>
           </View>
         }
-        // Performance improvements for FlatList
         removeClippedSubviews={true}
         maxToRenderPerBatch={10}
         windowSize={10}
@@ -355,7 +348,6 @@ export default function CartScreen(): React.ReactElement {
   );
 }
 
-// Styles remain the same...
 const BRAND = "#5E3EBD";
 const screenWidth = Dimensions.get("window").width;
 
