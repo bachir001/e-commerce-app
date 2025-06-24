@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Modal from "react-native-modal";
+import EmptyState from "../common/EmptyList";
 
 function FiltersModal({
   isVisible,
@@ -128,6 +129,19 @@ function FiltersModal({
     },
     [setSizeIds]
   );
+
+  useEffect(() => {
+    console.log(brands);
+  }, [categories]);
+
+  if (!categories && !brands && !colors && !sizes) {
+    return (
+      <EmptyState
+        title="No Filters"
+        subtitle="There are no filters for this category"
+      />
+    );
+  }
 
   return (
     <Modal

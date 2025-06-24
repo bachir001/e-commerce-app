@@ -46,14 +46,13 @@ interface Params {
 }
 
 export default function Category() {
-  const { slug, color, id } = useLocalSearchParams();
+  const { slug, color, id, brand } = useLocalSearchParams();
   const [query, setQuery] = useState("");
 
   const [activeTab, setActiveTab] = useState<"sort" | "filters" | null>(null);
   const [selectedSortOption, setSelectedSortOption] = useState("default");
 
   const [loading, setLoading] = useState(false);
-  const [automaticVisibleFilter, setAutomaticVisibleFilter] = useState(false);
 
   //filters
   const [categories, setCategories] = useState([]);
@@ -113,16 +112,35 @@ export default function Category() {
       try {
         setLoading(true);
         const response = await axiosApi.get(
-          `filters?model_id=${id}&model_type=category`
+          `filters?model_id=${Number(id)}&model_type=${
+            brand ? "brand" : "category"
+          }`
         );
 
+        console.log(response.data);
+
         if (response.status === 200) {
-          setCategories(response.data.data.categories);
-          setMinValue(response.data.data.prices.min);
-          setMaxValue(response.data.data.prices.max);
-          setBrands(response.data.data.brands);
-          setColors(response.data.data.colors);
-          setSizes(response.data.data.sizes);
+          // console.log(response.data);
+          if (response.data.data.categories) {
+            setCategories(response.data.data.categories);
+          }
+
+          if (response.data.data.prices) {
+            setMinValue(response.data.data.prices.min);
+            setMaxValue(response.data.data.prices.max);
+          }
+
+          if (response.data.data.brands) {
+            setBrands(response.data.data.brands);
+          }
+
+          if (response.data.data.colors) {
+            setColors(response.data.data.colors);
+          }
+
+          if (response.data.data.sizes) {
+            setSizes(response.data.data.sizes);
+          }
         }
       } catch (err) {
         Toast.show({
@@ -140,7 +158,7 @@ export default function Category() {
     };
 
     fetchFilters();
-  }, []);
+  }, [id, brand]);
 
   useEffect(() => {
     setActiveTab(null);
@@ -293,6 +311,9 @@ export default function Category() {
         paramsProp={paramsProp}
         setActiveTab={(tab: string) =>
           setActiveTab(tab as "sort" | "filters" | null)
+        }
+        isBrand={
+          brand !== undefined && brand !== null && typeof brand === "string"
         }
       />
 

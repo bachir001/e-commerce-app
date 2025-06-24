@@ -10,6 +10,7 @@ import React, { useCallback } from "react";
 
 import { Brand } from "@/types/globalTypes";
 import { useBrands } from "@/hooks/home/topSection";
+import { router } from "expo-router";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -27,6 +28,17 @@ const BrandComponent = React.memo(({ name, image, slug, id }: Brand) => {
         shadowOpacity: 0.15,
         shadowRadius: 6,
         elevation: 4,
+      }}
+      onPress={() => {
+        router.push({
+          pathname: "category",
+          params: {
+            brand: "brand",
+            id: String(id),
+            slug: String(slug),
+            color: "#5e3ebd",
+          },
+        });
       }}
     >
       <View className="flex-1 items-center justify-center p-2">

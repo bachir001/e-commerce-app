@@ -23,11 +23,13 @@ const InfiniteList = ({
   color,
   paramsProp,
   setActiveTab,
+  isBrand,
 }: {
   slug: string;
   color: string;
   paramsProp?: any;
   setActiveTab: (tab: string) => void;
+  isBrand: boolean;
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [page, setPage] = useState(1);
@@ -54,9 +56,9 @@ const InfiniteList = ({
 
     try {
       const response = await axios.get(
-        `https://api-gocami-test.gocami.com/api/getCategoryData/${encodeURIComponent(
-          slug
-        )}/`,
+        `https://api-gocami-test.gocami.com/api/${
+          isBrand ? "get-brand-products" : "getCategoryData"
+        }/${encodeURIComponent(slug)}/`,
         {
           params: {
             page,

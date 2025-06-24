@@ -101,7 +101,6 @@ export default function CreateAccount({ email }: { email: string }) {
           RequestBody
         )
         .then(async (response) => {
-          console.log(response.data);
           if (response.status === 200) {
             Toast.show({
               type: "success",

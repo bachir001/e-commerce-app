@@ -29,7 +29,6 @@ export default function useGetProductDetails(slug: string) {
       const response: AxiosResponse<GetProductApiResponse> = await axiosApi.get(
         `getProduct/${slug}`
       );
-      console.log(response.data.data);
       if (!response) {
         throw new Error("Cannot get product");
       }

@@ -95,9 +95,6 @@ export default function Verification() {
       await axiosApi
         .post("verify-code", RequestBody)
         .then((response) => {
-          console.log(response.data);
-          console.log(email);
-          console.log(code);
           if (response.status === 200) {
             router.push({
               pathname: "/auth/createAccount",

@@ -18,8 +18,6 @@ export default function useGetCategoryRelatedCategories(
         `getCategoryData/${slug}?page=1&per_page=1`
       );
 
-      console.log(response.data.data.relatedCategories);
-
       if (response.status === 200) {
         return {
           categoryInfo: response.data.data.categoryInfo as CategoryInfo,
