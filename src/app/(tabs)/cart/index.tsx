@@ -147,6 +147,9 @@ export default function CartScreen(): React.ReactElement {
         formData.append("cart_item_id", cartItemId);
         formData.append("_method", "DELETE");
 
+        console.log(sessionId, "sessionId");
+        console.log(formData, "formData");
+        
         await axios.post(
           "https://api-gocami-test.gocami.com/api/cart/remove",
           formData,

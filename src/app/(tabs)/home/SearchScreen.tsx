@@ -63,7 +63,7 @@ export default function SearchScreen() {
 
   useEffect(() => {
     const getRecentSearches = async () => {
-      try {
+      try {                                                  
         const stored = await SecureStore.getItemAsync("recentSearches");
         if (stored) {
           const parsed = JSON.parse(stored);
