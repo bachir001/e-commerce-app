@@ -9,7 +9,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as SecureStore from "expo-secure-store";
 import Header from "@/components/home/Header";
 import CategorySection from "@/components/home/Categories/CategorySection";
-import { FlatList, View } from "react-native";
+import { FlatList, View, Animated, Platform } from "react-native";
 import SpecificSection from "@/components/home/Sections/SpecificSection";
 import { HOMEPAGE_SECTIONS } from "@/constants/HomePageSections";
 import { Colors } from "@/constants/Colors";
@@ -17,6 +17,7 @@ import FeaturedSection from "@/components/home/Sections/FeaturedSection";
 import ProductInfiniteList from "@/components/common/ProductInfiniteList";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useAppDataStore } from "@/store/useAppDataStore";
+import { useUiStore } from "@/store/useUiStore";
 
 const HOME_SCREEN_DATA_STRUCTURE = [
   { id: "beautyAndHealth", type: "specific" },
@@ -31,6 +32,7 @@ const HOME_SCREEN_DATA_STRUCTURE = [
 export default function HomeScreen() {
   const { setIsLogged, setUser, setToken } = useSessionStore();
   const { newArrivals } = useAppDataStore();
+  const { showTabBar, hideTabBar } = useUiStore();
 
   const [visibleSections, setVisibleSections] = useState([
     HOME_SCREEN_DATA_STRUCTURE[0],
@@ -42,6 +44,9 @@ export default function HomeScreen() {
 
   const isBusy = useRef(false);
   const flatListRef = useRef<FlatList>(null);
+  const lastScrollY = useRef(0);
+  const scrollThreshold = 50;
+  const tabBarHeightAndMargin = 65 + (Platform.OS === "ios" ? 40 : 25); // Approximate tab bar height + margin
 
   const checkForToken = useCallback(async () => {
     try {
@@ -58,21 +63,11 @@ export default function HomeScreen() {
     } catch (error) {
       console.error("Token check error:", error);
     }
-  }, [tokenChecked]);
+  }, []);
 
   useEffect(() => {
     checkForToken();
   }, [checkForToken]);
-
-  const handleSectionLoading = useCallback(
-    (sectionId: string, isLoading: boolean) => {
-      if (!isLoading && loadingSectionId === sectionId) {
-        setLoadingSectionId(null);
-        isBusy.current = false;
-      }
-    },
-    [loadingSectionId]
-  );
 
   const loadMoreSections = useCallback(() => {
     if (isBusy.current || loadingSectionId !== null) return;
@@ -89,6 +84,26 @@ export default function HomeScreen() {
     setVisibleSections((prev) => [...prev, newSection]);
     setCurrentIndex(nextSectionIndex);
   }, [currentIndex, loadingSectionId]);
+
+  const handleSectionLoading = useCallback(
+    (sectionId: string, isLoading: boolean) => {
+      if (!isLoading && loadingSectionId === sectionId) {
+        setLoadingSectionId(null);
+        isBusy.current = false;
+
+        if (currentIndex < HOME_SCREEN_DATA_STRUCTURE.length - 1) {
+          setTimeout(() => {
+            if (flatListRef.current) {
+              handleEndReached();
+            }
+          }, 100);
+        } else if (!showInfiniteList) {
+          setShowInfiniteList(true);
+        }
+      }
+    },
+    [loadingSectionId, currentIndex, showInfiniteList]
+  );
 
   const renderItem = useCallback(
     ({ item }: { item: (typeof HOME_SCREEN_DATA_STRUCTURE)[0] }) => {
@@ -145,6 +160,23 @@ export default function HomeScreen() {
     [newArrivals]
   );
 
+  const handleScroll = useCallback(
+    (event: any) => {
+      const currentScrollY = event.nativeEvent.contentOffset.y;
+
+      if (currentScrollY > lastScrollY.current + scrollThreshold) {
+        hideTabBar();
+      } else if (
+        currentScrollY < lastScrollY.current - scrollThreshold &&
+        currentScrollY > 0
+      ) {
+        showTabBar();
+      }
+      lastScrollY.current = currentScrollY;
+    },
+    [hideTabBar, showTabBar, scrollThreshold]
+  );
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <FlatList
@@ -154,15 +186,25 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.id}
         ListHeaderComponent={ListHeader}
         onEndReached={handleEndReached}
-        onEndReachedThreshold={0.5}
+        onEndReachedThreshold={0.1}
         showsVerticalScrollIndicator={false}
         initialNumToRender={1}
         windowSize={5}
         extraData={loadingSectionId}
         removeClippedSubviews={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={{
+          paddingTop: 16,
+        }}
         ListFooterComponent={
           showInfiniteList && !loadingSectionId ? (
-            <View style={{ marginTop: 20 }}>
+            <View
+              style={{
+                marginTop: 20,
+                paddingBottom: Platform.OS === "ios" ? 40 : 25,
+              }}
+            >
               <ProductInfiniteList
                 type="categoryData"
                 url="getCategoryData/beauty-health"
@@ -170,7 +212,6 @@ export default function HomeScreen() {
             </View>
           ) : null
         }
-        // decelerationRate="fast"
       />
     </SafeAreaView>
   );

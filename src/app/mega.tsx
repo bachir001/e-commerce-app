@@ -29,7 +29,6 @@ enum Tab {
 }
 
 export default function Mega() {
-  const router = useRouter();
   const { slug, color = Colors.beautyAndHealth } = useLocalSearchParams();
   const [imageLoading, setImageLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>(Tab.Overview);
@@ -261,7 +260,12 @@ export default function Mega() {
         </ScrollView>
       ) : (
         <View className="flex-1 bg-white">
-          <InfiniteList slug={slug as string} color={color as string} />
+          <InfiniteList
+            slug={slug as string}
+            color={color as string}
+            isBrand={false}
+            paramsProp={{}}
+          />
         </View>
       )}
     </SafeAreaView>

@@ -1,19 +1,36 @@
-import React, { useCallback } from "react";
+// app/(tabs)/_layout.tsx
+import React, { useCallback, useRef, useEffect } from "react";
 import { Tabs } from "expo-router";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-
 import { useCartStore } from "@/store/cartStore";
 import { Home, LayoutGrid, ShoppingBag, User } from "lucide-react-native";
-import { Platform } from "react-native";
+import { Platform, Animated } from "react-native"; // Import Animated
 import * as Haptics from "expo-haptics";
 import { ImpactFeedbackStyle } from "expo-haptics";
+import { useUiStore } from "@/store/useUiStore"; // Import useUiStore
 
 export default function TabLayout() {
   const colorScheme = useColorScheme() ?? "light";
   const totalCartQuantity = useCartStore(
     useCallback((state) => state.totalQuantity, [])
   );
+
+  const { isTabBarVisible } = useUiStore();
+  const tabBarTranslateY = useRef(new Animated.Value(0)).current;
+
+  const tabBarHeight = 65;
+  const bottomMargin = Platform.OS === "ios" ? 40 : 25;
+
+  useEffect(() => {
+    Animated.timing(tabBarTranslateY, {
+      toValue: isTabBarVisible
+        ? 0
+        : tabBarHeight + bottomMargin + (Platform.OS === "ios" ? 0 : 5),
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [isTabBarVisible, tabBarTranslateY, tabBarHeight, bottomMargin]);
 
   return (
     <Tabs
@@ -24,11 +41,11 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: "#6e3ebd",
           borderTopWidth: 0,
-          height: 65,
+          height: tabBarHeight,
           paddingBottom: Platform.OS === "ios" ? 15 : 5,
           paddingTop: 5,
           marginHorizontal: 16,
-          marginBottom: Platform.OS === "ios" ? 40 : 25,
+          marginBottom: bottomMargin,
           borderRadius: 20,
           position: "absolute",
           shadowColor: "#6e3ebd",
@@ -39,6 +56,7 @@ export default function TabLayout() {
           shadowOpacity: 0.35,
           shadowRadius: 25,
           elevation: 20,
+          transform: [{ translateY: tabBarTranslateY }],
         },
         tabBarLabelStyle: {
           fontSize: 10,

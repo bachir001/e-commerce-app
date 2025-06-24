@@ -28,7 +28,7 @@ const InfiniteList = ({
   slug: string;
   color: string;
   paramsProp?: any;
-  setActiveTab: (tab: string) => void;
+  setActiveTab?: (tab: string) => void;
   isBrand: boolean;
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -82,7 +82,9 @@ const InfiniteList = ({
         }
         setTotalPages(newTotalPages);
         if (Object.keys(paramsProp).length > 1) {
-          setActiveTab("filters");
+          if (setActiveTab !== undefined) {
+            setActiveTab("filters");
+          }
         }
       } else {
         setError(response.data.message || "Failed to load products.");
