@@ -1,6 +1,5 @@
 import React, { useCallback, useRef, useEffect } from "react";
 import { Tabs } from "expo-router";
-import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useCartStore } from "@/store/cartStore";
 import { Home, LayoutGrid, ShoppingBag, User } from "lucide-react-native";
@@ -111,6 +110,7 @@ export default function TabLayout() {
         name="cart"
         options={{
           title: "Cart",
+          headerShown: false,
           tabBarLabel: "Cart",
           tabBarIcon: ({ focused }) => (
             <ShoppingBag
