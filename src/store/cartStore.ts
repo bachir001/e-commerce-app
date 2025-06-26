@@ -141,12 +141,18 @@ export const useCartStore = create<CartState>()(
       },
 
       addToCart: async (productId, quantity, action) => {
-        // Performance: Optimistic update with better state management
+                  
+        // const stored = await SecureStore.getItemAsync("cart-storage");
+        // console.log("stored", stored);
+              
         const currentState = get();
+        console.log("currentState", currentState);
+        
         const existingItemIndex = currentState.items.findIndex(
           (i) => i.productId === productId
         );
-
+        console.log(existingItemIndex, "existingItemIndex");
+        
         // Create optimistic state
         let optimisticItems: CartItem[];
 
@@ -179,7 +185,8 @@ export const useCartStore = create<CartState>()(
             },
           ];
         }
-
+        console.log(optimisticItems, "optimisticItems");
+          
         // Apply optimistic update
         set({
           items: optimisticItems,
@@ -199,7 +206,8 @@ export const useCartStore = create<CartState>()(
           if (action) {
             payload.action = action;
           }
-
+          console.log(payload, "payload");
+          
           const res = await fetch(`${API_BASE}/cart/add`, {
             method: "POST",
             headers: {
@@ -211,13 +219,16 @@ export const useCartStore = create<CartState>()(
           });
 
           clearTimeout(timeoutId);
-
+          console.log(res, "res");
+          
           if (!res.ok) {
             throw new Error(`HTTP ${res.status}: ${res.statusText}`);
           }
 
           const json: AddToCartApiResponse = await res.json();
 
+          console.log(json, "json");
+          
           if (!json.status) {
             // Revert optimistic update on failure
             set({ items: currentState.items, loading: false });
@@ -237,6 +248,8 @@ export const useCartStore = create<CartState>()(
               position: "bottom",
             });
             return;
+          }else{
+              set({ loading: true });
           }
 
           // Success: fetch fresh data and show success message
