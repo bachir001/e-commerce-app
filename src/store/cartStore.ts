@@ -1,10 +1,12 @@
-// Optimized cartStore.ts
+// Optimized cartStore.ts with all type definitions
 import { create } from "zustand";
 import Toast from "react-native-toast-message";
 import { getOrCreateSessionId } from "@/lib/session";
 import { persist, createJSONStorage } from "zustand/middleware";
 import * as SecureStore from "expo-secure-store";
+
 const API_BASE = "https://api-gocami-test.gocami.com/api";
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export type CartItem = {
   id: string;
@@ -15,17 +17,20 @@ export type CartItem = {
   imageUrl: string;
 };
 
+// Define missing response interfaces
+interface CartItemResponse {
+  id: string;
+  product_id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  product_image: string | null;
+}
+
 interface FetchCartApiResponse {
   status: boolean;
   message: string;
-  data: Array<{
-    id: string;
-    product_id: number;
-    name: string;
-    price: number;
-    quantity: number;
-    product_image: string | null;
-  }>;
+  data: CartItemResponse[];
 }
 
 interface AddToCartApiResponse {
@@ -41,20 +46,36 @@ interface CartState {
   items: CartItem[];
   loading: boolean;
   error: string | null;
-  lastFetch: number | null; // Performance: Track last fetch time
-  fetchCart: () => Promise<void>;
+  lastFetch: number | null;
+  fetchCart: (force?: boolean) => Promise<void>;
   addToCart: (
     productId: string,
     quantity: number,
     action?: "increase" | "decrease"
   ) => Promise<void>;
   clearCart: () => void;
-  // Performance: Add method to check if refresh is needed
   needsRefresh: () => boolean;
 }
 
-// Performance: Cache duration (5 minutes)
-const CACHE_DURATION = 5 * 60 * 1000;
+// Helper function to extract a readable error message
+function getErrorMessage(error: any): string {
+  if (error.name === "AbortError") {
+    return "Network request timed out. Please check your internet connection.";
+  }
+  if (error.message) {
+    return error.message;
+  }
+  // If it's an object, try to stringify it for more details
+  if (typeof error === 'object' && error !== null) {
+    try {
+      return JSON.stringify(error);
+    } catch (e) {
+      return "An unknown error occurred [object stringify failed]";
+    }
+  }
+  return String(error || "An unknown error occurred.");
+}
+
 
 export const useCartStore = create<CartState>()(
   persist(
@@ -66,24 +87,22 @@ export const useCartStore = create<CartState>()(
 
       needsRefresh: () => {
         const { lastFetch } = get();
-        if (!lastFetch) return true;
-        return Date.now() - lastFetch > CACHE_DURATION;
+        // Return true if no lastFetch or if cache duration has passed
+        return !lastFetch || Date.now() - lastFetch > CACHE_DURATION;
       },
 
-      fetchCart: async () => {
-        // Performance: Skip fetch if data is fresh
+      fetchCart: async (force = false) => {
         const state = get();
-        if (!state.needsRefresh() && state.items.length > 0) {
+        // If not forced, cache is valid, and items exist, don't fetch
+        if (!force && !state.needsRefresh() && state.items.length > 0) {
           return;
         }
 
-        set({ loading: true, error: null });
+        set({ loading: true, error: null }); // Set loading true at the start
         try {
           const sessionId = await getOrCreateSessionId();
           const controller = new AbortController();
-
-          // Performance: Add timeout to prevent hanging requests
-          const timeoutId = setTimeout(() => controller.abort(), 10000);
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
 
           const res = await fetch(`${API_BASE}/cart`, {
             headers: {
@@ -93,46 +112,36 @@ export const useCartStore = create<CartState>()(
             signal: controller.signal,
           });
 
-          clearTimeout(timeoutId);
+          clearTimeout(timeoutId); // Clear timeout on successful response
 
           if (!res.ok) {
-            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            const errorText = await res.text();
+            throw new Error(`HTTP ${res.status}: ${errorText}`);
           }
 
           const json: FetchCartApiResponse = await res.json();
+          if (!json.status) throw new Error(json.message || "Failed to load cart");
 
-          if (!json.status) {
-            throw new Error(json.message || "Failed to load cart");
-          }
-
-          const items: CartItem[] = json.data.map((raw) => ({
+          // Map raw API response data to CartItem type
+          const items: CartItem[] = json.data.map((raw: CartItemResponse) => ({
             id: raw.id,
-            productId: String(raw.product_id),
+            productId: String(raw.product_id), // Ensure productId is string
             name: raw.name,
             price: raw.price,
             quantity: raw.quantity,
-            imageUrl: raw.product_image ?? "",
+            imageUrl: raw.product_image ?? "", // Handle null product_image
           }));
 
-          set({
-            items,
-            loading: false,
-            lastFetch: Date.now(), // Performance: Update fetch timestamp
-          });
+          set({ items, loading: false, lastFetch: Date.now() }); // Update state on success
         } catch (err: any) {
-          if (err.name === "AbortError") {
-            console.log("Cart fetch aborted");
-            return;
-          }
-
-          const msg = err.message || "Unknown error fetching cart";
-          set({ loading: false, error: msg });
-
-          // Performance: Only show toast for user-initiated actions
+          const msg = getErrorMessage(err); // Use the helper to get message
+          set({ loading: false, error: msg }); // Set loading false and update error
+          
+          // Show toast only if there are no items in the cart to avoid excessive toasts
           if (get().items.length === 0) {
             Toast.show({
               type: "error",
-              text1: "Error Loading Cart",
+              text1: "Cart Error",
               text2: msg,
               position: "bottom",
             });
@@ -141,161 +150,143 @@ export const useCartStore = create<CartState>()(
       },
 
       addToCart: async (productId, quantity, action) => {
-                  
-        // const stored = await SecureStore.getItemAsync("cart-storage");
-        // console.log("stored", stored);
-              
-        const currentState = get();
-        console.log("currentState", currentState);
-        
-        const existingItemIndex = currentState.items.findIndex(
+        const prevState = get(); // Capture current state for potential revert
+
+        // Find existing item in cart
+        const existingIndex = prevState.items.findIndex(
           (i) => i.productId === productId
         );
-        console.log(existingItemIndex, "existingItemIndex");
-        
-        // Create optimistic state
+
+        // Create optimistic state update for UI responsiveness
         let optimisticItems: CartItem[];
-
-        if (existingItemIndex >= 0) {
-          optimisticItems = currentState.items
-            .map((item, index) => {
-              if (index === existingItemIndex) {
-                const newQuantity =
-                  action === "increase"
-                    ? item.quantity + quantity
-                    : action === "decrease"
-                    ? Math.max(0, item.quantity - quantity)
-                    : quantity;
-
-                return { ...item, quantity: newQuantity };
-              }
-              return item;
-            })
-            .filter((item) => item.quantity > 0); // Remove items with 0 quantity
+        if (existingIndex >= 0) {
+          optimisticItems = prevState.items.map((item, idx) => {
+            if (idx !== existingIndex) return item; // Return other items as is
+            // Calculate new quantity based on action
+            const newQty =
+              action === "increase"
+                ? item.quantity + quantity
+                : action === "decrease"
+                ? Math.max(1, item.quantity - quantity) // Ensure quantity doesn't go below 1
+                : quantity; // For direct set quantity
+            return { ...item, quantity: newQty };
+          });
         } else {
+          // Add new temporary item if not existing
           optimisticItems = [
-            ...currentState.items,
+            ...prevState.items,
             {
-              id: `temp-${productId}-${Date.now()}`,
+              id: `temp-${Date.now()}`, // Temporary ID for optimistic item
               productId,
-              name: "Loading…",
-              price: 0,
+              name: "Loading...", // Placeholder name
+              price: 0, // Placeholder price
               quantity,
-              imageUrl: "",
+              imageUrl: "", // Placeholder image
             },
           ];
         }
-        console.log(optimisticItems, "optimisticItems");
-          
-        // Apply optimistic update
+
+        // Apply optimistic update immediately
         set({
           items: optimisticItems,
+          loading: true, // Show loading indicator
           error: null,
-          loading: true,
+          lastFetch: null, // Invalidate cache to force fresh fetch after API call
         });
 
         try {
           const sessionId = await getOrCreateSessionId();
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000);
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
 
-          const payload: any = {
-            product_id: Number(productId),
-            quantity,
-          };
-          if (action) {
-            payload.action = action;
-          }
-          console.log(payload, "payload");
-          
           const res = await fetch(`${API_BASE}/cart/add`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               "x-session": sessionId,
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({
+              product_id: Number(productId), // Ensure product_id is number for API
+              quantity,
+              ...(action && { action }), // Conditionally add action to body
+            }),
             signal: controller.signal,
           });
 
-          clearTimeout(timeoutId);
-          console.log(res, "res");
-          
+          clearTimeout(timeoutId); // Clear timeout on successful response
+
+          // Handle HTTP errors from the API
           if (!res.ok) {
-            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            let errorMsg = `HTTP ${res.status}`;
+
+            // Specific handling for 422 (Validation errors)
+            if (res.status === 422) {
+              try {
+                const errorBody = await res.json();
+                errorMsg = errorBody.message || "Validation failed";
+              } catch {
+                errorMsg = "Invalid request data"; // Fallback if JSON parsing fails
+              }
+            }
+            // Specific handling for 500 (Server errors)
+            else if (res.status === 500) {
+              errorMsg = "Server error, please try again later";
+            }
+
+            throw new Error(errorMsg); // Throw error to be caught below
           }
 
           const json: AddToCartApiResponse = await res.json();
-
-          console.log(json, "json");
-          
           if (!json.status) {
-            // Revert optimistic update on failure
-            set({ items: currentState.items, loading: false });
-
-            const message =
-              typeof json.message === "string"
-                ? json.message
-                : JSON.stringify(json.message);
-            const isStockErr = message.includes(
-              "quantity exceeds available stock"
-            );
-
-            Toast.show({
-              type: "error",
-              text1: isStockErr ? "Out of Stock" : "Error Adding to Cart",
-              text2: message,
-              position: "bottom",
-            });
-            return;
-          }else{
-              set({ loading: true });
+            throw new Error(json.message || "Failed to add item");
           }
 
-          // Success: fetch fresh data and show success message
-          await get().fetchCart();
+          // SUCCESS: Force a fresh cart fetch from the server to reflect actual state
+          await get().fetchCart(true);
+
           Toast.show({
             type: "success",
             text1: "Cart Updated",
-            text2: "Your cart has been updated successfully.",
             position: "bottom",
           });
         } catch (err: any) {
-          if (err.name === "AbortError") {
-            console.log("Add to cart aborted");
-            return;
-          }
+          const msg = getErrorMessage(err); // Use the helper to get message
+          
+          // Revert to the previous state only if there was a definitive error that
+          // means the optimistic update was incorrect.
+          // For network issues, it's better to show an error and let user retry.
+          set({ ...prevState, loading: false, error: msg }); // Revert state and set loading false
 
-          // Revert optimistic update on error
-          set({ items: currentState.items, loading: false });
+          const isStockErr = msg.includes("exceeds available stock");
 
-          const msg = err.message || "Unknown error adding to cart";
-          set({ error: msg });
           Toast.show({
             type: "error",
-            text1: "Error Adding to Cart",
+            text1: isStockErr ? "Out of Stock" : "Cart Error",
             text2: msg,
             position: "bottom",
           });
+        } finally {
+          // Ensure loading state is always turned off
+          set({ loading: false });
         }
       },
 
-      clearCart: () => {
-        set({ items: [], error: null, lastFetch: null });
-      },
+      clearCart: () => set({ items: [], error: null, lastFetch: null }),
     }),
     {
-      name: "cart-storage",
+      name: "cart-storage", // Name for the storage key
       storage: createJSONStorage(() => ({
+        // Use Expo SecureStore for persistent, secure storage
         getItem: SecureStore.getItemAsync,
         setItem: SecureStore.setItemAsync,
         removeItem: SecureStore.deleteItemAsync,
       })),
+      // Partialize state to only persist 'items' and 'lastFetch'
       partialize: (state) => ({
         items: state.items,
-        lastFetch: state.lastFetch, // Performance: Persist cache timestamp
+        lastFetch: state.lastFetch,
       }),
-      version: 2, // Increment version due to schema change
+      version: 3, // Bump version for migration if schema changes
     }
   )
 );
