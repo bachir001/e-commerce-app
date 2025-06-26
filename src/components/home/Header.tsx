@@ -7,14 +7,21 @@ import {
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useRef } from "react";
 import Brands from "./Brands";
 
 const Header = React.memo(() => {
   const router = useRouter();
+  const isPressableSearch = useRef(true);
 
   const goToSearch = () => {
+    if (!isPressableSearch.current) return;
+    isPressableSearch.current = false;
     router.push("/SearchScreen");
+
+    setTimeout(() => {
+      isPressableSearch.current = true;
+    }, 1500);
   };
 
   return (

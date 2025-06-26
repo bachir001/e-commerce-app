@@ -1,5 +1,11 @@
 import { View, Text, Image, TouchableOpacity } from "react-native";
-import React, { useMemo, useCallback, useEffect, useState } from "react";
+import React, {
+  useMemo,
+  useCallback,
+  useEffect,
+  useState,
+  useRef,
+} from "react";
 import type { Product } from "@/types/globalTypes";
 import { Heart, ShoppingBag, Clock } from "lucide-react-native";
 import { useRouter } from "expo-router";
@@ -31,6 +37,8 @@ const ProductCard = React.memo(
     const [timeLeft, setTimeLeft] = useState<string>("");
     const [isFavorite, setIsFavorite] = useState<boolean>(false);
     const { isLogged, token } = useSessionStore();
+
+    const isPressable = useRef(true);
 
     const { wishList } = useAppDataStore();
 
@@ -115,10 +123,17 @@ const ProductCard = React.memo(
     }, []);
 
     const onPress = useCallback(() => {
+      if (!isPressable.current) return;
+      isPressable.current = false;
+
       router.push({
         pathname: "/ProductDetails",
         params: { productJSON: JSON.stringify(product) },
       });
+
+      setTimeout(() => {
+        isPressable.current = true;
+      }, 1500);
     }, [router, product]);
 
     const handleAddToCart = useCallback(() => {
@@ -178,6 +193,7 @@ const ProductCard = React.memo(
                 autoHide: true,
                 visibilityTime: 1000,
               });
+              setIsFavorite(false);
             }
           });
       } catch (err) {

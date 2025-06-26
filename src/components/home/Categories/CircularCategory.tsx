@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useRef } from "react";
 import { View, Text, TouchableOpacity, Image } from "react-native";
 import type { MegaCategory } from "@/types/globalTypes";
 import { router } from "expo-router";
@@ -9,10 +9,14 @@ interface CircularCategoryProps {
 }
 
 function CircularCategory({ props }: CircularCategoryProps) {
+  const isPressable = useRef(true);
   return (
     <TouchableOpacity
       className="items-center"
       onPress={() => {
+        if (!isPressable.current) return;
+        isPressable.current = false;
+
         router.push({
           pathname: "mega",
           params: {
@@ -20,6 +24,10 @@ function CircularCategory({ props }: CircularCategoryProps) {
             color: colorMap[props.slug as niche] || "5e3ebd",
           },
         });
+
+        setTimeout(() => {
+          isPressable.current = true;
+        }, 1500);
       }}
     >
       <View

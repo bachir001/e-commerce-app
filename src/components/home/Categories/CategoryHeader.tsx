@@ -1,6 +1,6 @@
 import { View, Text, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { router } from "expo-router";
 
 interface Props {
@@ -24,6 +24,8 @@ export default function CategoryHeader({
       : ["#FACC15", "#ca9e0e", "#1a1a1a"];
 
   const accentColor = variant === "purple" ? "#FACC15" : "#5e3ebd";
+
+  const isPressableViewAll = useRef(true);
 
   return (
     <LinearGradient
@@ -55,7 +57,14 @@ export default function CategoryHeader({
             backgroundColor: `${accentColor}20`,
           }}
           onPress={() => {
+            if (!isPressableViewAll.current) return;
+            isPressableViewAll.current = false;
+
             router.push("/(tabs)/categories");
+
+            setTimeout(() => {
+              isPressableViewAll.current = true;
+            }, 1500);
           }}
         >
           <Text style={{ color: accentColor }} className="font-bold text-base">

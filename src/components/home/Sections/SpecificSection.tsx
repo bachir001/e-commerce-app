@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   ImageBackground,
 } from "react-native";
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axiosApi from "@/apis/axiosApi";
 import type {
@@ -124,6 +124,8 @@ const SpecificSection = React.memo(
     setLoading,
     onViewMorePress,
   }: SpecificSectionProps) => {
+    const isCategoryPressable = useRef(true);
+
     const { data: metaCategoryInfo, isLoading } = useQuery({
       queryKey: ["metaCategoryInfo", type],
       queryFn: async ({ signal }) => {
@@ -156,6 +158,9 @@ const SpecificSection = React.memo(
         <MemoizedCategoryItem
           item={item}
           onPress={() => {
+            if (!isCategoryPressable.current) return;
+            isCategoryPressable.current = false;
+
             router.push({
               pathname: "category",
               params: {
@@ -164,6 +169,10 @@ const SpecificSection = React.memo(
                 id: String(item.id),
               },
             });
+
+            setTimeout(() => {
+              isCategoryPressable.current = true;
+            }, 1500);
           }}
         />
       ),

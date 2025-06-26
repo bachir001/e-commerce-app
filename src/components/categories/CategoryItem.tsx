@@ -2,7 +2,7 @@ import type { MainCategory } from "@/app/(tabs)/categories";
 import { Colors } from "@/constants/Colors";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { Image, Text, TouchableOpacity, View, Dimensions } from "react-native";
 
 const { width: screenWidth } = Dimensions.get("window");
@@ -38,6 +38,8 @@ export default function CategoryItem({
   item: MainCategory;
   color: string;
 }) {
+  const isPressable = useRef(true);
+
   const computedValues = useMemo(
     () => ({
       hasImage: item.main_image && item.main_image.trim() !== "",
@@ -49,6 +51,8 @@ export default function CategoryItem({
   );
 
   const handleCategoryPress = useCallback(() => {
+    if (!isPressable.current) return;
+    isPressable.current = false;
     const categoryData = {
       id: item.id,
       name: item.name,
@@ -65,6 +69,10 @@ export default function CategoryItem({
         id: String(categoryData.id),
       },
     });
+
+    setTimeout(() => {
+      isPressable.current = true;
+    }, 1500);
   }, [item, computedValues]);
 
   return (
