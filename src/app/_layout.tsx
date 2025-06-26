@@ -16,6 +16,9 @@ import { useAppDataStore } from "@/store/useAppDataStore";
 import { initOneSignalNew } from "@/Services/OneSignalService";
 
 import ErrorState from "@/components/common/ErrorState";
+import Toast from "react-native-toast-message";
+import axiosApi from "@/apis/axiosApi";
+
 export const queryClient = new QueryClient({});
 
 const newArrivalsOptions = {
@@ -28,8 +31,13 @@ const newArrivalsOptions = {
 
 function AppWithProviders() {
   const { setSessionId } = useSessionStore();
-  const { setBrands, setSliders, setMegaCategories, setNewArrivals } =
-    useAppDataStore();
+  const {
+    setBrands,
+    setSliders,
+    setMegaCategories,
+    setNewArrivals,
+    setWishList,
+  } = useAppDataStore();
   const {
     data: brands,
     isLoading: loadingBrands,
@@ -51,21 +59,45 @@ function AppWithProviders() {
     error: megaError,
     refetch: refetchMega,
   } = useMegaCategories();
+
   const { data: newArrivals, isLoading: loadingNewArrivals } =
     useFeaturedSection("new-arrivals", newArrivalsOptions);
+
+  const { isLogged, token } = useSessionStore();
+
+  const fetchWishlist = async (token: string) => {
+    try {
+      const response = await axiosApi.get("favorite", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data.data;
+    } catch (err) {
+      console.error("Error fetching wishlist:", err);
+    }
+  };
 
   useEffect(() => {
     const initializeApp = async () => {
       try {
         const id = await getOrCreateSessionId();
         const userString = await SecureStore.getItemAsync("user");
+
+        if (token !== null && isLogged) {
+          const wishList = await fetchWishlist(token ?? "");
+          setWishList(wishList || []);
+        } else {
+          setWishList([]);
+        }
+
         const userParsed = userString ? JSON.parse(userString) : null;
         setSessionId(id);
 
         if (brands && !loadingBrands) setBrands(brands);
         if (sliders && !loadingSliders) setSliders(sliders);
         if (megaCategories && !loadingMega) {
-          // console.log(megaCategories);
           setMegaCategories(megaCategories);
         }
         if (newArrivals && !loadingNewArrivals) setNewArrivals(newArrivals);
@@ -80,6 +112,7 @@ function AppWithProviders() {
     sliders,
     megaCategories,
     newArrivals,
+    isLogged,
     // loadingBrands,
     // loadingSliders,
     // loadingMega,
@@ -118,12 +151,15 @@ function AppWithProviders() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        animation: "fade_from_bottom",
-      }}
-    />
+    <>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "fade_from_bottom",
+        }}
+      />
+      <Toast />
+    </>
   );
 }
 

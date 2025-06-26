@@ -5,11 +5,16 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
+import "react-native-gesture-handler";
+import {
+  SafeAreaView,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+} from "react-native";
 import * as SecureStore from "expo-secure-store";
 import Header from "@/components/home/Header";
 import CategorySection from "@/components/home/Categories/CategorySection";
-import { FlatList, View, Animated, Platform } from "react-native";
+import { FlatList, View, Platform } from "react-native";
 import SpecificSection from "@/components/home/Sections/SpecificSection";
 import { HOMEPAGE_SECTIONS } from "@/constants/HomePageSections";
 import { Colors } from "@/constants/Colors";
@@ -43,10 +48,10 @@ export default function HomeScreen() {
   const [tokenChecked, setTokenChecked] = useState(false);
 
   const isBusy = useRef(false);
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef =
+    useRef<FlatList<(typeof HOME_SCREEN_DATA_STRUCTURE)[0]>>(null);
   const lastScrollY = useRef(0);
-  const scrollThreshold = 50;
-  const tabBarHeightAndMargin = 65 + (Platform.OS === "ios" ? 40 : 25); // Approximate tab bar height + margin
+  const lastAction = useRef<"hide" | "show" | null>(null);
 
   const checkForToken = useCallback(async () => {
     try {
@@ -126,7 +131,12 @@ export default function HomeScreen() {
           return (
             <SpecificSection
               {...sectionData}
-              color={Colors[item.id as keyof typeof Colors] || Colors.PRIMARY}
+              color={
+                typeof Colors[item.id as keyof typeof Colors] === "string"
+                  ? (Colors[item.id as keyof typeof Colors] as string)
+                  : (Colors[item.id as keyof typeof Colors] as any)
+                      ?.background || Colors.PRIMARY
+              }
               setLoading={(loading: boolean) =>
                 handleSectionLoading(item.id, loading)
               }
@@ -161,20 +171,36 @@ export default function HomeScreen() {
   );
 
   const handleScroll = useCallback(
-    (event: any) => {
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const currentScrollY = event.nativeEvent.contentOffset.y;
 
-      if (currentScrollY > lastScrollY.current + scrollThreshold) {
-        hideTabBar();
-      } else if (
-        currentScrollY < lastScrollY.current - scrollThreshold &&
-        currentScrollY > 0
-      ) {
-        showTabBar();
+      // Always show tab bar if at top edge (including bounce)
+      if (currentScrollY <= 0) {
+        if (lastAction.current !== "show") {
+          showTabBar();
+          lastAction.current = "show";
+        }
+        lastScrollY.current = currentScrollY;
+        return;
       }
+
+      // Determine scroll direction
+      const scrollingDown = currentScrollY > lastScrollY.current;
+
+      // Hide immediately on scroll down
+      if (scrollingDown && lastAction.current !== "hide") {
+        hideTabBar();
+        lastAction.current = "hide";
+      }
+      // Show immediately on scroll up
+      else if (!scrollingDown && lastAction.current !== "show") {
+        showTabBar();
+        lastAction.current = "show";
+      }
+
       lastScrollY.current = currentScrollY;
     },
-    [hideTabBar, showTabBar, scrollThreshold]
+    [hideTabBar, showTabBar]
   );
 
   return (

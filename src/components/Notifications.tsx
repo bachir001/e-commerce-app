@@ -1,4 +1,3 @@
-// /components/Notifications.tsx
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -6,7 +5,6 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   Modal,
   Pressable,
   Image,
@@ -21,9 +19,7 @@ import {
 import { format } from "date-fns";
 import DotsLoader from "./common/AnimatedLayout";
 
-export default function Notifications(props: {
-  /* … */
-}) {
+export default function Notifications(props: {}) {
   const router = useRouter();
   const [notifications, setNotifications] = useState<StoredNotification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);

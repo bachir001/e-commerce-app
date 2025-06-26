@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from "react-native";
-import ProductCard from "./ProductCard";
+import ProductCard from "./product/ProductCard";
 import type { Product } from "@/types/globalTypes";
 import axios from "axios";
 import DotsLoader from "./AnimatedLayout";

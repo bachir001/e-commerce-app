@@ -4,15 +4,18 @@ import type { Product } from "@/types/globalTypes";
 import { Heart, ShoppingBag, Clock } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { FontAwesome5 } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
+import axiosApi from "@/apis/axiosApi";
+import { useSessionStore } from "@/store/useSessionStore";
+import { useAppDataStore } from "@/store/useAppDataStore";
+import ProductCardWide from "./ProductCardWide";
 
 interface Props {
   product: Product;
   innerColor?: string;
   containerColor?: string;
-  variant?: "default" | "grid";
+  variant?: "default" | "grid" | "wide";
   onPress?: () => void;
-  onAddToCart?: () => void;
-  onAddToWishlist?: () => void;
   simplified?: boolean;
 }
 
@@ -23,17 +26,22 @@ const ProductCard = React.memo(
     containerColor = "white",
     variant = "default",
     simplified = false,
-    onAddToCart,
-    onAddToWishlist,
   }: Props) => {
     const router = useRouter();
     const [timeLeft, setTimeLeft] = useState<string>("");
+    const [isFavorite, setIsFavorite] = useState<boolean>(false);
+    const { isLogged, token } = useSessionStore();
+
+    const { wishList } = useAppDataStore();
 
     const productData = useMemo(() => {
       if (!product) return null;
 
       const productName = product.name || "Untitled Product";
-      const productImage = product.image || "https://via.placeholder.com/150";
+      const productImage =
+        product.image ||
+        product.product_image ||
+        "https://gocami.gonext.tech/images/common/no-image.png";
       const productRating = product.rating ? Number(product.rating) : 0;
       const price = product.price ? String(product.price) : "0.00";
       const specialPrice = product.special_price
@@ -98,6 +106,14 @@ const ProductCard = React.memo(
       return () => clearInterval(interval);
     }, [productData?.endDate]);
 
+    useEffect(() => {
+      if (!wishList || !product) return;
+
+      const isInWishlist = wishList.some((item) => item.id === product.id);
+
+      setIsFavorite(isInWishlist);
+    }, []);
+
     const onPress = useCallback(() => {
       router.push({
         pathname: "/ProductDetails",
@@ -106,12 +122,76 @@ const ProductCard = React.memo(
     }, [router, product]);
 
     const handleAddToCart = useCallback(() => {
-      onAddToCart?.();
-    }, [onAddToCart]);
+      // onAddToCart?.();
+    }, []);
 
-    const handleAddToWishlist = useCallback(() => {
-      onAddToWishlist?.();
-    }, [onAddToWishlist]);
+    const handleAddToWishlist = useCallback(async () => {
+      try {
+        console.log("TOKEN: " + token);
+        if (!isLogged) {
+          Toast.show({
+            type: "error",
+            text1: "Login Required",
+            text2: "Please log in to add products to your wishlist.",
+            autoHide: true,
+            visibilityTime: 2000,
+            topOffset: 60,
+          });
+          return;
+        }
+
+        setIsFavorite((prev) => !prev);
+        const WishListBody: any = {};
+
+        if (product.has_variants) {
+          WishListBody.product_detail_id = Number(product.id);
+        }
+
+        if (!product.has_variants) {
+          WishListBody.product_id = Number(product.id);
+        }
+
+        await axiosApi
+          .post(`favorite/add`, WishListBody, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          })
+          .then((response) => {
+            console.log(response.data);
+            console.log(product.id);
+            console.log(token);
+            if (response.data.status) {
+              Toast.show({
+                type: "success",
+                text1: "Success",
+                text2: "Product added to wishlist.",
+                autoHide: true,
+                visibilityTime: 1000,
+              });
+            } else {
+              Toast.show({
+                type: "error",
+                text1: "Error",
+                text2: "Failed to add product to wishlist.",
+                autoHide: true,
+                visibilityTime: 1000,
+              });
+            }
+          });
+      } catch (err) {
+        console.error("Error adding to wishlist:", err);
+        setIsFavorite(false);
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "Failed to add product to wishlist.",
+          autoHide: true,
+          visibilityTime: 2000,
+        });
+      }
+    }, [product]);
 
     if (!productData) return null;
 
@@ -139,19 +219,28 @@ const ProductCard = React.memo(
               source={{ uri: productImage }}
               className="w-full h-full"
               resizeMode="cover"
-              defaultSource={{ uri: "https://via.placeholder.com/150" }}
+              defaultSource={{
+                uri: "https://gocami.gonext.tech/images/common/no-image.png",
+              }}
               fadeDuration={0}
             />
 
             {/* Wishlist button */}
-            <TouchableOpacity
-              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 items-center justify-center"
-              onPress={handleAddToWishlist}
-              hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
-              activeOpacity={0.7}
-            >
-              <Heart size={16} color="#666" stroke="#666" fill="transparent" />
-            </TouchableOpacity>
+            {!product?.has_variants && (
+              <TouchableOpacity
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 items-center justify-center"
+                onPress={handleAddToWishlist}
+                hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+                activeOpacity={0.7}
+              >
+                <FontAwesome5
+                  name="heart"
+                  size={16}
+                  color={isFavorite ? "#ffb500" : "#666"}
+                  solid={isFavorite}
+                />
+              </TouchableOpacity>
+            )}
 
             {/* Discount badge */}
             {!simplified && hasSpecialPrice && discount > 0 && (
@@ -256,18 +345,27 @@ const ProductCard = React.memo(
             source={{ uri: productImage }}
             className="w-full h-full bg-gray-100"
             resizeMode="cover"
-            defaultSource={{ uri: "https://via.placeholder.com/150" }}
+            defaultSource={{
+              uri: "https://gocami.gonext.tech/images/common/no-image.png",
+            }}
             fadeDuration={0}
           />
 
-          <TouchableOpacity
-            className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 items-center justify-center z-10 shadow-sm"
-            onPress={handleAddToWishlist}
-            hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
-            activeOpacity={0.7}
-          >
-            <Heart size={18} color="#111" stroke="#111" fill="transparent" />
-          </TouchableOpacity>
+          {!product.has_variants && (
+            <TouchableOpacity
+              className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 items-center justify-center z-10 shadow-sm"
+              onPress={handleAddToWishlist}
+              hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+              activeOpacity={0.7}
+            >
+              <FontAwesome5
+                name="heart"
+                size={16}
+                color={isFavorite ? "#ffb500" : "#666"}
+                solid={isFavorite}
+              />
+            </TouchableOpacity>
+          )}
 
           {hasSpecialPrice && discount > 0 && (
             <View

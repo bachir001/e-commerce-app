@@ -51,8 +51,8 @@ export default function ProductDetailsScreen(): React.ReactElement {
   } = useGetRelatedProducts(product?.slug || "");
 
   const [productDetail, setProductDetail] = useState<MainDetail | null>(null);
-  const [productDetailLoading, setProductDetailLoading] = useState(false);
-  const [timeLeft, setTimeLeft] = useState<string>("");
+  const [productDetailLoading, setProductDetailLoading] = useState(true);
+  const [timeLeft, setTimeLeft] = useState<string | null>(null);
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const mainCarouselReference = useRef<FlatList<string>>(null);
@@ -104,7 +104,10 @@ export default function ProductDetailsScreen(): React.ReactElement {
 
   useEffect(() => {
     const endDate = productDetail?.end_date || product?.end_date;
-    if (!endDate) return;
+    if (!endDate) {
+      setTimeLeft(null);
+      return;
+    }
 
     const updateTimer = () => {
       const now = new Date().getTime();
@@ -128,7 +131,7 @@ export default function ProductDetailsScreen(): React.ReactElement {
           setTimeLeft(`${minutes} minutes left`);
         }
       } else {
-        setTimeLeft("");
+        setTimeLeft(null);
       }
     };
 
@@ -154,7 +157,7 @@ export default function ProductDetailsScreen(): React.ReactElement {
         viewPosition: 0.5,
       });
     },
-    [activeImageIndex, product?.id]
+    [activeImageIndex]
   );
 
   const handleAddToCartPress = useCallback(async (): Promise<void> => {
@@ -169,7 +172,7 @@ export default function ProductDetailsScreen(): React.ReactElement {
         cartOperationError ?? "Unable to add product to cart"
       );
     }
-  }, [productDetail, product?.id, quantity, addToCart, cartOperationError]);
+  }, [product, quantity, addToCart, cartOperationError]);
 
   const toggleFavorite = useCallback(() => {
     setIsFavorite((prev) => !prev);
@@ -181,12 +184,12 @@ export default function ProductDetailsScreen(): React.ReactElement {
     try {
       await Share.share({
         message: `Check out ${product.name} on our store!`,
-        url: `https://yourstore.com/product/${product.name}`,
+        url: `https://yourstore.com/product/${product.slug}`,
       });
     } catch (error) {
       console.error("Error sharing product:", error);
     }
-  }, [product, product?.name]);
+  }, [product]);
 
   const toggleSection = useCallback(
     (section: keyof typeof expandedSections) => {
@@ -208,9 +211,11 @@ export default function ProductDetailsScreen(): React.ReactElement {
 
   useEffect(() => {
     const fetchProductDetail = async () => {
+      if (!product?.slug) return;
+
       setProductDetailLoading(true);
       try {
-        const response = await axiosApi.get(`getProduct/${product?.slug}`);
+        const response = await axiosApi.get(`getProduct/${product.slug}`);
         if (response.status === 200) {
           setProductDetail(response.data.data.mainDetail);
         }
@@ -228,7 +233,15 @@ export default function ProductDetailsScreen(): React.ReactElement {
         clearTimeout(scrollTimeout.current);
       }
     };
-  }, []);
+  }, [product?.slug]);
+
+  if (!product) {
+    return (
+      <SafeAreaView className="flex-1 bg-white justify-center items-center">
+        <Text className="text-lg text-gray-500">Product not found</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -248,10 +261,11 @@ export default function ProductDetailsScreen(): React.ReactElement {
         <MainImageCarousel
           activeImageIndex={activeImageIndex}
           allImages={
-            productDetailLoading ||
-            (!productDetailLoading && productDetail?.gallery?.length === 0)
-              ? [product?.image]
-              : [product?.image, ...(productDetail?.gallery ?? [])]
+            productDetailLoading
+              ? ([product.image].filter(Boolean) as string[])
+              : ([product.image, ...(productDetail?.gallery || [])].filter(
+                  Boolean
+                ) as string[])
           }
           mainCarouselReference={mainCarouselReference}
           setActiveImageIndex={setActiveImageIndex}
@@ -261,10 +275,10 @@ export default function ProductDetailsScreen(): React.ReactElement {
         <ThumbnailCarousel
           allImages={
             productDetailLoading
-              ? null
-              : !productDetailLoading && productDetail?.gallery?.length === 0
-              ? [product?.image]
-              : [product?.image, ...(productDetail?.gallery ?? [])]
+              ? ([product.image].filter(Boolean) as string[])
+              : ([product.image, ...(productDetail?.gallery || [])].filter(
+                  Boolean
+                ) as string[])
           }
           thumbnailCarouselReference={thumbnailCarouselReference}
           activeImageIndex={activeImageIndex}
@@ -272,7 +286,7 @@ export default function ProductDetailsScreen(): React.ReactElement {
           productDetailLoading={productDetailLoading}
         />
 
-        {/* Price and Discount Information */}
+        {/* Consolidated Price and Discount Information */}
         <View className="px-4 py-4 bg-white">
           {/* Purchase Points */}
           {purchasePoints && (
@@ -285,7 +299,7 @@ export default function ProductDetailsScreen(): React.ReactElement {
           )}
 
           {/* Discount Timer */}
-          {timeLeft && priceData?.hasSpecialPrice && (
+          {timeLeft !== null && priceData?.hasSpecialPrice && (
             <View className="flex-row items-center mb-3 bg-red-50 px-3 py-2 rounded-lg">
               <Clock size={16} color="#EF4444" />
               <Text className="text-red-600 font-semibold ml-2">
@@ -294,12 +308,12 @@ export default function ProductDetailsScreen(): React.ReactElement {
             </View>
           )}
 
-          {/* Price Display */}
-          <View className="flex-row items-center justify-between mb-4">
-            <View className="flex-1">
-              {priceData?.hasSpecialPrice ? (
+          {/* Consolidated Price Display */}
+          <View className="mb-4">
+            {priceData?.hasSpecialPrice ? (
+              <View className="flex-row items-center justify-between">
                 <View>
-                  <View className="flex-row items-center mb-1">
+                  <View className="flex-row items-center">
                     <Text className="text-3xl font-bold text-red-500">
                       ${priceData.specialPrice?.toFixed(2)}
                     </Text>
@@ -311,39 +325,50 @@ export default function ProductDetailsScreen(): React.ReactElement {
                       </View>
                     )}
                   </View>
-                  <Text className="text-lg text-gray-400 line-through">
-                    ${priceData.regularPrice.toFixed(2)}
-                  </Text>
-                  {priceData?.specialPrice && (
-                    <Text className="text-green-600 font-semibold">
-                      You save $
-                      {(
-                        priceData.regularPrice - priceData.specialPrice
-                      ).toFixed(2)}
+                  <View className="flex-row items-center mt-1">
+                    <Text className="text-lg text-gray-400 line-through mr-2">
+                      ${priceData.regularPrice.toFixed(2)}
                     </Text>
-                  )}
+                    {priceData.hasSpecialPrice &&
+                      priceData.specialPrice !== null &&
+                      priceData.specialPrice !== undefined && (
+                        <Text className="text-green-600 font-semibold">
+                          Save $
+                          {(
+                            priceData.regularPrice - priceData.specialPrice
+                          ).toFixed(2)}
+                        </Text>
+                      )}
+                  </View>
                 </View>
-              ) : (
+                <Text className="text-xl font-bold text-red-500">
+                  ${priceData.totalPrice.toFixed(2)}
+                </Text>
+              </View>
+            ) : (
+              <View className="flex-row items-center justify-between">
                 <Text className="text-3xl font-bold text-[#5E3EBD]">
                   ${priceData?.regularPrice.toFixed(2)}
                 </Text>
-              )}
-            </View>
+                {/* <Text className="text-xl font-bold text-[#5E3EBD]">
+                  ${priceData?.totalPrice.toFixed(2)}
+                </Text> */}
+              </View>
+            )}
           </View>
         </View>
 
-        {/* Product Information */}
+        {/* Product Information - Removed price display from here */}
         <ProductInformation
           brand={productDetail?.brand}
           categories={productDetail?.categories}
-          description={product?.description}
+          description={product.description}
           expandedSections={expandedSections}
-          highlights={product?.highlights}
+          highlights={product.highlights}
           inStock={inStock}
-          name={product?.name}
-          price={product?.price}
+          name={product.name}
           rating={productDetail?.rating}
-          reviews={productDetail?.rating}
+          reviews={productDetail?.reviews}
           sku={productDetail?.sku}
           toggleSection={toggleSection}
         />
@@ -353,7 +378,7 @@ export default function ProductDetailsScreen(): React.ReactElement {
       </ScrollView>
 
       {/* Bottom Action Bar */}
-      {!productDetail ? (
+      {productDetailLoading ? (
         <View className="bg-white border-t border-gray-200 px-4 py-4">
           <View className="flex-row items-center justify-between mb-4">
             {/* Quantity Selector Skeleton */}
@@ -383,9 +408,6 @@ export default function ProductDetailsScreen(): React.ReactElement {
                 <View className="items-end">
                   <Text className="text-xl font-bold text-red-500">
                     ${priceData.totalPrice.toFixed(2)}
-                  </Text>
-                  <Text className="text-sm text-gray-400 line-through">
-                    ${(priceData.regularPrice * quantity).toFixed(2)}
                   </Text>
                 </View>
               ) : (

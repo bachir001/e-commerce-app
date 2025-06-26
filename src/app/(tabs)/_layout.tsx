@@ -10,7 +10,7 @@ import { useUiStore } from "@/store/useUiStore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme() ?? "light";
+  // const colorScheme = useColorScheme() ?? "light";
   const totalCartQuantity = useCartStore(
     useCallback((state) => state.totalQuantity, [])
   );

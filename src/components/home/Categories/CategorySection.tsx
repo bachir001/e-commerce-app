@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import { Dimensions, Image, View } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
@@ -20,19 +20,20 @@ const SliderItem = ({ item }: SliderItemProps) => {
   return (
     <View style={{ width: SCREEN_WIDTH, height: 200 }}>
       <Image
-        source={{ uri: item.mobile_image }}
-        style={{
-          width: SCREEN_WIDTH,
-          height: 200,
-        }}
+        source={{ uri: item.mobile_image || item.image }}
+        style={{ width: SCREEN_WIDTH, height: 200 }}
         resizeMode="cover"
+        onError={(e) => console.log("Image load error:", e.nativeEvent.error)}
+        defaultSource={{
+          uri: "https://gocami.gonext.tech/images/common/no-image.png",
+        }}
       />
     </View>
   );
 };
 
 interface SliderComponentProps {
-  sliders: Slider[] | [];
+  sliders: Slider[] | [] | null;
 }
 
 const SliderComponent = ({ sliders }: SliderComponentProps) => {
@@ -41,7 +42,7 @@ const SliderComponent = ({ sliders }: SliderComponentProps) => {
       <Carousel
         width={ITEM_WIDTH}
         height={ITEM_HEIGHT}
-        data={sliders}
+        data={sliders ?? []}
         scrollAnimationDuration={500}
         autoPlay={true}
         autoPlayInterval={3000}
@@ -53,13 +54,15 @@ const SliderComponent = ({ sliders }: SliderComponentProps) => {
 };
 
 const CategorySection = React.memo(() => {
-  // const { sliders, megaCategories } = useAppDataStore();
-  const { data: sliders } = useSliders();
-  const { data: megaCategories } = useMegaCategories();
+  const { megaCategories, sliders } = useAppDataStore();
+
+  useEffect(() => {
+    console.log(sliders);
+  }, []);
 
   return (
     <View style={{ backgroundColor: "#FFF8E1" }} className="max-h-max pb-5">
-      <SliderComponent sliders={sliders} />
+      <SliderComponent sliders={sliders ?? []} />
       <CategoryHeader
         title="All Categories"
         coloredTitle="Enjoy!"

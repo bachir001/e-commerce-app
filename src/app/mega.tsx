@@ -10,9 +10,7 @@ import {
   View,
   TouchableOpacity,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { FontAwesome5 } from "@expo/vector-icons";
-import type { SubCategory } from "./(tabs)/categories";
 import CategoryItem from "@/components/categories/CategoryItem";
 import MegaHeader from "@/components/categories/MegaHeader";
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
@@ -21,7 +19,7 @@ import { Colors } from "@/constants/Colors";
 import useGetCategoryRelatedCategories from "@/hooks/categories/useGetCategory";
 import DotsLoader from "@/components/common/AnimatedLayout";
 import InfiniteList from "@/components/common/InfiniteList";
-import ProductCard from "@/components/common/ProductCard";
+import ProductCard from "@/components/common/product/ProductCard";
 
 enum Tab {
   Overview = "Overview",
