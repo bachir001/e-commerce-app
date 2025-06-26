@@ -10,7 +10,7 @@ import {
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome5 } from "@expo/vector-icons";
-import type { Address } from "@/app/(tabs)/account/addresses";
+import type { Address } from "@/app/addresses";
 import { Colors } from "@/constants/Colors";
 import axiosApi from "@/apis/axiosApi";
 import { CustomPicker } from "./CustomPicker";

@@ -1,5 +1,4 @@
 import { OneSignal, LogLevel } from "react-native-onesignal";
-import Constants from "expo-constants";
 
 const ONESIGNAL_APP_ID = process.env.EXPO_PUBLIC_ONESIGNAL_APP_ID;
 
@@ -36,7 +35,6 @@ export const initOneSignalNew = () => {
 };
 
 export const loginOneSignal = async (userId: string) => {
- 
   if (!userId) {
     console.warn("OneSignal login skipped: userId is undefined");
     return;

@@ -1,6 +1,6 @@
 import { FlatList, ListRenderItem, Text, View } from "react-native";
 import { useCallback } from "react";
-import ProductCard from "../common/ProductCard";
+import ProductCard from "../common/product/ProductCard";
 import { Product } from "@/types/globalTypes";
 
 export default function SimilarProductsSection({ similarProducts }) {

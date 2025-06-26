@@ -79,6 +79,7 @@ export interface Product {
   rating: number;
   purchase_points: number | null;
   reviews?: number;
+  product_image?: string;
 }
 
 export interface popularSearches {

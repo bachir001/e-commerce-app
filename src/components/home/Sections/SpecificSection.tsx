@@ -16,7 +16,7 @@ import type {
   RelatedCategory,
 } from "@/types/globalTypes";
 import type { HomePageSectionProp } from "@/constants/HomePageSections";
-import ProductCard from "@/components/common/ProductCard";
+import ProductCard from "@/components/common/product/ProductCard";
 import AnimatedLoader from "@/components/common/AnimatedLayout";
 import { ChevronRight } from "lucide-react-native";
 import { router } from "expo-router";
@@ -86,12 +86,7 @@ const RelatedCategoryItem = React.memo(
 const MemoizedProductItem = React.memo(
   ({ item, innerColor }: { item: any; innerColor: string }) => (
     <View className="mr-3">
-      <ProductCard
-        product={item}
-        innerColor={innerColor}
-        onAddToCart={() => console.log("Add to cart:", item.id)}
-        onAddToWishlist={() => console.log("Add to wishlist:", item.id)}
-      />
+      <ProductCard product={item} innerColor={innerColor} />
     </View>
   ),
   (prevProps, nextProps) => {

@@ -13,7 +13,7 @@ export default function AddressDetails() {
 
   const handleEdit = () => {
     router.push({
-      pathname: "/(tabs)/account/addresses/editAddress",
+      pathname: "/addresses/editAddress",
       params: {
         address: JSON.stringify(addressParsed),
       },

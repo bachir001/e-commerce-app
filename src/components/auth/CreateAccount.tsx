@@ -6,7 +6,6 @@ import {
   Pressable,
   ScrollView,
   Platform,
-  StyleSheet,
   KeyboardAvoidingView,
   ActivityIndicator,
 } from "react-native";
@@ -15,8 +14,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AuthHeader from "./AuthHeader";
 import { CREATE_INPUTS } from "@/constants/createInputs";
 import { Link, useRouter } from "expo-router";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import Checkbox from "expo-checkbox";
 import Toast from "react-native-toast-message";

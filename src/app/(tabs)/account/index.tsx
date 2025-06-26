@@ -167,7 +167,7 @@ export default function AccountScreen() {
                     Account Details
                   </Text>
                   <TouchableOpacity
-                    onPress={() => router.push("/(tabs)/account/profile/edit")}
+                    onPress={() => router.push("/profile/edit")}
                     className="bg-gray-100 px-3 py-1.5 rounded-full"
                   >
                     <Text
@@ -195,9 +195,7 @@ export default function AccountScreen() {
                   </View>
                 </View>
 
-                <TouchableOpacity
-                  onPress={() => router.push("/(tabs)/account/addresses")}
-                >
+                <TouchableOpacity onPress={() => router.push("/addresses")}>
                   <View
                     className={`flex-row items-center py-2 px-3 rounded-lg mt-5`}
                     style={{

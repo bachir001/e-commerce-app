@@ -25,7 +25,7 @@ const Header = React.memo(() => {
   }, []);
 
   const goToSearch = () => {
-    router.push("/(tabs)/home/SearchScreen");
+    router.push("/SearchScreen");
   };
 
   return (

@@ -7,7 +7,7 @@ import {
   Dimensions,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
-import ProductCard from "./ProductCard";
+import ProductCard from "./product/ProductCard";
 import type { Product } from "@/types/globalTypes";
 import AnimatedLoader from "./AnimatedLayout";
 import { Colors } from "@/constants/Colors";
@@ -109,7 +109,7 @@ const ProductInfiniteList = memo(function ProductInfiniteList({
     if (isLoadingMore) {
       return (
         <View className="py-6 items-center">
-          <DotsLoader size="large" color={Colors.PRIMARY} />
+          <ActivityIndicator size="large" color={Colors.PRIMARY} />
           <Text className="text-gray-500 mt-3 text-sm font-medium">
             Loading more products...
           </Text>

@@ -1,7 +1,7 @@
 import { View, Text, FlatList, TouchableOpacity } from "react-native";
 import React, { useCallback, useEffect } from "react";
 import { ChevronRight } from "lucide-react-native";
-import ProductCard from "@/components/common/ProductCard";
+import ProductCard from "@/components/common/product/ProductCard";
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import type { HomePageSectionProp } from "@/constants/HomePageSections";
 import { useAppDataStore } from "@/store/useAppDataStore";

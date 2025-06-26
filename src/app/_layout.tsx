@@ -16,6 +16,8 @@ import { useAppDataStore } from "@/store/useAppDataStore";
 import { initOneSignalNew } from "@/Services/OneSignalService";
 
 import ErrorState from "@/components/common/ErrorState";
+import Toast from "react-native-toast-message";
+import axiosApi from "@/apis/axiosApi";
 export const queryClient = new QueryClient({});
 
 const newArrivalsOptions = {
@@ -28,8 +30,13 @@ const newArrivalsOptions = {
 
 function AppWithProviders() {
   const { setSessionId } = useSessionStore();
-  const { setBrands, setSliders, setMegaCategories, setNewArrivals } =
-    useAppDataStore();
+  const {
+    setBrands,
+    setSliders,
+    setMegaCategories,
+    setNewArrivals,
+    setWishList,
+  } = useAppDataStore();
   const {
     data: brands,
     isLoading: loadingBrands,
@@ -54,11 +61,32 @@ function AppWithProviders() {
   const { data: newArrivals, isLoading: loadingNewArrivals } =
     useFeaturedSection("new-arrivals", newArrivalsOptions);
 
+  const fetchWishlist = async (token: string) => {
+    try {
+      const response = await axiosApi.get("favorite", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
+    } catch (err) {
+      console.error("Error fetching wishlist:", err);
+    }
+  };
+
   useEffect(() => {
     const initializeApp = async () => {
       try {
         const id = await getOrCreateSessionId();
         const userString = await SecureStore.getItemAsync("user");
+        await SecureStore.getItemAsync("token").then(async (token) => {
+          if (token) {
+            const wishList = await fetchWishlist(token);
+            setWishList(wishList.data || []);
+          }
+        });
+
         const userParsed = userString ? JSON.parse(userString) : null;
         setSessionId(id);
 
@@ -118,12 +146,15 @@ function AppWithProviders() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        animation: "fade_from_bottom",
-      }}
-    />
+    <>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "fade_from_bottom",
+        }}
+      />
+      <Toast />
+    </>
   );
 }
 
