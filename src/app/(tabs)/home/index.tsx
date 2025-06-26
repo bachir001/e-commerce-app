@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as SecureStore from "expo-secure-store";
 import Header from "@/components/home/Header";
@@ -43,7 +44,8 @@ export default function HomeScreen() {
   const [tokenChecked, setTokenChecked] = useState(false);
 
   const isBusy = useRef(false);
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef =
+    useRef<FlatList<(typeof HOME_SCREEN_DATA_STRUCTURE)[0]>>(null);
   const lastScrollY = useRef(0);
   const scrollThreshold = 50;
   const tabBarHeightAndMargin = 65 + (Platform.OS === "ios" ? 40 : 25); // Approximate tab bar height + margin
@@ -126,7 +128,12 @@ export default function HomeScreen() {
           return (
             <SpecificSection
               {...sectionData}
-              color={Colors[item.id as keyof typeof Colors] || Colors.PRIMARY}
+              color={
+                typeof Colors[item.id as keyof typeof Colors] === "string"
+                  ? (Colors[item.id as keyof typeof Colors] as string)
+                  : (Colors[item.id as keyof typeof Colors] as any)
+                      ?.background || Colors.PRIMARY
+              }
               setLoading={(loading: boolean) =>
                 handleSectionLoading(item.id, loading)
               }
@@ -180,7 +187,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <FlatList
-        ref={flatListRef}
+        {...{ ref: flatListRef }}
         data={visibleSections}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}

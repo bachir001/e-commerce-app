@@ -11,15 +11,7 @@ import DotsLoader from "@/components/common/AnimatedLayout";
 export default function Confirmation() {
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
-  const {
-    email,
-    // firstName,
-    // lastName,
-    // verificationType,
-    // password,
-    // selectedGender,
-    // password_confirmation,
-  } = useLocalSearchParams();
+  const { email } = useLocalSearchParams();
 
   const handleBack = () => {
     router.back();
@@ -30,14 +22,7 @@ export default function Confirmation() {
       setLoading(true);
 
       const RequestBody = {
-        // first_name: firstName,
-        // last_name: lastName,
         email,
-        // password,
-        // password_confirmation: password_confirmation,
-        // gender_id: "1",
-        // terms: 1,
-        // verification_method: verificationType,
       };
 
       await axiosApi
@@ -56,13 +41,7 @@ export default function Confirmation() {
             router.push({
               pathname: "/auth/verification",
               params: {
-                // firstName,
-                // lastName,
                 email,
-                // selectedGender,
-                // verification_method: verificationType,
-                // password,
-                // password_confirmation,
               },
             });
           } else {

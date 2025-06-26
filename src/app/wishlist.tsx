@@ -14,9 +14,10 @@ import Toast from "react-native-toast-message";
 import { Heart, Filter } from "lucide-react-native";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Product } from "@/types/globalTypes";
 
 export default function Wishlist() {
-  const [wishList, setWishList] = useState(null);
+  const [wishList, setWishList] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -120,7 +121,9 @@ export default function Wishlist() {
     </View>
   );
 
-  const renderItem = ({ item }) => <ProductCardWide product={item} />;
+  const renderItem = ({ item }: { item: Product }) => (
+    <ProductCardWide product={item} />
+  );
 
   const renderFooter = () => {
     if (!wishList || wishList.length === 0) return null;

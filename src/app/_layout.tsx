@@ -18,6 +18,7 @@ import { initOneSignalNew } from "@/Services/OneSignalService";
 import ErrorState from "@/components/common/ErrorState";
 import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
+
 export const queryClient = new QueryClient({});
 
 const newArrivalsOptions = {
@@ -58,8 +59,11 @@ function AppWithProviders() {
     error: megaError,
     refetch: refetchMega,
   } = useMegaCategories();
+
   const { data: newArrivals, isLoading: loadingNewArrivals } =
     useFeaturedSection("new-arrivals", newArrivalsOptions);
+
+  const { isLogged, token } = useSessionStore();
 
   const fetchWishlist = async (token: string) => {
     try {
@@ -69,7 +73,7 @@ function AppWithProviders() {
         },
       });
 
-      return response.data;
+      return response.data.data;
     } catch (err) {
       console.error("Error fetching wishlist:", err);
     }
@@ -80,12 +84,13 @@ function AppWithProviders() {
       try {
         const id = await getOrCreateSessionId();
         const userString = await SecureStore.getItemAsync("user");
-        await SecureStore.getItemAsync("token").then(async (token) => {
-          if (token) {
-            const wishList = await fetchWishlist(token);
-            setWishList(wishList.data || []);
-          }
-        });
+
+        if (token !== null && isLogged) {
+          const wishList = await fetchWishlist(token ?? "");
+          setWishList(wishList || []);
+        } else {
+          setWishList([]);
+        }
 
         const userParsed = userString ? JSON.parse(userString) : null;
         setSessionId(id);
@@ -93,7 +98,6 @@ function AppWithProviders() {
         if (brands && !loadingBrands) setBrands(brands);
         if (sliders && !loadingSliders) setSliders(sliders);
         if (megaCategories && !loadingMega) {
-          // console.log(megaCategories);
           setMegaCategories(megaCategories);
         }
         if (newArrivals && !loadingNewArrivals) setNewArrivals(newArrivals);
@@ -108,6 +112,7 @@ function AppWithProviders() {
     sliders,
     megaCategories,
     newArrivals,
+    isLogged,
     // loadingBrands,
     // loadingSliders,
     // loadingMega,

@@ -135,10 +135,11 @@ export default function AccountScreen() {
     await Promise.all([
       SecureStore.deleteItemAsync("token"),
       SecureStore.deleteItemAsync("user"),
-    ]);
-    setUser(null);
-    setToken(null);
-    setIsLogged(false);
+    ]).then(() => {
+      setUser(null);
+      setToken(null);
+      setIsLogged(false);
+    });
   };
 
   return (

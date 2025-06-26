@@ -1,7 +1,7 @@
 import { View, Text, Image, TouchableOpacity } from "react-native";
 import React, { useMemo, useCallback, useEffect, useState } from "react";
 import type { Product } from "@/types/globalTypes";
-import { Heart, ShoppingBag, Star, Clock, Package } from "lucide-react-native";
+import { Heart, ShoppingBag, Star, Package } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { FontAwesome5 } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
@@ -19,7 +19,6 @@ interface Props {
 const ProductCardWide = React.memo(
   ({ product, innerColor = "#6e3ebd", containerColor = "white" }: Props) => {
     const router = useRouter();
-    const [timeLeft, setTimeLeft] = useState<string>("");
     const [isFavorite, setIsFavorite] = useState<boolean>(false);
     const { isLogged, token } = useSessionStore();
     const { wishList } = useAppDataStore();
@@ -31,7 +30,7 @@ const ProductCardWide = React.memo(
       const productImage =
         product.image ||
         product.product_image ||
-        "https://via.placeholder.com/150";
+        "https://gocami.gonext.tech/images/common/no-image.png";
       const productRating = product.rating ? Number(product.rating) : 0;
       const price = product.price ? String(product.price) : "0.00";
       const specialPrice = product.special_price
@@ -43,7 +42,6 @@ const ProductCardWide = React.memo(
       const reviews = product.reviews || 0;
       const discount = product.discount || 0;
       const quantity = product.quantity || 0;
-      const endDate = product.end_date;
       const showCounter = product.show_counter;
 
       const hasSpecialPrice =
@@ -67,45 +65,9 @@ const ProductCardWide = React.memo(
         highlights,
         reviews,
         quantity,
-        endDate,
         showCounter,
       };
     }, [product]);
-
-    useEffect(() => {
-      if (!productData?.endDate) return;
-
-      const updateTimer = () => {
-        const now = new Date().getTime();
-        const endTime = new Date(productData.endDate).getTime();
-        const difference = endTime - now;
-
-        if (difference > 0) {
-          const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-          const hours = Math.floor(
-            (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-          );
-          const minutes = Math.floor(
-            (difference % (1000 * 60 * 60)) / (1000 * 60)
-          );
-
-          if (days > 0) {
-            setTimeLeft(`${days}d ${hours}h`);
-          } else if (hours > 0) {
-            setTimeLeft(`${hours}h ${minutes}m`);
-          } else {
-            setTimeLeft(`${minutes}m`);
-          }
-        } else {
-          setTimeLeft("");
-        }
-      };
-
-      updateTimer();
-      const interval = setInterval(updateTimer, 60000);
-
-      return () => clearInterval(interval);
-    }, [productData?.endDate]);
 
     useEffect(() => {
       if (!wishList || !product) return;
@@ -137,18 +99,23 @@ const ProductCardWide = React.memo(
         }
 
         setIsFavorite((prev) => !prev);
-        await axiosApi.post(
-          `favorite/add`,
-          {
-            product_detail_id: Number(product.id),
+
+        const WishListBody: any = {};
+
+        if (product.has_variants) {
+          WishListBody.product_detail_id = Number(product.id);
+        }
+
+        if (!product.has_variants) {
+          WishListBody.product_id = Number(product.id);
+        }
+
+        await axiosApi.post(`favorite/add`, WishListBody, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        });
 
         Toast.show({
           type: "success",
@@ -204,7 +171,9 @@ const ProductCardWide = React.memo(
             source={{ uri: productImage }}
             className="w-full h-full"
             resizeMode="cover"
-            defaultSource={{ uri: "https://via.placeholder.com/150" }}
+            defaultSource={{
+              uri: "https://gocami.gonext.tech/images/common/no-image.png",
+            }}
             fadeDuration={0}
           />
 
@@ -225,21 +194,6 @@ const ProductCardWide = React.memo(
               }}
             >
               <Text className="text-white text-xs font-bold">-{discount}%</Text>
-            </View>
-          )}
-
-          {timeLeft && (
-            <View
-              className="absolute bottom-3 left-3 px-2 py-1 flex-row items-center"
-              style={{
-                backgroundColor: "rgba(0, 0, 0, 0.8)",
-                backdropFilter: "blur(8px)",
-              }}
-            >
-              <Clock size={10} color="white" />
-              <Text className="text-white text-xs font-bold ml-1">
-                {timeLeft}
-              </Text>
             </View>
           )}
 
@@ -433,7 +387,6 @@ const ProductCardWide = React.memo(
       prevProps.product.id === nextProps.product.id &&
       prevProps.product.price === nextProps.product.price &&
       prevProps.product.special_price === nextProps.product.special_price &&
-      prevProps.product.end_date === nextProps.product.end_date &&
       prevProps.product.purchase_points === nextProps.product.purchase_points &&
       prevProps.product.quantity === nextProps.product.quantity
     );

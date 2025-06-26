@@ -9,7 +9,6 @@ export default function ProductInformation({
   name,
   rating,
   reviews,
-  price,
   sku,
   inStock,
   description,
@@ -48,9 +47,6 @@ export default function ProductInformation({
       {/* Price and Stock */}
       <View className="flex-row items-center justify-between mb-6">
         <View>
-          <Text className="text-3xl font-bold text-[#5E3EBD]">
-            ${price !== undefined && price.toFixed(2)}
-          </Text>
           {sku && (
             <Text className="text-xs text-gray-500 mt-1">SKU: {sku}</Text>
           )}

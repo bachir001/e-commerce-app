@@ -41,7 +41,7 @@ const ProductCard = React.memo(
       const productImage =
         product.image ||
         product.product_image ||
-        "https://via.placeholder.com/150";
+        "https://gocami.gonext.tech/images/common/no-image.png";
       const productRating = product.rating ? Number(product.rating) : 0;
       const price = product.price ? String(product.price) : "0.00";
       const specialPrice = product.special_price
@@ -127,7 +127,7 @@ const ProductCard = React.memo(
 
     const handleAddToWishlist = useCallback(async () => {
       try {
-        console.log(token);
+        console.log("TOKEN: " + token);
         if (!isLogged) {
           Toast.show({
             type: "error",
@@ -141,19 +141,23 @@ const ProductCard = React.memo(
         }
 
         setIsFavorite((prev) => !prev);
+        const WishListBody: any = {};
+
+        if (product.has_variants) {
+          WishListBody.product_detail_id = Number(product.id);
+        }
+
+        if (!product.has_variants) {
+          WishListBody.product_id = Number(product.id);
+        }
+
         await axiosApi
-          .post(
-            `favorite/add`,
-            {
-              product_detail_id: Number(product.id),
+          .post(`favorite/add`, WishListBody, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          )
+          })
           .then((response) => {
             console.log(response.data);
             console.log(product.id);
@@ -215,7 +219,9 @@ const ProductCard = React.memo(
               source={{ uri: productImage }}
               className="w-full h-full"
               resizeMode="cover"
-              defaultSource={{ uri: "https://via.placeholder.com/150" }}
+              defaultSource={{
+                uri: "https://gocami.gonext.tech/images/common/no-image.png",
+              }}
               fadeDuration={0}
             />
 
@@ -339,7 +345,9 @@ const ProductCard = React.memo(
             source={{ uri: productImage }}
             className="w-full h-full bg-gray-100"
             resizeMode="cover"
-            defaultSource={{ uri: "https://via.placeholder.com/150" }}
+            defaultSource={{
+              uri: "https://gocami.gonext.tech/images/common/no-image.png",
+            }}
             fadeDuration={0}
           />
 

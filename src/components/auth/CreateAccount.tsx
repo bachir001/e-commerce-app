@@ -38,7 +38,7 @@ const passwordRegex: RegExp =
   /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
 
 export default function CreateAccount({ email }: { email: string }) {
-  const { isLogged, setIsLogged } = useSessionStore();
+  const { setIsLogged, setToken, setUser } = useSessionStore();
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
 
@@ -54,7 +54,7 @@ export default function CreateAccount({ email }: { email: string }) {
     const messages: string[] = [];
 
     if (!email || !firstName || !lastName || !selectedGender || !termAccepted) {
-      messages.push("Values are missing!");
+      messages.push("All fields are required!");
     }
 
     if (firstName.length < 3)
@@ -64,14 +64,17 @@ export default function CreateAccount({ email }: { email: string }) {
       messages.push("Last name must be 3 characters long or more");
 
     if (email.length < 1 || !email.includes("@"))
-      messages.push("Invalid email");
+      messages.push("Invalid email format");
 
-    if (!passwordRegex.test(password)) messages.push("Invalid Password");
+    if (!passwordRegex.test(password))
+      messages.push(
+        "Password must be at least 8 characters long, include an uppercase letter and a special character."
+      );
 
     if (password !== confirmPassword) messages.push("Passwords do not match");
 
     if (!termAccepted)
-      messages.push("You cannot sign up without accepting to the terms!");
+      messages.push("You must accept the terms and conditions to sign up!");
 
     if (messages.length >= 1) return messages[0];
 
@@ -79,7 +82,19 @@ export default function CreateAccount({ email }: { email: string }) {
   };
 
   const handleCompleteSignUp = async () => {
-    console.log(email);
+    const validationResult = validateSignUp();
+    if (validationResult !== "Success") {
+      Toast.show({
+        type: "error",
+        text1: "Validation Error",
+        text2: validationResult,
+        position: "top",
+        autoHide: true,
+        topOffset: 60,
+      });
+      return;
+    }
+
     const RequestBody: CompleteSignUp = {
       password: password,
       password_confirmation: confirmPassword,
@@ -92,58 +107,67 @@ export default function CreateAccount({ email }: { email: string }) {
 
     try {
       setLoading(true);
-      await axiosApi
-        .post(
-          `https://api-gocami-test.gocami.com/api/register/complete`,
-          RequestBody
-        )
-        .then(async (response) => {
-          if (response.status === 200) {
-            Toast.show({
-              type: "success",
-              text1: "Register Successful",
-              text2: "Please enter verification code",
-              position: "top",
-              autoHide: true,
-              topOffset: 60,
-            });
+      const response = await axiosApi.post(
+        `https://api-gocami-test.gocami.com/api/register/complete`,
+        RequestBody
+      );
 
-            const LoginBody = {
-              email,
-              password,
-            };
+      if (response.status === 200) {
+        const LoginBody = {
+          email,
+          password,
+        };
 
-            await axiosApi
-              .post("https://api-gocami-test.gocami.com/api/login", LoginBody)
-              .then(async (response) => {
-                if (response.data.status) {
-                  await loginOneSignal(response.data.data.user.id.toString());
-                  await updateUserTags(response.data.data.user);
+        const loginResponse = await axiosApi.post(
+          "https://api-gocami-test.gocami.com/api/login",
+          LoginBody
+        );
 
-                  await Promise.all([
-                    SecureStore.setItemAsync("token", response.data.data.token),
-                    SecureStore.setItemAsync(
-                      "user",
-                      JSON.stringify(response.data.data.user)
-                    ),
-                  ]);
-                  setIsLogged(true);
-                  router.replace("/(tabs)/home");
-                }
-              });
-          } else {
-            Toast.show({
-              type: "error",
-              text1: "Register Failed",
-              text2: "Account Already Exists",
-              position: "top",
-              autoHide: false,
-              topOffset: 60,
-            });
-          }
+        if (loginResponse.data.status) {
+          await loginOneSignal(loginResponse.data.data.user.id.toString());
+          await updateUserTags(loginResponse.data.data.user);
+
+          await Promise.all([
+            SecureStore.setItemAsync("token", loginResponse.data.data.token),
+            SecureStore.setItemAsync(
+              "user",
+              JSON.stringify(loginResponse.data.data.user)
+            ),
+          ]);
+          setIsLogged(true);
+          setUser(loginResponse.data.data.user);
+          setToken(loginResponse.data.data.token);
+
+          router.replace("/(tabs)/home");
+          Toast.show({
+            type: "success",
+            text1: "Registration Successful",
+            text2: "Please enter verification code",
+            position: "top",
+            autoHide: true,
+            topOffset: 60,
+          });
+        }
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Registration Failed",
+          text2: response.data.message || "Account Already Exists",
+          position: "top",
+          autoHide: false,
+          topOffset: 60,
         });
-    } catch (err) {
+      }
+    } catch (err: any) {
       console.error(err);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: err.response?.data?.message || "An unexpected error occurred.",
+        position: "top",
+        autoHide: true,
+        topOffset: 60,
+      });
     } finally {
       setLoading(false);
     }
@@ -248,7 +272,6 @@ export default function CreateAccount({ email }: { email: string }) {
                         setFirstName(text);
                       else if (createInput.label === "Last Name")
                         setLastName(text);
-                      // else if (createInput.label === "Email") setEmail(text);
                       else if (createInput.label === "Password")
                         setPassword(text);
                     }}
@@ -300,12 +323,10 @@ export default function CreateAccount({ email }: { email: string }) {
                   backgroundColor: Colors.PRIMARY,
                 }}
                 className={`py-4 text-center mt-2 rounded-xl shadow-md`}
-                onPress={() => {
-                  handleCompleteSignUp();
-                }}
+                onPress={handleCompleteSignUp}
               >
                 {loading ? (
-                  <ActivityIndicator />
+                  <ActivityIndicator color="#fff" />
                 ) : (
                   <Text className="text-center text-white font-semibold">
                     Create Account
