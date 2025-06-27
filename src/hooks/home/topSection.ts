@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import axiosApi from "@/apis/axiosApi";
+import axios from "axios";
 
 export function useBrands() {
   return useQuery({

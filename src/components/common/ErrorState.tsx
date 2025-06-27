@@ -35,7 +35,7 @@ export default function ErrorState({
       </Text>
 
       {/* Retry Button */}
-      {onRetry && (
+      {onRetry ? (
         <TouchableOpacity
           onPress={onRetry}
           className="py-3 px-6 rounded-full flex-row items-center"
@@ -52,7 +52,7 @@ export default function ErrorState({
             {retryText}
           </Text>
         </TouchableOpacity>
-      )}
+      ) : null}
     </View>
   );
 }

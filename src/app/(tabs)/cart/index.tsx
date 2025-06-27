@@ -26,6 +26,7 @@ import { getOrCreateSessionId } from "@/lib/session"; // Session utility
 import DotsLoader from "@/components/common/AnimatedLayout"; // Custom loading component
 import { useSafeAreaInsets } from "react-native-safe-area-context"; // Hook for safe area insets
 import Toast from "react-native-toast-message"; // Import Toast for messages
+import axiosApi from "@/apis/axiosApi";
 
 // Interface for raw best-seller data from API
 interface BestSellerRaw {
@@ -158,16 +159,13 @@ export default function CartScreen(): React.ReactElement {
       try {
         const sessionId = await getOrCreateSessionId(); // Get session ID
 
-        await axios.delete(
-          "https://api-gocami-test.gocami.com/api/cart/remove",
-          {
-            headers: {
-              "Content-Type": "application/json",
-              "x-session": sessionId,
-            },
-            data: { cart_item_id: cartItemId }, // Send item ID in request body
-          }
-        );
+        await axiosApi.delete("cart/remove", {
+          headers: {
+            "Content-Type": "application/json",
+            "x-session": sessionId,
+          },
+          data: { cart_item_id: cartItemId }, // Send item ID in request body
+        });
 
         await fetchCart(true); // Force re-fetch cart to update UI
         Toast.show({
@@ -323,12 +321,12 @@ export default function CartScreen(): React.ReactElement {
         <View>
           <Text style={styles.sectionTitle}>Check These Products</Text>
           {isBestSellersLoading && <ActivityIndicator />}
-          {bestSellersErrorMessage && (
+          {bestSellersErrorMessage ? (
             <Text style={styles.errorText}>
               Error: {bestSellersErrorMessage}
             </Text>
-          )}
-          {!isBestSellersLoading && !bestSellersErrorMessage && (
+          ) : null}
+          {!isBestSellersLoading && !bestSellersErrorMessage ? (
             <FlatList
               data={bestSellerItems}
               horizontal // Horizontal scrolling
@@ -346,7 +344,7 @@ export default function CartScreen(): React.ReactElement {
                 index,
               })}
             />
-          )}
+          ) : null}
         </View>
       </SafeAreaView>
     );

@@ -2,9 +2,30 @@ import { Image, Text, TouchableOpacity, View } from "react-native";
 import StarRating from "./StarRating";
 import ExpandableSection from "./ExpandableSection";
 import { Clock, Shield } from "lucide-react-native";
-import { Category } from "@/app/(tabs)/home/ProductDetails";
-import { allowedNiches, colorMap, niche } from "../categories/CategoryItem";
 import { router } from "expo-router";
+import type { Brand, MainCategory } from "@/types/globalTypes";
+import { allowedNiches, colorMap, niche } from "../categories/CategoryItem"; // Assuming this path is correct
+
+interface ProductInformationProps {
+  brand?: Brand;
+  name: string;
+  rating?: number;
+  reviews?: number;
+  sku?: string;
+  inStock: boolean;
+  description: string;
+  expandedSections: {
+    description: boolean;
+    highlights: boolean;
+    shipping: boolean;
+  };
+  productDetailLoading?: boolean;
+  toggleSection: (
+    section: keyof ProductInformationProps["expandedSections"]
+  ) => void;
+  highlights: string;
+  categories?: MainCategory[];
+}
 
 export default function ProductInformation({
   brand,
@@ -18,11 +39,11 @@ export default function ProductInformation({
   toggleSection,
   highlights,
   categories,
-}) {
+  productDetailLoading = true,
+}: ProductInformationProps): React.ReactElement {
   return (
     <View className="px-4">
-      {/* Brand */}
-      {brand?.name && (
+      {brand?.name ? (
         <View className="flex-row items-center mb-2">
           {brand.logo ? (
             <Image
@@ -39,74 +60,63 @@ export default function ProductInformation({
             {brand.name}
           </Text>
         </View>
-      )}
+      ) : null}
 
-      {/* Product Name */}
       <Text className="text-2xl font-bold text-gray-900 mb-2">{name}</Text>
 
-      {/* Rating */}
       <StarRating rating={rating} reviews={reviews} />
 
-      {/* Price and Stock */}
       <View className="flex-row items-center justify-between mb-6">
         <View>
-          {sku && (
+          {sku ? (
             <Text className="text-xs text-gray-500 mt-1">SKU: {sku}</Text>
-          )}
+          ) : null}
         </View>
-        <View
-          className={`px-3 py-1 rounded-full ${
-            inStock ? "bg-green-100" : "bg-red-100"
-          }`}
-        >
-          <Text
-            className={`text-sm font-medium ${
-              inStock ? "text-green-700" : "text-red-700"
+        {!productDetailLoading ? (
+          <View
+            className={`px-3 py-1 rounded-full ${
+              inStock ? "bg-green-100" : "bg-red-100"
             }`}
           >
-            {inStock ? "In Stock" : "Out of Stock"}
-          </Text>
-        </View>
+            <Text
+              className={`text-sm font-medium ${
+                inStock ? "text-green-700" : "text-red-700"
+              }`}
+            >
+              {inStock ? "In Stock" : "Out of Stock"}
+            </Text>
+          </View>
+        ) : null}
       </View>
 
-      {/* Divider */}
       <View className="h-px bg-gray-200 my-4" />
 
-      {/* Description Section */}
-      {description && (
+      {description ? (
         <ExpandableSection
           title="Product Description"
           content={description}
           isExpanded={expandedSections.description}
           onToggle={() => toggleSection("description")}
         />
-      )}
+      ) : null}
 
-      {/* Highlights Section */}
-      {highlights && (
+      {highlights ? (
         <ExpandableSection
           title="Highlights"
           content={highlights}
           isExpanded={expandedSections.highlights}
           onToggle={() => toggleSection("highlights")}
         />
-      )}
+      ) : null}
 
-      {/* Shipping Section */}
       <ExpandableSection
         title="Shipping & Returns"
         content=""
         isExpanded={expandedSections.shipping}
         onToggle={() => toggleSection("shipping")}
       />
-      {expandedSections.shipping && (
+      {expandedSections.shipping ? (
         <View className="mb-4">
-          {/* <View className="flex-row items-center mb-3">
-                <Truck size={16} color="#5E3EBD" />
-                <Text className="text-gray-700 ml-2">
-                  Free shipping on orders over $50
-                </Text>
-              </View> */}
           <View className="flex-row items-center mb-3">
             <Clock size={16} color="#5E3EBD" />
             <Text className="text-gray-700 ml-2">
@@ -118,14 +128,13 @@ export default function ProductInformation({
             <Text className="text-gray-700 ml-2">30-day return policy</Text>
           </View>
         </View>
-      )}
+      ) : null}
 
-      {/* Categories */}
-      {categories && categories.length > 0 && (
+      {categories && categories.length > 0 ? (
         <View className="mt-4 mb-6">
           <Text className="text-sm text-gray-500 mb-2">Categories</Text>
           <View className="flex-row flex-wrap">
-            {categories.map((category: Category, index: number) => (
+            {categories.map((category: MainCategory, index: number) => (
               <TouchableOpacity
                 onPress={() => {
                   const isAllowedNiche = allowedNiches.includes(
@@ -148,9 +157,8 @@ export default function ProductInformation({
             ))}
           </View>
         </View>
-      )}
+      ) : null}
 
-      {/* Divider */}
       <View className="h-px bg-gray-200 my-4" />
     </View>
   );

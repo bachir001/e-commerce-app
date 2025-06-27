@@ -369,7 +369,7 @@ export default function AddressForm({
           </View>
 
           {/* Delivery Settings */}
-          {selectedArea && (
+          {selectedArea ? (
             <View className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
               <View className="flex-row items-center mb-4">
                 <View className="w-10 h-10 bg-green-100 rounded-full items-center justify-center mr-3">
@@ -389,18 +389,18 @@ export default function AddressForm({
                 </View>
               </View>
             </View>
-          )}
+          ) : null}
 
           {/* Action Buttons */}
           <View className="flex-row space-x-3 mb-6">
-            {!addAddressMutation.isPending && (
+            {!addAddressMutation.isPending ? (
               <TouchableOpacity
                 onPress={handleCancel}
                 className="flex-1 bg-gray-100 py-4 px-6 rounded-2xl items-center justify-center"
               >
                 <Text className="text-gray-700 font-semibold">Cancel</Text>
               </TouchableOpacity>
-            )}
+            ) : null}
 
             <TouchableOpacity
               style={{ backgroundColor: Colors.PRIMARY }}

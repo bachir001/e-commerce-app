@@ -107,13 +107,13 @@ export default function CategoryItem({
           </View>
         )}
 
-        {computedValues.subcategoriesCount > 0 && (
+        {computedValues.subcategoriesCount > 0 ? (
           <View className="absolute top-2 right-2 bg-white/90 rounded-full px-2 py-1">
             <Text className="text-xs font-bold text-gray-700">
               {computedValues.subcategoriesCount}
             </Text>
           </View>
-        )}
+        ) : null}
       </View>
 
       <Text

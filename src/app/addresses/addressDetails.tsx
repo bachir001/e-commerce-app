@@ -53,13 +53,13 @@ export default function AddressDetails() {
               <Text className="text-xl font-bold text-gray-800">
                 {addressParsed.name}
               </Text>
-              {addressParsed.is_default === 1 && (
+              {addressParsed.is_default === 1 ? (
                 <View className="bg-green-100 px-3 py-1 rounded-full">
                   <Text className="text-green-700 font-medium text-sm">
                     Default
                   </Text>
                 </View>
-              )}
+              ) : null}
             </View>
 
             {addressParsed.status === 1 ? (
@@ -97,11 +97,11 @@ export default function AddressDetails() {
                 <Text className="text-gray-800 font-medium">
                   {addressParsed.street}
                 </Text>
-                {addressParsed.street_2 && (
+                {addressParsed.street_2 ? (
                   <Text className="text-gray-600 mt-1">
                     {addressParsed.street_2}
                   </Text>
-                )}
+                ) : null}
               </View>
 
               <View className="flex-row space-x-4 mt-2">

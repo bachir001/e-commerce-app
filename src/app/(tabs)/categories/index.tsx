@@ -129,14 +129,14 @@ export default function CategoriesScreen() {
             autoCapitalize="none"
             selectTextOnFocus={false}
           />
-          {searchQuery && searchQuery.length > 0 && (
+          {searchQuery && searchQuery.length > 0 ? (
             <TouchableOpacity onPress={handleClearSearch}>
               <FontAwesome5 name="times" size={16} color="#9CA3AF" />
             </TouchableOpacity>
-          )}
+          ) : null}
         </View>
 
-        {filteredCategories && filteredCategories.length > 0 && (
+        {filteredCategories && filteredCategories.length > 0 ? (
           <View className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-4 mb-4">
             <View className="flex-row items-center">
               <View className="w-10 h-10 bg-white rounded-2xl items-center justify-center mr-3 shadow-sm">
@@ -154,7 +154,7 @@ export default function CategoriesScreen() {
               </View>
             </View>
           </View>
-        )}
+        ) : null}
       </View>
 
       <FlatList

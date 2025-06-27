@@ -7,7 +7,7 @@ import React, {
   useRef,
 } from "react";
 import type { Product } from "@/types/globalTypes";
-import { Heart, ShoppingBag, Clock } from "lucide-react-native";
+import { Clock } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { FontAwesome5 } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
@@ -21,7 +21,6 @@ interface Props {
   innerColor?: string;
   containerColor?: string;
   variant?: "default" | "grid" | "wide";
-  onPress?: () => void;
   simplified?: boolean;
 }
 
@@ -37,10 +36,9 @@ const ProductCard = React.memo(
     const [timeLeft, setTimeLeft] = useState<string>("");
     const [isFavorite, setIsFavorite] = useState<boolean>(false);
     const { isLogged, token } = useSessionStore();
+    const { wishList, setWishList } = useAppDataStore();
 
     const isPressable = useRef(true);
-
-    const { wishList } = useAppDataStore();
 
     const productData = useMemo(() => {
       if (!product) return null;
@@ -59,7 +57,9 @@ const ProductCard = React.memo(
       const endDate = product.end_date;
 
       const hasSpecialPrice =
-        specialPrice !== undefined && specialPrice !== null;
+        specialPrice !== undefined &&
+        specialPrice !== null &&
+        Number(specialPrice) < Number(price);
       const discount = hasSpecialPrice
         ? Math.round(
             ((Number(price) - Number(specialPrice)) / Number(price)) * 100
@@ -80,9 +80,12 @@ const ProductCard = React.memo(
     }, [product]);
 
     useEffect(() => {
-      if (!productData?.endDate) return;
+      if (!productData?.endDate) {
+        setTimeLeft("");
+        return;
+      }
 
-      const updateTimer = () => {
+      const calculateTimeLeft = () => {
         const now = new Date().getTime();
         const endTime = new Date(productData.endDate).getTime();
         const difference = endTime - now;
@@ -108,24 +111,22 @@ const ProductCard = React.memo(
         }
       };
 
-      updateTimer();
-      const interval = setInterval(updateTimer, 60000);
+      calculateTimeLeft();
+      const interval = setInterval(calculateTimeLeft, 60 * 1000);
 
       return () => clearInterval(interval);
     }, [productData?.endDate]);
 
     useEffect(() => {
-      if (!wishList || !product) return;
+      if (wishList && product) {
+        const isInWishlist = wishList.some((item) => item.id === product.id);
+        setIsFavorite(isInWishlist);
+      }
+    }, [wishList, product]);
 
-      const isInWishlist = wishList.some((item) => item.id === product.id);
-
-      setIsFavorite(isInWishlist);
-    }, []);
-
-    const onPress = useCallback(() => {
+    const navigateToProductDetails = useCallback(() => {
       if (!isPressable.current) return;
       isPressable.current = false;
-
       router.push({
         pathname: "/ProductDetails",
         params: { productJSON: JSON.stringify(product) },
@@ -137,80 +138,97 @@ const ProductCard = React.memo(
     }, [router, product]);
 
     const handleAddToCart = useCallback(() => {
-      // onAddToCart?.();
-    }, []);
+      Toast.show({
+        type: "info",
+        text1: "Add to Cart",
+        text2: `${productData?.productName} added to cart (placeholder).`,
+        autoHide: true,
+        visibilityTime: 1500,
+        topOffset: 60,
+      });
+    }, [productData?.productName]);
 
     const handleAddToWishlist = useCallback(async () => {
+      if (!isLogged) {
+        Toast.show({
+          type: "error",
+          text1: "Login Required",
+          text2: "Please log in to add products to your wishlist.",
+          autoHide: true,
+          visibilityTime: 2000,
+          topOffset: 60,
+        });
+        return;
+      }
+
+      setIsFavorite((prev) => !prev);
+      const isCurrentlyFavorite = isFavorite;
+
       try {
-        console.log("TOKEN: " + token);
-        if (!isLogged) {
+        const WishListBody: {
+          product_detail_id?: number;
+          product_id?: number;
+        } = {};
+
+        if (product.has_variants) {
+          WishListBody.product_detail_id = Number(product.id);
+        } else {
+          WishListBody.product_id = Number(product.id);
+        }
+
+        const endpoint = isCurrentlyFavorite
+          ? `favorite/remove`
+          : `favorite/add`;
+        const response = await axiosApi.post(endpoint, WishListBody, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.status) {
+          Toast.show({
+            type: "success",
+            text1: "Success",
+            text2: isCurrentlyFavorite
+              ? "Product removed from wishlist."
+              : "Product added to wishlist.",
+            autoHide: true,
+            visibilityTime: 1000,
+            topOffset: 60,
+          });
+
+          if (setWishList) {
+            if (isCurrentlyFavorite) {
+              setWishList(wishList.filter((item) => item.id !== product.id));
+            } else {
+              setWishList([...wishList, product]);
+            }
+          }
+        } else {
           Toast.show({
             type: "error",
-            text1: "Login Required",
-            text2: "Please log in to add products to your wishlist.",
+            text1: "Error",
+            text2: "Failed to update wishlist.",
             autoHide: true,
             visibilityTime: 2000,
             topOffset: 60,
           });
-          return;
+          setIsFavorite(isCurrentlyFavorite);
         }
-
-        setIsFavorite((prev) => !prev);
-        const WishListBody: any = {};
-
-        if (product.has_variants) {
-          WishListBody.product_detail_id = Number(product.id);
-        }
-
-        if (!product.has_variants) {
-          WishListBody.product_id = Number(product.id);
-        }
-
-        await axiosApi
-          .post(`favorite/add`, WishListBody, {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          })
-          .then((response) => {
-            console.log(response.data);
-            console.log(product.id);
-            console.log(token);
-            if (response.data.status) {
-              Toast.show({
-                type: "success",
-                text1: "Success",
-                text2: "Product added to wishlist.",
-                autoHide: true,
-                visibilityTime: 1000,
-                topOffset: 60,
-              });
-            } else {
-              Toast.show({
-                type: "error",
-                text1: "Error",
-                text2: "Failed to add product to wishlist.",
-                autoHide: true,
-                visibilityTime: 2000,
-                topOffset: 60,
-              });
-              setIsFavorite(false);
-            }
-          });
       } catch (err) {
-        console.error("Error adding to wishlist:", err);
-        setIsFavorite(false);
+        console.error("Error updating wishlist:", err);
+        setIsFavorite(isCurrentlyFavorite);
         Toast.show({
           type: "error",
           text1: "Error",
-          text2: "Failed to add product to wishlist.",
+          text2: "Failed to update wishlist.",
           autoHide: true,
           visibilityTime: 2000,
           topOffset: 60,
         });
       }
-    }, [product]);
+    }, [isLogged, token, product, isFavorite, wishList, setWishList]);
 
     if (!productData) return null;
 
@@ -225,96 +243,141 @@ const ProductCard = React.memo(
       purchasePoints,
     } = productData;
 
-    if (simplified || variant === "grid") {
+    if (variant === "wide") {
       return (
-        <TouchableOpacity
-          className="rounded-lg overflow-hidden bg-white"
-          activeOpacity={0.95}
-          onPress={onPress}
-        >
-          {/* Image container */}
-          <View className="w-full h-48 relative bg-gray-50">
-            <Image
-              source={{ uri: productImage }}
-              className="w-full h-full"
-              resizeMode="cover"
-              defaultSource={{
-                uri: "https://gocami.gonext.tech/images/common/no-image.png",
-              }}
-              fadeDuration={0}
-            />
+        <ProductCardWide
+          product={product}
+          innerColor={innerColor}
+          containerColor={containerColor}
+          simplified={simplified}
+        />
+      );
+    }
 
-            {/* Wishlist button */}
-            {!product?.has_variants && (
-              <TouchableOpacity
-                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 items-center justify-center"
-                onPress={handleAddToWishlist}
-                hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
-                activeOpacity={0.7}
-              >
-                <FontAwesome5
-                  name="heart"
-                  size={16}
-                  color={isFavorite ? "#ffb500" : "#666"}
-                  solid={isFavorite}
-                />
-              </TouchableOpacity>
-            )}
+    const isSimplifiedOrGrid = simplified || variant === "grid";
 
-            {/* Discount badge */}
-            {!simplified && hasSpecialPrice && discount > 0 && (
-              <View className="absolute top-3 left-3 px-2 py-1 rounded-full bg-red-500">
-                <Text className="text-white text-xs font-bold">
-                  -{discount}%
-                </Text>
-              </View>
-            )}
+    return (
+      <TouchableOpacity
+        className={`rounded-lg overflow-hidden ${
+          isSimplifiedOrGrid
+            ? "bg-white"
+            : "w-44 shadow-md mx-1 my-2 border border-gray-100"
+        }`}
+        style={{ backgroundColor: containerColor }}
+        activeOpacity={0.95}
+        onPress={navigateToProductDetails}
+      >
+        <View className="w-full h-48 relative bg-gray-50">
+          <Image
+            source={{ uri: productImage }}
+            className={`w-full h-full ${
+              isSimplifiedOrGrid ? "" : "bg-gray-100"
+            }`}
+            resizeMode="cover"
+            defaultSource={{
+              uri: "https://gocami.gonext.tech/images/common/no-image.png",
+            }}
+            fadeDuration={0}
+          />
 
-            {/* Timer badge */}
-            {!simplified && timeLeft && (
-              <View className="absolute bottom-3 left-3 px-2 py-1 rounded-full bg-black/70 flex-row items-center">
-                <Clock size={10} color="white" />
-                <Text className="text-white text-xs font-bold ml-1">
-                  {timeLeft}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Product details */}
-          <View className="p-4">
-            {/* Purchase Points */}
-            {!simplified && purchasePoints && (
-              <View className="flex-row items-center mb-2">
-                <FontAwesome5 name="diamond" size={12} color={innerColor} />
-                <Text
-                  className="text-xs font-semibold ml-1"
-                  style={{ color: innerColor }}
-                >
-                  {purchasePoints} points
-                </Text>
-              </View>
-            )}
-
-            {/* Rating */}
-            {!simplified && productRating > 0 && (
-              <View className="flex-row items-center mb-2">
-                <FontAwesome5 name="star" size={12} color="#FFD700" />
-                <Text className="text-xs text-gray-600 ml-1 font-medium">
-                  {productRating.toFixed(1)}
-                </Text>
-              </View>
-            )}
-
-            {/* Product name */}
-            <Text
-              className="text-base font-semibold text-gray-900 mb-3"
-              numberOfLines={simplified ? 1 : 2}
+          {!product?.has_variants ? (
+            <TouchableOpacity
+              className={`absolute top-3 right-3 rounded-full bg-white/90 items-center justify-center ${
+                isSimplifiedOrGrid ? "w-8 h-8" : "w-7 h-7 z-10 shadow-sm"
+              }`}
+              onPress={handleAddToWishlist}
+              hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+              activeOpacity={0.7}
             >
-              {productName}
-            </Text>
+              <FontAwesome5
+                name="heart"
+                size={isSimplifiedOrGrid ? 16 : 16}
+                color={isFavorite ? "#ffb500" : "#666"}
+                solid={isFavorite}
+              />
+            </TouchableOpacity>
+          ) : null}
 
-            {/* Price and cart section */}
+          {!simplified && hasSpecialPrice && discount > 0 ? (
+            <View
+              className={`absolute top-3 left-3 px-2 py-1 rounded-full ${
+                isSimplifiedOrGrid ? "bg-red-500" : "px-1.5 py-0.5 rounded"
+              }`}
+              style={!isSimplifiedOrGrid ? { backgroundColor: "#e4344f" } : {}}
+            >
+              <Text className="text-white text-xs font-bold">
+                {discount > 0 ? `-${discount}%` : null}
+              </Text>
+            </View>
+          ) : null}
+
+          {!simplified && timeLeft ? (
+            <View
+              className={`absolute bottom-3 left-3 px-2 py-1 rounded-full bg-black/70 flex-row items-center ${
+                isSimplifiedOrGrid
+                  ? ""
+                  : "bottom-2 left-2 px-1.5 py-0.5 rounded"
+              }`}
+            >
+              <Clock size={isSimplifiedOrGrid ? 10 : 8} color="white" />
+              <Text className="text-white text-xs font-bold ml-1">
+                {timeLeft ? `${timeLeft} left` : "Sale ended"}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+
+        <View className={`p-4 ${isSimplifiedOrGrid ? "" : "p-2.5"}`}>
+          {!simplified && purchasePoints ? (
+            <View
+              className={`flex-row items-center mb-2 ${
+                isSimplifiedOrGrid ? "" : "mb-1"
+              }`}
+            >
+              <Text
+                className={`text-xs font-semibold ml-1 ${
+                  isSimplifiedOrGrid ? "" : "ml-1"
+                }`}
+                style={{ color: innerColor }}
+              >
+                {purchasePoints ? purchasePoints : null}{" "}
+                {isSimplifiedOrGrid ? "points" : "pts"}
+              </Text>
+            </View>
+          ) : null}
+
+          {!simplified && productRating > 0 ? (
+            <View
+              className={`flex-row items-center mb-2 ${
+                isSimplifiedOrGrid ? "" : "mb-1"
+              }`}
+            >
+              <FontAwesome5
+                name="star"
+                size={isSimplifiedOrGrid ? 12 : 10}
+                color="#FFD700"
+              />
+              <Text
+                className={`text-xs text-gray-600 ml-1 font-medium ${
+                  isSimplifiedOrGrid ? "" : "ml-0.5"
+                }`}
+              >
+                {productRating ? productRating.toFixed(1) : null}
+              </Text>
+            </View>
+          ) : null}
+
+          <Text
+            className={`font-semibold text-gray-900 mb-3 ${
+              isSimplifiedOrGrid ? "text-base" : "text-sm mb-1"
+            }`}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {productName ? productName : null}
+          </Text>
+
+          {isSimplifiedOrGrid ? (
             <View className="flex-row items-center justify-between">
               <View className="flex-1">
                 {hasSpecialPrice ? (
@@ -323,17 +386,17 @@ const ProductCard = React.memo(
                       className="text-lg font-bold"
                       style={{ color: "#FF4757" }}
                     >
-                      ${specialPrice}
+                      {specialPrice ? `$${specialPrice}` : null}
                     </Text>
-                    {!simplified && (
+                    {!simplified ? (
                       <Text className="text-sm text-gray-400 line-through">
-                        ${price}
+                        {price ? `$${price}` : null}
                       </Text>
-                    )}
+                    ) : null}
                   </View>
                 ) : (
                   <Text className="text-lg font-bold text-gray-900">
-                    ${price}
+                    {price ? `$${price}` : null}
                   </Text>
                 )}
               </View>
@@ -344,130 +407,42 @@ const ProductCard = React.memo(
                 activeOpacity={0.8}
                 onPress={handleAddToCart}
               >
-                <ShoppingBag size={18} color="#fff" />
+                <FontAwesome5 name="shopping-bag" size={18} color="#fff" />
               </TouchableOpacity>
             </View>
-          </View>
-        </TouchableOpacity>
-      );
-    }
-
-    return (
-      <TouchableOpacity
-        className="w-40 rounded-lg overflow-hidden shadow-md mx-1 my-2 border border-gray-100"
-        style={{ backgroundColor: containerColor }}
-        activeOpacity={0.9}
-        onPress={onPress}
-      >
-        <View className="w-full h-48 relative bg-gray-50">
-          <Image
-            source={{ uri: productImage }}
-            className="w-full h-full bg-gray-100"
-            resizeMode="cover"
-            defaultSource={{
-              uri: "https://gocami.gonext.tech/images/common/no-image.png",
-            }}
-            fadeDuration={0}
-          />
-
-          {!product.has_variants && (
-            <TouchableOpacity
-              className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 items-center justify-center z-10 shadow-sm"
-              onPress={handleAddToWishlist}
-              hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
-              activeOpacity={0.7}
-            >
-              <FontAwesome5
-                name="heart"
-                size={16}
-                color={isFavorite ? "#ffb500" : "#666"}
-                solid={isFavorite}
-              />
-            </TouchableOpacity>
-          )}
-
-          {hasSpecialPrice && discount > 0 && (
-            <View
-              className="absolute top-2 left-2 px-1.5 py-0.5 rounded"
-              style={{ backgroundColor: "#e4344f" }}
-            >
-              <Text className="text-white text-xs font-bold">-{discount}%</Text>
-            </View>
-          )}
-
-          {/* Timer badge */}
-          {timeLeft && (
-            <View className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded bg-black/70 flex-row items-center">
-              <Clock size={8} color="white" />
-              <Text className="text-white text-xs font-bold ml-1">
-                {timeLeft}
-              </Text>
+          ) : (
+            <View className="flex-row items-center">
+              {hasSpecialPrice ? (
+                <>
+                  <Text
+                    className="text-sm font-bold mr-1.5"
+                    style={{ color: "#e4344f" }}
+                  >
+                    {specialPrice ? `$${specialPrice}` : null}
+                  </Text>
+                  <Text className="text-xs text-gray-400 line-through">
+                    {price ? `$${price}` : null}
+                  </Text>
+                </>
+              ) : (
+                <Text className="text-sm font-bold text-gray-900">
+                  {price ? `$${price}` : null}
+                </Text>
+              )}
             </View>
           )}
         </View>
 
-        {/* Product details */}
-        <View className="p-2.5">
-          {/* Purchase Points */}
-          {purchasePoints && (
-            <View className="flex-row items-center mb-1">
-              <FontAwesome5 name="diamond" size={10} color={innerColor} />
-              <Text
-                className="text-xs font-semibold ml-1"
-                style={{ color: innerColor }}
-              >
-                {purchasePoints} pts
-              </Text>
-            </View>
-          )}
-
-          {/* Rating */}
-          {productRating > 0 && (
-            <View className="flex-row items-center mb-1">
-              <FontAwesome5 name="star" size={10} color="#FFD700" />
-              <Text className="text-xs text-gray-600 ml-0.5 font-medium">
-                {productRating.toFixed(1)}
-              </Text>
-            </View>
-          )}
-
-          {/* Product name */}
-          <Text
-            className="text-sm font-medium text-gray-900 mb-1"
-            numberOfLines={1}
+        {!isSimplifiedOrGrid ? (
+          <TouchableOpacity
+            className="absolute bottom-2.5 right-2.5 w-8 h-8 rounded-full items-center justify-center shadow-sm"
+            style={{ backgroundColor: innerColor }}
+            activeOpacity={0.8}
+            onPress={handleAddToCart}
           >
-            {productName}
-          </Text>
-
-          {/* Price row */}
-          <View className="flex-row items-center">
-            {hasSpecialPrice ? (
-              <>
-                <Text
-                  className="text-sm font-bold mr-1.5"
-                  style={{ color: "#e4344f" }}
-                >
-                  ${specialPrice}
-                </Text>
-                <Text className="text-xs text-gray-400 line-through">
-                  ${price}
-                </Text>
-              </>
-            ) : (
-              <Text className="text-sm font-bold text-gray-900">${price}</Text>
-            )}
-          </View>
-        </View>
-
-        {/* Add to cart button */}
-        <TouchableOpacity
-          className="absolute bottom-2.5 right-2.5 w-8 h-8 rounded-full items-center justify-center shadow-sm"
-          style={{ backgroundColor: innerColor }}
-          activeOpacity={0.8}
-          onPress={handleAddToCart}
-        >
-          <ShoppingBag size={16} color="#fff" />
-        </TouchableOpacity>
+            <FontAwesome5 name="shopping-bag" size={16} color="#fff" />
+          </TouchableOpacity>
+        ) : null}
       </TouchableOpacity>
     );
   },
@@ -479,7 +454,9 @@ const ProductCard = React.memo(
       prevProps.product.end_date === nextProps.product.end_date &&
       prevProps.product.purchase_points === nextProps.product.purchase_points &&
       prevProps.variant === nextProps.variant &&
-      prevProps.simplified === nextProps.simplified
+      prevProps.simplified === nextProps.simplified &&
+      prevProps.innerColor === nextProps.innerColor &&
+      prevProps.containerColor === nextProps.containerColor
     );
   }
 );

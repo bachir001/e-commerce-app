@@ -93,11 +93,11 @@ const FeaturedSection = React.memo(
         <View className="flex-row justify-between items-center px-4 mb-4">
           <View className="flex-1 mr-4">
             <Text className="text-lg font-bold text-gray-900">{title}</Text>
-            {description && (
+            {description ? (
               <Text className="text-sm text-gray-600 mt-0.5">
                 {description}
               </Text>
-            )}
+            ) : null}
           </View>
 
           <TouchableOpacity

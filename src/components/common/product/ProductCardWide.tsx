@@ -187,7 +187,7 @@ const ProductCardWide = React.memo(
             }}
           />
 
-          {hasSpecialPrice && discount > 0 && (
+          {hasSpecialPrice && discount > 0 ? (
             <View
               className="absolute top-3 left-3 px-2 py-1"
               style={{
@@ -197,9 +197,9 @@ const ProductCardWide = React.memo(
             >
               <Text className="text-white text-xs font-bold">-{discount}%</Text>
             </View>
-          )}
+          ) : null}
 
-          {quantity > 0 && quantity <= 10 && (
+          {quantity > 0 && quantity <= 10 ? (
             <View
               className="absolute top-3 right-3 px-2 py-1 flex-row items-center"
               style={{
@@ -212,13 +212,13 @@ const ProductCardWide = React.memo(
                 {quantity} left
               </Text>
             </View>
-          )}
+          ) : null}
         </View>
 
         <View className="flex-1 p-4 justify-between">
           <View>
             <View className="flex-row items-center justify-between mb-2">
-              {purchasePoints && (
+              {purchasePoints ? (
                 <View
                   className="flex-row items-center px-2 py-1"
                   style={{
@@ -226,7 +226,13 @@ const ProductCardWide = React.memo(
                     borderRadius: 12,
                   }}
                 >
-                  <FontAwesome5 name="diamond" size={10} color={innerColor} />
+                  {/* <FontAwesome5
+                    name="diamond"
+                    size={10}
+                    color="#5e3ebd"
+                    solid
+                  />
+                  ; */}
                   <Text
                     className="text-xs font-semibold ml-1"
                     style={{ color: innerColor }}
@@ -234,9 +240,9 @@ const ProductCardWide = React.memo(
                     {purchasePoints} pts
                   </Text>
                 </View>
-              )}
+              ) : null}
 
-              {product.has_variants && (
+              {product.has_variants ? (
                 <View
                   className="px-2 py-1"
                   style={{
@@ -248,7 +254,7 @@ const ProductCardWide = React.memo(
                     Multiple Options
                   </Text>
                 </View>
-              )}
+              ) : null}
             </View>
 
             <Text
@@ -258,7 +264,7 @@ const ProductCardWide = React.memo(
               {productName}
             </Text>
 
-            {productRating > 0 && (
+            {productRating > 0 ? (
               <View className="flex-row items-center mb-2">
                 <View className="flex-row items-center mr-3">
                   <Star size={14} color="#FFD700" fill="#FFD700" />
@@ -266,19 +272,19 @@ const ProductCardWide = React.memo(
                     {productRating.toFixed(1)}
                   </Text>
                 </View>
-                {reviews > 0 && (
+                {reviews > 0 ? (
                   <Text className="text-xs text-gray-500">
                     ({reviews} reviews)
                   </Text>
-                )}
+                ) : null}
               </View>
-            )}
+            ) : null}
 
-            {(highlights || description) && (
+            {highlights || description ? (
               <Text className="text-sm text-gray-600 mb-3" numberOfLines={2}>
                 {highlights || description}
               </Text>
-            )}
+            ) : null}
           </View>
 
           <View>
@@ -304,7 +310,7 @@ const ProductCardWide = React.memo(
               </View>
 
               <View className="flex-row items-center">
-                {!product?.has_variants && (
+                {!product?.has_variants ? (
                   <TouchableOpacity
                     className="w-11 h-11 items-center justify-center mr-3"
                     style={{
@@ -328,7 +334,7 @@ const ProductCardWide = React.memo(
                       solid={isFavorite}
                     />
                   </TouchableOpacity>
-                )}
+                ) : null}
 
                 <TouchableOpacity
                   className="w-11 h-11 items-center justify-center"
@@ -347,7 +353,7 @@ const ProductCardWide = React.memo(
               </View>
             </View>
 
-            {(quantity > 0 || showCounter) && (
+            {quantity > 0 || showCounter ? (
               <View
                 className="flex-row items-center justify-between px-3 py-2"
                 style={{
@@ -378,7 +384,7 @@ const ProductCardWide = React.memo(
                     : "Out of Stock"}
                 </Text>
               </View>
-            )}
+            ) : null}
           </View>
         </View>
       </TouchableOpacity>

@@ -48,7 +48,7 @@ export default function loginAccount() {
       if (phoneNumber.length >= 1) RequestBody.mobile = `961${phoneNumber}`;
 
       await axiosApi
-        .post("https://api-gocami-test.gocami.com/api/login", RequestBody)
+        .post("login", RequestBody)
         .then(async (response) => {
           if (response.data.status) {
             loginOneSignal(response.data.data.user.id.toString());
@@ -236,7 +236,7 @@ export default function loginAccount() {
               </View>
             </View>
 
-            {(email.length >= 1 || phoneNumber.length >= 1) && (
+            {email.length >= 1 || phoneNumber.length >= 1 ? (
               <View className="mb-8">
                 <Text className="text-sm font-bold text-gray-800 mb-3">
                   Password
@@ -263,9 +263,19 @@ export default function loginAccount() {
                   />
                 </View>
               </View>
-            )}
+            ) : null}
 
-            {password.length >= 1 && (
+            <Text className="mt-3 text-gray-500 text-xs">
+              Forgot your password?{" "}
+              <Link
+                href="/auth/resetPassword"
+                className="text-red-600 text-sm font-bold"
+              >
+                Click here
+              </Link>
+            </Text>
+
+            {password.length >= 1 ? (
               <TouchableOpacity
                 className="py-4 rounded-2xl mb-6"
                 style={{
@@ -287,7 +297,7 @@ export default function loginAccount() {
                   </Text>
                 )}
               </TouchableOpacity>
-            )}
+            ) : null}
           </View>
         </KeyboardAvoidingView>
 

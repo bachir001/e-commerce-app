@@ -13,6 +13,7 @@ import axios from "axios";
 import DotsLoader from "./AnimatedLayout";
 import EmptyState from "./EmptyList";
 import ErrorState from "./ErrorState";
+import axiosApi from "@/apis/axiosApi";
 
 const { width } = Dimensions.get("window");
 const ITEM_WIDTH = (width - 48) / 2;
@@ -55,8 +56,8 @@ const InfiniteList = ({
     setError(null);
 
     try {
-      const response = await axios.get(
-        `https://api-gocami-test.gocami.com/api/${
+      const response = await axiosApi.get(
+        `${
           isBrand ? "get-brand-products" : "getCategoryData"
         }/${encodeURIComponent(slug)}/`,
         {

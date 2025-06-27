@@ -200,7 +200,7 @@ export default function Category() {
             autoCapitalize="none"
             selectTextOnFocus={false}
           />
-          {query.length > 0 && (
+          {query.length > 0 ? (
             <TouchableOpacity
               onPress={() => setQuery("")}
               className="w-6 h-6 bg-gray-300 rounded-full items-center justify-center ml-1"
@@ -208,7 +208,7 @@ export default function Category() {
             >
               <FontAwesome5 name="times" size={10} color="#6B7280" />
             </TouchableOpacity>
-          )}
+          ) : null}
         </View>
 
         <View className="flex-row justify-between items-center mx-4 mt-4 ">
@@ -270,7 +270,7 @@ export default function Category() {
         <View className="h-px bg-gray-200 mt-4 mx-4" />
       </View>
 
-      {activeTab === "sort" && (
+      {activeTab === "sort" ? (
         <View
           className=" bg-white rounded-b-lg shadow-lg mx-4"
           style={{
@@ -307,7 +307,7 @@ export default function Category() {
             </TouchableOpacity>
           ))}
         </View>
-      )}
+      ) : null}
 
       <InfiniteList
         slug={Array.isArray(slug) ? slug[0] : slug ?? ""}

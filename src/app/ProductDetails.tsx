@@ -9,6 +9,7 @@ import {
   Alert,
   TouchableOpacity,
   Share,
+  Image, // Import Image here
 } from "react-native";
 import { useCartStore } from "@/store/cartStore";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -39,10 +40,13 @@ interface MainDetail extends Product {
 
 export default function ProductDetailsScreen(): React.ReactElement {
   const { productJSON } = useLocalSearchParams();
-  const product =
-    typeof productJSON === "string"
-      ? (JSON.parse(productJSON) as Product)
-      : null;
+  const product = useMemo(
+    () =>
+      typeof productJSON === "string"
+        ? (JSON.parse(productJSON) as Product)
+        : null,
+    [productJSON]
+  );
 
   const {
     data: relatedProducts,
@@ -250,14 +254,12 @@ export default function ProductDetailsScreen(): React.ReactElement {
         showsVerticalScrollIndicator={false}
         removeClippedSubviews={true}
       >
-        {/* Header */}
         <ProductHeader
           isFavorite={isFavorite}
           shareProduct={shareProduct}
           toggleFavorite={toggleFavorite}
         />
 
-        {/* Main Image Carousel */}
         <MainImageCarousel
           activeImageIndex={activeImageIndex}
           allImages={
@@ -271,7 +273,6 @@ export default function ProductDetailsScreen(): React.ReactElement {
           setActiveImageIndex={setActiveImageIndex}
         />
 
-        {/* Thumbnail Carousel */}
         <ThumbnailCarousel
           allImages={
             productDetailLoading
@@ -286,29 +287,25 @@ export default function ProductDetailsScreen(): React.ReactElement {
           productDetailLoading={productDetailLoading}
         />
 
-        {/* Consolidated Price and Discount Information */}
         <View className="px-4 py-4 bg-white">
-          {/* Purchase Points */}
-          {purchasePoints && (
+          {purchasePoints ? (
             <View className="flex-row items-center mb-3 bg-purple-50 px-3 py-2 rounded-lg">
-              <FontAwesome5 name="diamond" size={16} color="#5E3EBD" />
+              {/* <FontAwesome5 name="diamond" size={10} color="#5e3ebd" solid />; */}
               <Text className="text-purple-700 font-semibold ml-2">
                 Earn {purchasePoints} points with this purchase
               </Text>
             </View>
-          )}
+          ) : null}
 
-          {/* Discount Timer */}
-          {timeLeft !== null && priceData?.hasSpecialPrice && (
+          {timeLeft !== null && priceData?.hasSpecialPrice ? (
             <View className="flex-row items-center mb-3 bg-red-50 px-3 py-2 rounded-lg">
               <Clock size={16} color="#EF4444" />
               <Text className="text-red-600 font-semibold ml-2">
                 🔥 Limited Time: {timeLeft}
               </Text>
             </View>
-          )}
+          ) : null}
 
-          {/* Consolidated Price Display */}
           <View className="mb-4">
             {priceData?.hasSpecialPrice ? (
               <View className="flex-row items-center justify-between">
@@ -317,28 +314,28 @@ export default function ProductDetailsScreen(): React.ReactElement {
                     <Text className="text-3xl font-bold text-red-500">
                       ${priceData.specialPrice?.toFixed(2)}
                     </Text>
-                    {priceData.discount > 0 && (
+                    {priceData.discount > 0 ? (
                       <View className="ml-3 bg-red-500 px-2 py-1 rounded">
                         <Text className="text-white text-sm font-bold">
                           -{priceData.discount}% OFF
                         </Text>
                       </View>
-                    )}
+                    ) : null}
                   </View>
                   <View className="flex-row items-center mt-1">
                     <Text className="text-lg text-gray-400 line-through mr-2">
                       ${priceData.regularPrice.toFixed(2)}
                     </Text>
                     {priceData.hasSpecialPrice &&
-                      priceData.specialPrice !== null &&
-                      priceData.specialPrice !== undefined && (
-                        <Text className="text-green-600 font-semibold">
-                          Save $
-                          {(
-                            priceData.regularPrice - priceData.specialPrice
-                          ).toFixed(2)}
-                        </Text>
-                      )}
+                    priceData.specialPrice !== null &&
+                    priceData.specialPrice !== undefined ? (
+                      <Text className="text-green-600 font-semibold">
+                        Save $
+                        {(
+                          priceData.regularPrice - priceData.specialPrice
+                        ).toFixed(2)}
+                      </Text>
+                    ) : null}
                   </View>
                 </View>
                 <Text className="text-xl font-bold text-red-500">
@@ -350,15 +347,11 @@ export default function ProductDetailsScreen(): React.ReactElement {
                 <Text className="text-3xl font-bold text-[#5E3EBD]">
                   ${priceData?.regularPrice.toFixed(2)}
                 </Text>
-                {/* <Text className="text-xl font-bold text-[#5E3EBD]">
-                  ${priceData?.totalPrice.toFixed(2)}
-                </Text> */}
               </View>
             )}
           </View>
         </View>
 
-        {/* Product Information - Removed price display from here */}
         <ProductInformation
           brand={productDetail?.brand}
           categories={productDetail?.categories}
@@ -371,24 +364,19 @@ export default function ProductDetailsScreen(): React.ReactElement {
           reviews={productDetail?.reviews}
           sku={productDetail?.sku}
           toggleSection={toggleSection}
+          productDetailLoading={productDetailLoading}
         />
 
-        {/* Similar Products Section */}
         <SimilarProductsSection similarProducts={relatedProducts} />
       </ScrollView>
 
-      {/* Bottom Action Bar */}
       {productDetailLoading ? (
         <View className="bg-white border-t border-gray-200 px-4 py-4">
           <View className="flex-row items-center justify-between mb-4">
-            {/* Quantity Selector Skeleton */}
             <View className="w-24 h-10 rounded-md bg-[#e0d7f5]"></View>
-
-            {/* Price Skeleton */}
             <View className="w-16 h-6 rounded bg-[#e0d7f5]"></View>
           </View>
 
-          {/* Add to Cart Button Skeleton */}
           <View className="w-full rounded-xl py-4 px-6 flex-row items-center justify-center bg-[#e0d7f5]">
             <View className="w-5 h-5 rounded-full bg-[#d0c4f0] mr-2"></View>
             <View className="w-24 h-5 rounded bg-[#d0c4f0]"></View>

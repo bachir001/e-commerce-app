@@ -164,7 +164,7 @@ function FiltersModal({
           showsVerticalScrollIndicator={false} // Optional: hide scroll indicator if desired
         >
           {/*Categories*/}
-          {categories && categories.length > 0 && (
+          {categories && categories.length > 0 ? (
             <View className="mb-5">
               <Text className="text-lg font-bold mb-2.5 text-gray-800">
                 Categories
@@ -188,10 +188,10 @@ function FiltersModal({
                 ))}
               </View>
             </View>
-          )}
+          ) : null}
 
           {/*Brands*/}
-          {brands && brands.length > 0 && (
+          {brands && brands.length > 0 ? (
             <View className="mb-5">
               <Text className="text-lg font-bold mb-2.5 text-gray-800">
                 Brands
@@ -213,10 +213,10 @@ function FiltersModal({
                 ))}
               </View>
             </View>
-          )}
+          ) : null}
 
           {/*Colors*/}
-          {colors && colors.length > 0 && (
+          {colors && colors.length > 0 ? (
             <View className="mb-5">
               <Text className="text-lg font-bold mb-2.5 text-gray-800">
                 Colors
@@ -237,10 +237,10 @@ function FiltersModal({
                 ))}
               </View>
             </View>
-          )}
+          ) : null}
 
           {/*Sizes*/}
-          {sizes && sizes.length > 0 && (
+          {sizes && sizes.length > 0 ? (
             <View className="mb-5">
               <Text className="text-lg font-bold mb-2.5 text-gray-800">
                 Sizes
@@ -262,7 +262,7 @@ function FiltersModal({
                 ))}
               </View>
             </View>
-          )}
+          ) : null}
         </ScrollView>
       </View>
     </Modal>

@@ -22,6 +22,7 @@ import { useCartStore } from "@/store/cartStore";
 import { getOrCreateSessionId } from "@/lib/session";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
+import axiosApi from "@/apis/axiosApi";
 
 interface Governorate {
   id: number;
@@ -137,8 +138,8 @@ export default function ShippingScreen(): React.ReactElement {
 
   // Fetch governorates
   useEffect(() => {
-    axios
-      .get("https://api-gocami-test.gocami.com/api/governorates")
+    axiosApi
+      .get("governorates")
       .then((response) => {
         if (response.data.status) {
           setGovernorateList(response.data.data);
@@ -156,8 +157,8 @@ export default function ShippingScreen(): React.ReactElement {
     }
     const gov = governorateList.find((g) => g.id === selectedGovernorateId);
     if (!gov) return;
-    axios
-      .get(`https://api-gocami-test.gocami.com/api/cities/${gov.code}`)
+    axiosApi
+      .get(`cities/${gov.code}`)
       .then((response) => {
         if (response.data.status) {
           setCityList(response.data.data);
@@ -175,10 +176,8 @@ export default function ShippingScreen(): React.ReactElement {
     }
     const city = cityList.find((c) => c.id === selectedCityId);
     if (!city) return;
-    axios
-      .get(
-        `https://newapi.gocami.com/api/areas/${encodeURIComponent(city.code)}`
-      )
+    axiosApi
+      .get(`areas/${encodeURIComponent(city.code)}`)
       .then((response) => {
         if (response.data.status) {
           setAreaList(response.data.data);
@@ -242,11 +241,9 @@ export default function ShippingScreen(): React.ReactElement {
         delivery_price: deliveryCost,
       };
 
-      const response = await axios.post(
-        "https://api-gocami-test.gocami.com/api/checkout-data",
-        requestBody,
-        { headers: { "x-session": sessionId } }
-      );
+      const response = await axiosApi.post("checkout-data", requestBody, {
+        headers: { "x-session": sessionId },
+      });
 
       if (response.data.status) {
         Toast.show({
@@ -319,7 +316,7 @@ export default function ShippingScreen(): React.ReactElement {
               {dateOfBirth.toLocaleDateString()}
             </Text>
           </Pressable>
-          {showDatePicker && (
+          {showDatePicker ? (
             <DateTimePicker
               value={dateOfBirth}
               mode="date"
@@ -329,7 +326,7 @@ export default function ShippingScreen(): React.ReactElement {
                 if (date) setDateOfBirth(date);
               }}
             />
-          )}
+          ) : null}
           <TextInput
             style={styles.input}
             placeholder="Mobile Number"
@@ -426,9 +423,9 @@ export default function ShippingScreen(): React.ReactElement {
               style={styles.radioOption}
             >
               <View style={styles.radioOuter}>
-                {deliveryMethod === "delivery" && (
+                {deliveryMethod === "delivery" ? (
                   <View style={styles.radioInner} />
-                )}
+                ) : null}
               </View>
               <Text style={styles.radioLabel}>Home Delivery</Text>
             </Pressable>
@@ -437,9 +434,9 @@ export default function ShippingScreen(): React.ReactElement {
               style={styles.radioOption}
             >
               <View style={styles.radioOuter}>
-                {deliveryMethod === "pickup" && (
+                {deliveryMethod === "pickup" ? (
                   <View style={styles.radioInner} />
-                )}
+                ) : null}
               </View>
               <Text style={styles.radioLabel}>Store Pickup</Text>
             </Pressable>

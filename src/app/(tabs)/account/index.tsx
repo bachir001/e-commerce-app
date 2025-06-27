@@ -248,7 +248,7 @@ export default function AccountScreen() {
             <IconGrid items={serviceItems} />
           </View>
 
-          {isLogged && (
+          {isLogged ? (
             <TouchableOpacity
               onPress={handleSignOut}
               className="mt-4 mx-4 bg-white rounded-2xl shadow-sm overflow-hidden p-4 flex-row items-center"
@@ -258,7 +258,7 @@ export default function AccountScreen() {
               </View>
               <Text className="font-medium text-red-500">Sign Out</Text>
             </TouchableOpacity>
-          )}
+          ) : null}
 
           <Footer
             socials={[

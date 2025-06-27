@@ -5,7 +5,7 @@ import { getOrCreateSessionId } from "@/lib/session";
 import { persist, createJSONStorage } from "zustand/middleware";
 import * as SecureStore from "expo-secure-store";
 
-const API_BASE = "https://api-gocami-test.gocami.com/api";
+const API_BASE = process.env.EXPO_PUBLIC_BACKEND_BASE_URL;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export type CartItem = {

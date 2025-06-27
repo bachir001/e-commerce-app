@@ -118,10 +118,7 @@ export default function CreateAccount() {
 
     try {
       setLoading(true);
-      const response = await axiosApi.post(
-        `https://api-gocami-test.gocami.com/api/register/complete`,
-        RequestBody
-      );
+      const response = await axiosApi.post(`register/complete`, RequestBody);
 
       if (response.status === 200) {
         const LoginBody: any = {
@@ -131,10 +128,7 @@ export default function CreateAccount() {
         if (emailParam) LoginBody.email = emailParam;
         if (mobileParam) LoginBody.mobile = mobileParam;
 
-        const loginResponse = await axiosApi.post(
-          "https://api-gocami-test.gocami.com/api/login",
-          LoginBody
-        );
+        const loginResponse = await axiosApi.post("login", LoginBody);
 
         if (loginResponse.data.status) {
           await loginOneSignal(loginResponse.data.data.user.id.toString());
@@ -335,7 +329,7 @@ export default function CreateAccount() {
               />
             </View>
 
-            {termAccepted && (
+            {termAccepted ? (
               <TouchableOpacity
                 style={{
                   backgroundColor: Colors.PRIMARY,
@@ -351,7 +345,7 @@ export default function CreateAccount() {
                   </Text>
                 )}
               </TouchableOpacity>
-            )}
+            ) : null}
 
             <View className="mt-6 flex flex-row justify-center items-center">
               <Text className="text-sm text-gray-600">

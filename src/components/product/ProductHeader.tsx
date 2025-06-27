@@ -1,12 +1,19 @@
 import { router } from "expo-router";
 import { ChevronLeft, Heart, Share2 } from "lucide-react-native";
 import { TouchableOpacity, View } from "react-native";
+import type React from "react";
+
+interface ProductHeaderProps {
+  toggleFavorite: () => void;
+  isFavorite: boolean;
+  shareProduct: () => Promise<void>;
+}
 
 export default function ProductHeader({
   toggleFavorite,
   isFavorite,
   shareProduct,
-}) {
+}: ProductHeaderProps): React.ReactElement {
   return (
     <View className="flex-row justify-between items-center px-4 py-2">
       <TouchableOpacity

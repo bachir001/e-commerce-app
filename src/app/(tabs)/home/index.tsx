@@ -162,9 +162,9 @@ export default function HomeScreen() {
       <View style={{ flex: 1, width: "100%" }}>
         <Header />
         <CategorySection />
-        {newArrivals && newArrivals?.length > 0 && (
-          <FeaturedSection list={true} type="new-arrivals" />
-        )}
+        {newArrivals && newArrivals?.length > 0 ? (
+          <FeaturedSection list={true} {...HOMEPAGE_SECTIONS.newArrivals} />
+        ) : null}
       </View>
     ),
     [newArrivals]

@@ -1,9 +1,16 @@
 import { FlatList, ListRenderItem, Text, View } from "react-native";
 import { useCallback } from "react";
 import ProductCard from "../common/product/ProductCard";
-import { Product } from "@/types/globalTypes";
+import type { Product } from "@/types/globalTypes";
+import type React from "react";
 
-export default function SimilarProductsSection({ similarProducts }) {
+interface SimilarProductsSectionProps {
+  similarProducts?: Product[];
+}
+
+export default function SimilarProductsSection({
+  similarProducts,
+}: SimilarProductsSectionProps): React.ReactElement {
   const renderSimilarProduct: ListRenderItem<Product> = useCallback(
     ({ item }) => <ProductCard product={item} />,
     []
@@ -23,9 +30,7 @@ export default function SimilarProductsSection({ similarProducts }) {
       <FlatList
         horizontal
         showsHorizontalScrollIndicator={false}
-        data={
-          similarProducts && similarProducts.length > 0 ? similarProducts : []
-        }
+        data={similarProducts.length > 0 ? similarProducts : []}
         keyExtractor={(item) => `similar-${item.id}`}
         contentContainerStyle={{ paddingLeft: 16, paddingRight: 8 }}
         renderItem={renderSimilarProduct}

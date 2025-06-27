@@ -41,14 +41,14 @@ export default function CategoryHeader({
         <View className="flex-row items-center">
           <Text className="text-white text-xl font-bold">{title}</Text>
 
-          {coloredTitle && (
+          {coloredTitle ? (
             <Text
               className="text-xl font-bold ml-2"
               style={{ color: accentColor }}
             >
               - {coloredTitle}
             </Text>
-          )}
+          ) : null}
         </View>
 
         <Pressable

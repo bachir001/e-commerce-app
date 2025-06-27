@@ -61,7 +61,7 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
         </Text>
       </View>
 
-      {authType === "sign-up" && (
+      {authType === "sign-up" ? (
         <>
           <View
             className="flex-row mb-8 p-1 rounded-2xl"
@@ -255,19 +255,19 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
             />
           </View>
         </>
-      )}
+      ) : null}
 
       {authType === "sign-in" && <View className="mt-12" />}
 
       <View className="flex-col gap-4 mb-8">
-        {authType === "sign-in" && (
+        {authType === "sign-in" ? (
           <AuthButton
             text="Phone/Email"
             icon="mail-outline"
             iconColor="#4B5563"
             href={"/auth/signInAccount"}
           />
-        )}
+        ) : null}
         <AuthButton text="Sign In with Google" icon="logo-google" />
         <AuthButton text="Sign In with Facebook" icon="logo-facebook" />
       </View>

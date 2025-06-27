@@ -8,17 +8,25 @@ import {
   View,
 } from "react-native";
 import CarouselImage from "./CarouselImage";
+import type React from "react";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+interface MainImageCarouselProps {
+  mainCarouselReference: React.RefObject<FlatList<string>>;
+  allImages: string[];
+  activeImageIndex: number;
+  setActiveImageIndex: React.Dispatch<React.SetStateAction<number>>;
+}
 
 export default function MainImageCarousel({
   mainCarouselReference,
   allImages,
   activeImageIndex,
   setActiveImageIndex,
-}) {
+}: MainImageCarouselProps): React.ReactElement {
   const getItemLayout = useCallback(
-    (_: any, index: number) => ({
+    (_: unknown, index: number) => ({
       length: SCREEN_WIDTH,
       offset: SCREEN_WIDTH * index,
       index,
@@ -43,7 +51,7 @@ export default function MainImageCarousel({
         setActiveImageIndex(index);
       }
     },
-    [activeImageIndex, allImages.length]
+    [activeImageIndex, allImages.length, setActiveImageIndex]
   );
 
   return (
@@ -65,8 +73,7 @@ export default function MainImageCarousel({
         initialNumToRender={1}
       />
 
-      {/* Pagination Indicators */}
-      {allImages && allImages.length > 1 && (
+      {allImages.length > 1 ? (
         <View className="absolute bottom-4 left-0 right-0 flex-row justify-center items-center">
           {allImages.map((_, index: number) => (
             <View
@@ -77,7 +84,7 @@ export default function MainImageCarousel({
             />
           ))}
         </View>
-      )}
+      ) : null}
     </View>
   );
 }

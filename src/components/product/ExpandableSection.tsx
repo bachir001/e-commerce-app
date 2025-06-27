@@ -29,11 +29,11 @@ const ExpandableSection = React.memo<{
         <ChevronDown size={20} color="#333" />
       )}
     </Pressable>
-    {isExpanded && (
+    {isExpanded ? (
       <Text className="text-gray-700 leading-6 mb-4">
         {stripHtmlTags(content)}
       </Text>
-    )}
+    ) : null}
   </>
 ));
 
