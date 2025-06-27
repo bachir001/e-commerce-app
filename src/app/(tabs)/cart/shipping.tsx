@@ -453,6 +453,7 @@ export default function ShippingScreen(): React.ReactElement {
             <View key={item.id} style={styles.itemRow}>
               <View style={styles.rowLeft}>
                 <Image
+                  fadeDuration={0}
                   source={{ uri: item.imageUrl }}
                   style={styles.productImage}
                 />

@@ -40,13 +40,12 @@ export default function loginAccount() {
   const handleLogin = async () => {
     setLoading(true);
     try {
-      //post login with body
       const RequestBody: LoginBody = {
         password,
       };
 
       if (email.length >= 1) RequestBody.email = email;
-      if (phoneNumber.length >= 1) RequestBody.mobile = phoneNumber;
+      if (phoneNumber.length >= 1) RequestBody.mobile = `961${phoneNumber}`;
 
       await axiosApi
         .post("https://api-gocami-test.gocami.com/api/login", RequestBody)
@@ -100,125 +99,214 @@ export default function loginAccount() {
   const keyboardAvoidingBehavior = Platform.OS === "ios" ? "padding" : "height";
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "#fafafa" }}>
       <Stack.Screen options={{ headerShown: false }} />
 
+      <View
+        style={[
+          StyleSheet.absoluteFillObject,
+          {
+            backgroundColor: "rgba(110, 62, 189, 0.03)",
+          },
+        ]}
+      />
+
       <Image
+        fadeDuration={0}
         source={require("@/assets/images/logo.png")}
         resizeMode="contain"
         style={[
           StyleSheet.absoluteFillObject,
           {
             transform: [
-              { translateY: 300 },
-              { rotate: "-10deg" },
-              { scale: 1.1 },
+              { translateY: 280 },
+              { rotate: "-8deg" },
+              { scale: 0.9 },
             ],
-            opacity: 0.7,
-            width: 400,
+            opacity: 0.08,
+            width: 350,
             justifyContent: "center",
             alignItems: "center",
           },
         ]}
       />
 
-      <SafeAreaView className="flex-1 px-16 py-20">
+      <SafeAreaView className="flex-1 px-6">
         <KeyboardAvoidingView
           className="flex-1"
           behavior={keyboardAvoidingBehavior}
           keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
         >
-          <Text className="text-4xl font-bold">
-            Sign in with{" "}
-            {email.length >= 1
-              ? "email"
-              : phoneNumber.length >= 1
-              ? "phone"
-              : "email"}
-          </Text>
-          <Text className="mt-2 text-sm">Start using GoCami's features!</Text>
-          <View
-            style={{
-              transform: [{ translateY: 50 }],
-              position: "relative",
-            }}
-          >
-            <Text className="mt-10 text-sm font-bold">Email</Text>
-            <TextInput
-              placeholder="Enter Email"
-              className="py-4 pl-5 border border-gray-200 rounded-lg mt-2 bg-white shadow-sm"
-              keyboardType="email-address"
-              placeholderTextColor="#9CA3AF"
-              value={email}
-              onChangeText={setEmail}
-              editable={phoneNumber.length === 0}
-            />
+          <View className="pt-16 pb-8">
+            <Text className="text-4xl font-bold text-gray-900 mb-3">
+              Sign in with{" "}
+              <Text style={{ color: Colors.PRIMARY }}>
+                {email.length >= 1
+                  ? "email"
+                  : phoneNumber.length >= 1
+                  ? "phone"
+                  : "email"}
+              </Text>
+            </Text>
+            <Text className="text-gray-600 text-base leading-6">
+              Start using GoCami's amazing features!
+            </Text>
+          </View>
 
-            <Text className="text-sm font-bold mt-10">Phone Number</Text>
-            <View className="flex flex-row mt-2 bg-white border border-gray-200 rounded-xl px-4 py-3.5 items-center shadow-sm">
-              <Text className="text-sm font-medium text-gray-700 mr-3">
-                +961
+          <View className="flex-1">
+            <View className="mb-6">
+              <Text className="text-sm font-bold text-gray-800 mb-3">
+                Email Address
               </Text>
               <View
+                className="px-5 py-4 rounded-2xl border"
                 style={{
-                  width: 1,
-                  height: "60%",
-                  backgroundColor: "#E5E7EB",
-                  marginRight: 10,
+                  backgroundColor:
+                    email.length === 0 && phoneNumber.length > 0
+                      ? "rgba(243, 244, 246, 0.5)"
+                      : "white",
+                  borderColor: "rgba(110, 62, 189, 0.15)",
+                  shadowColor: "rgba(110, 62, 189, 0.1)",
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 1,
+                  shadowRadius: 12,
+                  elevation: 4,
                 }}
-              />
-              <TextInput
-                keyboardType="phone-pad"
-                placeholder="Phone number"
-                className="w-full text-gray-700 mt-2"
-                placeholderTextColor="#9CA3AF"
-                value={phoneNumber}
-                editable={email.length === 0}
-                onChangeText={setPhoneNumber}
-              />
+              >
+                <TextInput
+                  placeholder="Enter your email address"
+                  className="text-gray-800 text-base"
+                  keyboardType="email-address"
+                  placeholderTextColor="#9CA3AF"
+                  value={email}
+                  onChangeText={setEmail}
+                  editable={phoneNumber.length === 0}
+                  autoCapitalize="none"
+                />
+              </View>
+            </View>
+
+            <View className="mb-6">
+              <Text className="text-sm font-bold text-gray-800 mb-3">
+                Phone Number
+              </Text>
+              <View
+                className="flex-row items-center px-5 py-4 rounded-2xl border"
+                style={{
+                  backgroundColor:
+                    phoneNumber.length === 0 && email.length > 0
+                      ? "rgba(243, 244, 246, 0.5)"
+                      : "white",
+                  borderColor: "rgba(110, 62, 189, 0.15)",
+                  shadowColor: "rgba(110, 62, 189, 0.1)",
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 1,
+                  shadowRadius: 12,
+                  elevation: 4,
+                }}
+              >
+                <View
+                  className="px-3 py-2 rounded-lg mr-3"
+                  style={{ backgroundColor: "rgba(110, 62, 189, 0.1)" }}
+                >
+                  <Text
+                    className="text-sm font-bold"
+                    style={{ color: Colors.PRIMARY }}
+                  >
+                    +961
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    width: 1,
+                    height: 24,
+                    backgroundColor: "rgba(110, 62, 189, 0.2)",
+                    marginRight: 12,
+                  }}
+                />
+                <TextInput
+                  keyboardType="phone-pad"
+                  placeholder="Phone number"
+                  className="flex-1 text-gray-800 text-base"
+                  placeholderTextColor="#9CA3AF"
+                  value={phoneNumber}
+                  editable={email.length === 0}
+                  onChangeText={setPhoneNumber}
+                />
+              </View>
             </View>
 
             {(email.length >= 1 || phoneNumber.length >= 1) && (
-              <View>
-                <Text className="text-sm font-bold mt-10">Password</Text>
-                <TextInput
-                  placeholder="Enter Password"
-                  className="py-4 pl-5 border border-gray-200 rounded-lg mt-2 bg-white shadow-sm"
-                  secureTextEntry
-                  value={password}
-                  onChangeText={setPassword}
-                />
+              <View className="mb-8">
+                <Text className="text-sm font-bold text-gray-800 mb-3">
+                  Password
+                </Text>
+                <View
+                  className="px-5 py-4 rounded-2xl border"
+                  style={{
+                    backgroundColor: "white",
+                    borderColor: "rgba(110, 62, 189, 0.15)",
+                    shadowColor: "rgba(110, 62, 189, 0.1)",
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 1,
+                    shadowRadius: 12,
+                    elevation: 4,
+                  }}
+                >
+                  <TextInput
+                    placeholder="Enter your password"
+                    className="text-gray-800 text-base"
+                    secureTextEntry
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
               </View>
             )}
 
             {password.length >= 1 && (
               <TouchableOpacity
+                className="py-4 rounded-2xl mb-6"
                 style={{
                   backgroundColor: Colors.PRIMARY,
+                  shadowColor: Colors.PRIMARY,
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 16,
+                  elevation: 8,
                 }}
-                className={`mt-5 py-4 rounded-lg shadow-sm`}
                 onPress={handleLogin}
+                disabled={loading}
               >
                 {loading ? (
                   <DotsLoader size="small" color="white" />
                 ) : (
-                  <Text className="text-white text-center">Sign In</Text>
+                  <Text className="text-white text-center font-bold text-base">
+                    Sign In
+                  </Text>
                 )}
               </TouchableOpacity>
             )}
           </View>
         </KeyboardAvoidingView>
 
-        <View className="bg-gray-50 flex flex-row items-center justify-center absolute bottom-0 left-0 right-0 h-32 border-t border-gray-100">
-          <Text className="text-gray-600">
+        <View
+          className="absolute bottom-0 left-0 right-0 items-center justify-center py-8"
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            backdropFilter: "blur(10px)",
+            borderTopWidth: 1,
+            borderTopColor: "rgba(110, 62, 189, 0.1)",
+          }}
+        >
+          <Text className="text-gray-600 text-base">
             Don't have an account?{" "}
             <Link
               href="/auth/signUp"
               replace
-              style={{
-                color: Colors.PRIMARY,
-              }}
-              className="font-semibold"
+              style={{ color: Colors.PRIMARY }}
+              className="font-bold"
             >
               Sign Up
             </Link>

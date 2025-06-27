@@ -12,7 +12,7 @@ export default function AddressDetails() {
   const addressParsed: Address = JSON.parse(address as string);
 
   const handleEdit = () => {
-    router.push({
+    router.navigate({
       pathname: "/addresses/editAddress",
       params: {
         address: JSON.stringify(addressParsed),

@@ -45,6 +45,7 @@ function CircularCategory({ props }: CircularCategoryProps) {
           source={{ uri: props.mega_mobile_bg }}
           className="w-[60px] h-[60px] rounded-[25px]"
           resizeMode="cover"
+          fadeDuration={0}
         />
       </View>
 

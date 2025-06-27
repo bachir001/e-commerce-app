@@ -73,7 +73,7 @@ export default function AddressPage() {
   });
 
   const handleEdit = (address: Address) => {
-    router.push({
+    router.navigate({
       pathname: "/addresses/editAddress",
       params: {
         address: JSON.stringify(address),
@@ -82,7 +82,7 @@ export default function AddressPage() {
   };
 
   const handleShowAll = (address: Address) => {
-    router.push({
+    router.navigate({
       pathname: "/addresses/addressDetails",
       params: {
         address: JSON.stringify(address),
@@ -91,7 +91,7 @@ export default function AddressPage() {
   };
 
   const handleAddAddress = () => {
-    router.push("/addresses/addAddress");
+    router.navigate("/addresses/addAddress");
   };
 
   const handleDelete = async (address: Address) => {

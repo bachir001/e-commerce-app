@@ -13,7 +13,7 @@ const CarouselImage = React.memo<{ uri: string; width: number }>(
         source={{ uri } as ImageSourcePropType}
         className="w-full h-full"
         resizeMode="contain"
-        fadeDuration={200}
+        fadeDuration={0}
         loadingIndicatorSource={{
           uri: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
         }}

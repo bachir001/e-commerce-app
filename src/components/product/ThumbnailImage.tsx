@@ -20,7 +20,7 @@ const ThumbnailImage = React.memo<{
       source={{ uri } as ImageSourcePropType}
       style={{ width: THUMBNAIL_SIZE, height: THUMBNAIL_SIZE }}
       resizeMode="cover"
-      fadeDuration={200}
+      fadeDuration={0}
     />
   </TouchableOpacity>
 ));

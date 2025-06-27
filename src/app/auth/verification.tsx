@@ -112,7 +112,7 @@ export default function Verification() {
               autoHide: true,
               topOffset: 60,
               onHide: () => {
-                router.push({
+                router.navigate({
                   pathname: "/auth/createAccount",
                   params: {
                     email: email?.toString() || "",

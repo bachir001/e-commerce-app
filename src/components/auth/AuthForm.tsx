@@ -6,7 +6,7 @@ import {
   Dimensions,
   TouchableOpacity,
 } from "react-native";
-import React, { useState } from "react"; // Import useState
+import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AuthHeader from "./AuthHeader";
 import AuthButton from "./AuthButton";
@@ -18,9 +18,9 @@ interface AuthParams {
   authType: string;
 }
 
-const _paddingHorizontal = 30;
-const separatorGap = 4;
-const OR_WIDTH = 14;
+const _paddingHorizontal = 24;
+const separatorGap = 6;
+const OR_WIDTH = 16;
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const phoneRegex =
@@ -40,18 +40,21 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
 
   return (
     <SafeAreaView
-      className="bg-white flex-1 pt-16"
+      className="flex-1"
       style={{
+        backgroundColor: "#fafafa",
         paddingHorizontal: _paddingHorizontal,
       }}
     >
-      <AuthHeader />
+      <View className="pt-12">
+        <AuthHeader />
+      </View>
 
-      <View className="mt-8">
-        <Text className="text-3xl font-bold text-gray-800 text-center">
+      <View className="mt-12 mb-8">
+        <Text className="text-3xl font-bold text-gray-900 text-center mb-3">
           {authType === "sign-up" ? "Create Account" : "Welcome Back"}
         </Text>
-        <Text className="text-gray-500 text-center mt-2">
+        <Text className="text-gray-600 text-center text-base leading-6">
           {authType === "sign-up"
             ? "Join GoCami and discover amazing products"
             : "Sign in to continue your shopping experience"}
@@ -60,83 +63,131 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
 
       {authType === "sign-up" && (
         <>
-          {/* Tab Navigation */}
-          <View className="flex flex-row mt-10 mb-5 justify-center">
+          <View
+            className="flex-row mb-8 p-1 rounded-2xl"
+            style={{
+              backgroundColor: "rgba(110, 62, 189, 0.08)",
+            }}
+          >
             <Pressable
               onPress={() => setActiveTab("phone")}
-              className={`py-3 px-6 rounded-l-xl ${
-                activeTab === "phone" ? "bg-gray-200" : "bg-gray-100"
-              }`}
+              className={`flex-1 py-3 px-4 rounded-xl`}
+              style={{
+                backgroundColor:
+                  activeTab === "phone"
+                    ? "rgba(110, 62, 189, 1)"
+                    : "transparent",
+              }}
             >
               <Text
-                className={`font-semibold ${
-                  activeTab === "phone" ? "text-gray-800" : "text-gray-500"
+                className={`font-semibold text-center ${
+                  activeTab === "phone" ? "text-white" : "text-gray-700"
                 }`}
               >
                 Phone
               </Text>
             </Pressable>
-            <TouchableOpacity
+            <Pressable
               onPress={() => setActiveTab("email")}
-              className={`py-3 px-6 rounded-r-xl ${
-                activeTab === "email" ? "bg-gray-200" : "bg-gray-100"
-              }`}
+              className={`flex-1 py-3 px-4 rounded-xl`}
+              style={{
+                backgroundColor:
+                  activeTab === "email"
+                    ? "rgba(110, 62, 189, 1)"
+                    : "transparent",
+              }}
             >
               <Text
-                className={`font-semibold ${
-                  activeTab === "email" ? "text-gray-800" : "text-gray-500"
+                className={`font-semibold text-center ${
+                  activeTab === "email" ? "text-white" : "text-gray-700"
                 }`}
               >
                 Email
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
-          <View className="flex flex-col gap-5">
+          <View className="mb-8">
             {activeTab === "phone" ? (
-              <View className="flex flex-row bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 items-center shadow-sm">
-                <Text className="text-sm font-medium text-gray-700 mr-3">
-                  +961
-                </Text>
+              <View
+                className="flex-row items-center px-5 py-4 rounded-2xl border"
+                style={{
+                  backgroundColor: "white",
+                  borderColor: "rgba(110, 62, 189, 0.15)",
+                  shadowColor: "rgba(110, 62, 189, 0.1)",
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 1,
+                  shadowRadius: 12,
+                  elevation: 4,
+                }}
+              >
+                <View
+                  className="px-3 py-2 rounded-lg mr-3"
+                  style={{ backgroundColor: "rgba(110, 62, 189, 0.1)" }}
+                >
+                  <Text
+                    className="text-sm font-bold"
+                    style={{ color: Colors.PRIMARY }}
+                  >
+                    +961
+                  </Text>
+                </View>
                 <View
                   style={{
                     width: 1,
-                    height: "60%",
-                    backgroundColor: "#E5E7EB",
-                    marginRight: 10,
+                    height: 24,
+                    backgroundColor: "rgba(110, 62, 189, 0.2)",
+                    marginRight: 12,
                   }}
                 />
                 <TextInput
                   keyboardType="phone-pad"
                   placeholder="Phone number"
-                  className="w-full text-gray-700"
+                  className="flex-1 text-gray-800 text-base"
                   placeholderTextColor="#9CA3AF"
                   onChangeText={setMobile}
                 />
               </View>
             ) : (
-              <TextInput
-                keyboardType="email-address"
-                placeholder="Email address"
-                className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-gray-700 shadow-sm"
-                placeholderTextColor="#9CA3AF"
-                autoCapitalize="none"
-                onChangeText={setEmail}
-              />
+              <View
+                className="px-5 py-4 rounded-2xl border"
+                style={{
+                  backgroundColor: "white",
+                  borderColor: "rgba(110, 62, 189, 0.15)",
+                  shadowColor: "rgba(110, 62, 189, 0.1)",
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 1,
+                  shadowRadius: 12,
+                  elevation: 4,
+                }}
+              >
+                <TextInput
+                  keyboardType="email-address"
+                  placeholder="Email address"
+                  className="text-gray-800 text-base"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="none"
+                  onChangeText={setEmail}
+                />
+              </View>
             )}
+
             <TouchableOpacity
+              className="mt-6 py-4 rounded-2xl"
               style={{
                 backgroundColor: Colors.PRIMARY,
+                shadowColor: Colors.PRIMARY,
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.3,
+                shadowRadius: 16,
+                elevation: 8,
               }}
-              className={`py-4 rounded-xl shadow-sm`}
               onPress={() => {
                 if (activeTab === "email") {
                   if (email !== "" && emailRegex.test(email)) {
-                    router.push({
+                    router.navigate({
                       pathname: "/auth/confirmation",
-                      params: {
-                        email,
-                      },
+                      params: { email },
                     });
                   } else {
                     Toast.show({
@@ -150,11 +201,9 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
                   }
                 } else {
                   if (mobile !== "" && mobile.length === 8) {
-                    router.push({
+                    router.navigate({
                       pathname: "/auth/confirmation",
-                      params: {
-                        mobile: mobile,
-                      },
+                      params: { mobile: mobile },
                     });
                   } else {
                     Toast.show({
@@ -169,47 +218,48 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
                 }
               }}
             >
-              <Text className="text-center text-white font-semibold">
+              <Text className="text-center text-white font-bold text-base">
                 Continue
               </Text>
             </TouchableOpacity>
           </View>
 
           <View
-            className="flex flex-row my-8 w-full items-center"
-            style={{
-              gap: separatorGap,
-            }}
+            className="flex-row items-center mb-8"
+            style={{ gap: separatorGap }}
           >
             <View
               style={{
-                width: linesWidth,
+                flex: 1,
                 height: 1,
-                backgroundColor: "#E5E7EB",
+                backgroundColor: "rgba(110, 62, 189, 0.2)",
               }}
             />
-            <Text
-              className="text-gray-400 text-center font-medium"
-              style={{
-                fontSize: OR_WIDTH,
-              }}
+            <View
+              className="px-4 py-2 rounded-full"
+              style={{ backgroundColor: "rgba(110, 62, 189, 0.08)" }}
             >
-              OR
-            </Text>
+              <Text
+                className="text-gray-500 font-medium"
+                style={{ fontSize: 14 }}
+              >
+                OR
+              </Text>
+            </View>
             <View
               style={{
-                width: linesWidth,
+                flex: 1,
                 height: 1,
-                backgroundColor: "#E5E7EB",
+                backgroundColor: "rgba(110, 62, 189, 0.2)",
               }}
             />
           </View>
         </>
       )}
 
-      {authType === "sign-in" && <View className="mt-10" />}
+      {authType === "sign-in" && <View className="mt-12" />}
 
-      <View className="flex flex-col gap-6">
+      <View className="flex-col gap-4 mb-8">
         {authType === "sign-in" && (
           <AuthButton
             text="Phone/Email"
@@ -222,31 +272,35 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
         <AuthButton text="Sign In with Facebook" icon="logo-facebook" />
       </View>
 
-      <View className="bg-gray-50 flex flex-row items-center justify-center absolute bottom-0 left-0 right-0 h-32 border-t border-gray-100">
+      <View
+        className="absolute bottom-0 left-0 right-0 items-center justify-center py-8"
+        style={{
+          backgroundColor: "rgba(255, 255, 255, 0.95)",
+          backdropFilter: "blur(10px)",
+          borderTopWidth: 1,
+          borderTopColor: "rgba(110, 62, 189, 0.1)",
+        }}
+      >
         {authType === "sign-up" ? (
-          <Text className="text-gray-600">
+          <Text className="text-gray-600 text-base">
             Already have an account?{" "}
             <Link
               href="/auth/signIn"
               replace
-              style={{
-                color: Colors.PRIMARY,
-              }}
-              className={`font-semibold`}
+              style={{ color: Colors.PRIMARY }}
+              className="font-bold"
             >
               Log In
             </Link>
           </Text>
         ) : (
-          <Text className="text-gray-600">
+          <Text className="text-gray-600 text-base">
             Don't have an account?{" "}
             <Link
               href="/auth/signUp"
               replace
-              style={{
-                color: Colors.PRIMARY,
-              }}
-              className={` font-semibold`}
+              style={{ color: Colors.PRIMARY }}
+              className="font-bold"
             >
               Sign Up
             </Link>

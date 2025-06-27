@@ -50,7 +50,7 @@ export default function Confirmation() {
               topOffset: 60,
               visibilityTime: 500,
               onHide: () => {
-                router.push({
+                router.navigate({
                   pathname: "/auth/verification",
                   params: {
                     email,

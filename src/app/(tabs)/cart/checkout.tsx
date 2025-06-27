@@ -1,5 +1,5 @@
 // app/(tabs)/cart/checkout.tsx
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 import {
   SafeAreaView,
   View,
@@ -9,16 +9,16 @@ import {
   StyleSheet,
   Dimensions,
   Image,
-} from 'react-native';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
-import { useCartStore, CartItem } from '@/store/cartStore';
-import { useRouter } from 'expo-router';
+} from "react-native";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
+import { useCartStore, CartItem } from "@/store/cartStore";
+import { useRouter } from "expo-router";
 
 export default function CheckoutScreen() {
   const router = useRouter();
   const rawScheme = useColorScheme();
-  const scheme: 'light' | 'dark' = rawScheme === 'dark' ? 'dark' : 'light';
+  const scheme: "light" | "dark" = rawScheme === "dark" ? "dark" : "light";
   const styles = createStyles(scheme);
 
   const cartItems = useCartStore((s) => s.items);
@@ -29,13 +29,22 @@ export default function CheckoutScreen() {
   const quantity = cartItems.reduce((sum, i) => sum + i.quantity, 0);
 
   // Refresh cart when leaving this screen
-  useEffect(() => () => { fetchCart(); }, [fetchCart]);
+  useEffect(
+    () => () => {
+      fetchCart();
+    },
+    [fetchCart]
+  );
 
   function renderRow({ item }: { item: CartItem }) {
     return (
       <View style={styles.row}>
         <View style={styles.rowLeft}>
-          <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
+          <Image
+            source={{ uri: item.imageUrl }}
+            style={styles.productImage}
+            fadeDuration={0}
+          />
           <Text style={styles.name} numberOfLines={1}>
             {item.name}
           </Text>
@@ -56,7 +65,6 @@ export default function CheckoutScreen() {
         ItemSeparatorComponent={() => <View style={styles.divider} />}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
-
         // Header: Checkout title + Order Summary card
         ListHeaderComponent={() => (
           <>
@@ -66,7 +74,6 @@ export default function CheckoutScreen() {
             </View>
           </>
         )}
-
         // Footer: Cart Totals card
         ListFooterComponent={() => (
           <View style={styles.card}>
@@ -74,7 +81,7 @@ export default function CheckoutScreen() {
 
             <View style={styles.totalsRow}>
               <Text style={styles.label}>
-                {quantity} item{quantity > 1 ? 's' : ''}
+                {quantity} item{quantity > 1 ? "s" : ""}
               </Text>
               <Text style={styles.value}>${subtotal.toFixed(2)}</Text>
             </View>
@@ -95,7 +102,7 @@ export default function CheckoutScreen() {
 
             <Pressable
               style={styles.actionButton}
-              onPress={() => router.push('/cart/shipping')}
+              onPress={() => router.navigate("/cart/shipping")}
             >
               <Text style={styles.actionText}>Proceed to Shipping</Text>
             </Pressable>
@@ -106,9 +113,10 @@ export default function CheckoutScreen() {
   );
 }
 
-const screenWidth = Dimensions.get('window').width;
-function createStyles(colorScheme: 'light' | 'dark') {
-  const bg = colorScheme === 'light' ? '#F3E8FF' : Colors[colorScheme].background;
+const screenWidth = Dimensions.get("window").width;
+function createStyles(colorScheme: "light" | "dark") {
+  const bg =
+    colorScheme === "light" ? "#F3E8FF" : Colors[colorScheme].background;
   const txt = Colors[colorScheme].text;
   return StyleSheet.create({
     container: {
@@ -121,35 +129,35 @@ function createStyles(colorScheme: 'light' | 'dark') {
     },
     header: {
       fontSize: 32,
-      fontWeight: '700',
+      fontWeight: "700",
       marginBottom: 16,
       color: txt,
     },
     card: {
-      backgroundColor: '#FFF',
+      backgroundColor: "#FFF",
       borderRadius: 12,
       padding: 16,
       marginBottom: 24,
-      shadowColor: '#000',
+      shadowColor: "#000",
       shadowOpacity: 0.05,
       shadowRadius: 12,
       elevation: 3,
     },
     cardTitle: {
       fontSize: 20,
-      fontWeight: '600',
+      fontWeight: "600",
       marginBottom: 12,
       color: txt,
     },
     row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
       paddingVertical: 8,
     },
     rowLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       flex: 1,
     },
     productImage: {
@@ -161,36 +169,36 @@ function createStyles(colorScheme: 'light' | 'dark') {
     name: {
       flex: 1,
       fontSize: 16,
-      fontWeight: '500',
+      fontWeight: "500",
       color: txt,
     },
     price: {
       fontSize: 16,
-      fontWeight: '600',
-      color: '#222',
+      fontWeight: "600",
+      color: "#222",
       marginLeft: 12,
     },
     divider: {
       height: 1,
-      backgroundColor: '#EEE',
+      backgroundColor: "#EEE",
       marginVertical: 4,
     },
     totalsRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
+      flexDirection: "row",
+      justifyContent: "space-between",
       marginVertical: 8,
     },
     label: { fontSize: 16, color: txt },
     value: { fontSize: 16, color: txt },
-    totalLabel: { fontWeight: '700' },
-    totalValue: { fontSize: 18, fontWeight: '700' },
+    totalLabel: { fontWeight: "700" },
+    totalValue: { fontSize: 18, fontWeight: "700" },
     actionButton: {
       marginTop: 16,
-      backgroundColor: '#5E3EBD',
+      backgroundColor: "#5E3EBD",
       borderRadius: 8,
       paddingVertical: 14,
-      alignItems: 'center',
+      alignItems: "center",
     },
-    actionText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
+    actionText: { color: "#FFF", fontSize: 16, fontWeight: "600" },
   });
 }

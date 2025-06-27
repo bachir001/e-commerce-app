@@ -143,6 +143,7 @@ function AppWithProviders() {
   if (appNotReady) {
     return (
       <ImageBackground
+        fadeDuration={0}
         source={require("@/assets/images/initialPageLoader.jpeg")}
         className="flex-1 justify-center items-center"
         resizeMode="cover"

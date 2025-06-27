@@ -162,6 +162,7 @@ export default function Mega() {
                 source={{
                   uri: "https://gocami.gonext.tech/_next/image?url=%2Fimages%2Fcategories%2FbeautyBanner.jpeg&w=1080&q=75",
                 }}
+                fadeDuration={0}
                 style={{ width: "100%", height: "100%" }}
                 resizeMode="cover"
                 onLoadStart={() => setImageLoading(true)}

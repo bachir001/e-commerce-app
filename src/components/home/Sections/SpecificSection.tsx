@@ -60,6 +60,7 @@ const RelatedCategoryItem = React.memo(
               source={{ uri: image }}
               className="w-full h-full"
               resizeMode="cover"
+              fadeDuration={0}
             />
           ) : (
             <View className="w-full h-full bg-gray-100 items-center justify-center">
@@ -212,6 +213,7 @@ const SpecificSection = React.memo(
             source={{ uri: mega_mobile_bg }}
             className="py-4 mx-2 rounded-t-xl overflow-hidden"
             imageStyle={{ opacity: 0.9 }}
+            fadeDuration={0}
           >
             <View
               className="flex-row justify-between items-center px-4 mb-3 py-2 -mt-4"

@@ -11,6 +11,7 @@ export default function AuthHeader() {
         source={require("@/assets/images/logo.png")}
         className="w-28 h-28"
         resizeMode="contain"
+        fadeDuration={0}
       />
     </View>
   );

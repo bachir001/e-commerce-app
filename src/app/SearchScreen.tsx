@@ -63,7 +63,7 @@ export default function SearchScreen() {
 
   useEffect(() => {
     const getRecentSearches = async () => {
-      try {                                                  
+      try {
         const stored = await SecureStore.getItemAsync("recentSearches");
         if (stored) {
           const parsed = JSON.parse(stored);
@@ -99,7 +99,7 @@ export default function SearchScreen() {
   }, []);
 
   const onPressItem = useCallback((product: Product) => {
-    router.push({
+    router.navigate({
       pathname: "/ProductDetails",
       params: { productJSON: JSON.stringify(product) },
     });
@@ -114,7 +114,8 @@ export default function SearchScreen() {
         : 0;
 
       return (
-        <Pressable
+        <TouchableOpacity
+          key={item.id}
           onPress={() => onPressItem(item)}
           className="py-4 px-4 border-b border-gray-100 active:bg-gray-50"
         >
@@ -185,7 +186,7 @@ export default function SearchScreen() {
 
             <ChevronRight size={20} color="#9ca3af" className="self-center" />
           </View>
-        </Pressable>
+        </TouchableOpacity>
       );
     },
     [onPressItem]

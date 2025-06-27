@@ -38,8 +38,6 @@ export default function CategoryItem({
   item: MainCategory;
   color: string;
 }) {
-  const isPressable = useRef(true);
-
   const computedValues = useMemo(
     () => ({
       hasImage: item.main_image && item.main_image.trim() !== "",
@@ -51,8 +49,6 @@ export default function CategoryItem({
   );
 
   const handleCategoryPress = useCallback(() => {
-    if (!isPressable.current) return;
-    isPressable.current = false;
     const categoryData = {
       id: item.id,
       name: item.name,
@@ -61,7 +57,7 @@ export default function CategoryItem({
       subcategories: item.subcategories,
     };
 
-    router.push({
+    router.navigate({
       pathname: computedValues.isAllowedNiche ? "mega" : "category",
       params: {
         slug: String(categoryData.slug),
@@ -69,10 +65,6 @@ export default function CategoryItem({
         id: String(categoryData.id),
       },
     });
-
-    setTimeout(() => {
-      isPressable.current = true;
-    }, 1500);
   }, [item, computedValues]);
 
   return (
@@ -101,6 +93,7 @@ export default function CategoryItem({
             resizeMode="cover"
             // Add caching for better performance
             cache="force-cache"
+            fadeDuration={0}
           />
         ) : (
           <View className="flex-1 items-center justify-center">

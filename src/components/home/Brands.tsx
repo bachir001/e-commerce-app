@@ -56,6 +56,7 @@ const BrandComponent = React.memo(({ name, image, slug, id }: Brand) => {
             source={{ uri: image }}
             className="w-20 h-20 mb-1"
             resizeMode="contain"
+            fadeDuration={0}
           />
         ) : (
           <View className="w-8 h-8 bg-gray-100 rounded-lg items-center justify-center mb-1">

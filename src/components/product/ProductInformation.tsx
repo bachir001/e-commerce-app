@@ -1,8 +1,10 @@
-import { Image, Text, View } from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 import StarRating from "./StarRating";
 import ExpandableSection from "./ExpandableSection";
 import { Clock, Shield } from "lucide-react-native";
 import { Category } from "@/app/(tabs)/home/ProductDetails";
+import { allowedNiches, colorMap, niche } from "../categories/CategoryItem";
+import { router } from "expo-router";
 
 export default function ProductInformation({
   brand,
@@ -24,6 +26,7 @@ export default function ProductInformation({
         <View className="flex-row items-center mb-2">
           {brand.logo ? (
             <Image
+              fadeDuration={0}
               source={{ uri: brand.logo }}
               className="w-6 h-6 mr-2 rounded-full"
             />
@@ -123,12 +126,25 @@ export default function ProductInformation({
           <Text className="text-sm text-gray-500 mb-2">Categories</Text>
           <View className="flex-row flex-wrap">
             {categories.map((category: Category, index: number) => (
-              <View
-                key={`category-${index}`}
+              <TouchableOpacity
+                onPress={() => {
+                  const isAllowedNiche = allowedNiches.includes(
+                    category.slug as niche
+                  );
+                  router.navigate({
+                    pathname: isAllowedNiche ? "mega" : "category",
+                    params: {
+                      slug: String(category.slug),
+                      color: colorMap[category.slug as niche],
+                      id: String(category.id),
+                    },
+                  });
+                }}
+                key={category.id || index}
                 className="bg-gray-100 rounded-full px-3 py-1 mr-2 mb-2"
               >
                 <Text className="text-xs text-gray-700">{category.name}</Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         </View>

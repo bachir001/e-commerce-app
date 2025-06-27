@@ -18,7 +18,7 @@ const serviceItems = [
   {
     icon: "bell",
     label: "My Notifications",
-    onPress: () => router.push("/notifications"),
+    onPress: () => router.navigate("/notifications"),
   },
 ];
 
@@ -26,17 +26,17 @@ const productItems = [
   {
     icon: "heart",
     label: "Wishlist",
-    onPress: () => router.push("/wishlist"),
+    onPress: () => router.navigate("/wishlist"),
   },
   {
     icon: "tag",
     label: "Brands",
-    onPress: () => router.push("/brands"),
+    onPress: () => router.navigate("/brands"),
   },
   {
     icon: "shopping-cart",
     label: "Cart",
-    onPress: () => router.push("/(tabs)/cart"),
+    onPress: () => router.navigate("/(tabs)/cart"),
   },
 ];
 
@@ -44,17 +44,17 @@ const orderItems = [
   {
     icon: "box",
     label: "Picked up",
-    onPress: () => router.push("/orders/picked-up"),
+    onPress: () => router.navigate("/orders/picked-up"),
   },
   {
     icon: "times-circle",
     label: "Cancelled",
-    onPress: () => router.push("/orders/cancelled"),
+    onPress: () => router.navigate("/orders/cancelled"),
   },
   {
     icon: "star",
     label: "Reviews",
-    onPress: () => router.push("/orders/reviews"),
+    onPress: () => router.navigate("/orders/reviews"),
   },
 ];
 
@@ -88,12 +88,12 @@ export default function AccountScreen() {
       {
         icon: "user",
         label: "Sign in",
-        onPress: () => router.push("/auth/signIn"),
+        onPress: () => router.navigate("/auth/signIn"),
       },
       {
         icon: "user-plus",
         label: "Sign up",
-        onPress: () => router.push("/auth/signUp"),
+        onPress: () => router.navigate("/auth/signUp"),
       },
       {
         icon: "phone",
@@ -168,7 +168,7 @@ export default function AccountScreen() {
                     Account Details
                   </Text>
                   <TouchableOpacity
-                    onPress={() => router.push("/profile/edit")}
+                    onPress={() => router.navigate("/profile/edit")}
                     className="bg-gray-100 px-3 py-1.5 rounded-full"
                   >
                     <Text
@@ -196,7 +196,7 @@ export default function AccountScreen() {
                   </View>
                 </View>
 
-                <TouchableOpacity onPress={() => router.push("/addresses")}>
+                <TouchableOpacity onPress={() => router.navigate("/addresses")}>
                   <View
                     className={`flex-row items-center py-2 px-3 rounded-lg mt-5`}
                     style={{

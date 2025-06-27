@@ -104,6 +104,7 @@ export default function Notifications(props: {}) {
                 {/* If there’s an imageUrl, render it above the body text */}
                 {selected.imageUrl ? (
                   <Image
+                    fadeDuration={0}
                     source={{ uri: selected.imageUrl! }}
                     style={styles.modalImage}
                     resizeMode="cover"

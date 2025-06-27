@@ -195,6 +195,7 @@ export default function CartScreen(): React.ReactElement {
     ({ item }: { item: CartItem }) => (
       <View style={styles.cartItemContainer}>
         <Image
+          fadeDuration={0}
           source={{ uri: item.imageUrl }} // Use item.imageUrl directly
           style={styles.productImage}
         />
@@ -254,7 +255,11 @@ export default function CartScreen(): React.ReactElement {
   const renderBestSellerCard = useCallback(
     ({ item }: { item: BestSellerItem }) => (
       <View style={styles.bestSellerCard}>
-        <Image source={{ uri: item.imageUrl }} style={styles.bestSellerImage} />
+        <Image
+          source={{ uri: item.imageUrl }}
+          style={styles.bestSellerImage}
+          fadeDuration={0}
+        />
         <Text style={styles.bestSellerName} numberOfLines={1}>
           {item.name}
         </Text>
@@ -310,6 +315,7 @@ export default function CartScreen(): React.ReactElement {
             source={require("@/assets/images/empty_basket.png")}
             style={styles.emptyBasketImage}
             resizeMode="contain"
+            fadeDuration={0}
           />
           <Text style={styles.emptyBasketText}>Your cart is empty</Text>
         </View>
@@ -379,7 +385,7 @@ export default function CartScreen(): React.ReactElement {
 
             <Pressable
               style={styles.checkoutButton}
-              onPress={() => router.push("/cart/checkout")}
+              onPress={() => router.navigate("/cart/checkout")}
             >
               <Text style={styles.checkoutText}>Proceed to Checkout</Text>
             </Pressable>
