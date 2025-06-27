@@ -43,6 +43,7 @@ export default function Wishlist() {
           text2: "Failed to fetch wishlist. Please try again later.",
           autoHide: true,
           visibilityTime: 1000,
+          topOffset: 60,
         });
       }
     } catch (err) {
@@ -53,6 +54,7 @@ export default function Wishlist() {
         text2: "Failed to fetch wishlist. Please try again later.",
         autoHide: true,
         visibilityTime: 3000,
+        topOffset: 60,
       });
     } finally {
       setLoading(false);

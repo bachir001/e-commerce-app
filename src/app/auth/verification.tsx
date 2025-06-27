@@ -16,6 +16,7 @@ import * as SecureStore from "expo-secure-store";
 import { Colors } from "@/constants/Colors";
 import { useSessionStore } from "@/store/useSessionStore";
 import DotsLoader from "@/components/common/AnimatedLayout";
+import Toast from "react-native-toast-message";
 
 export default function Verification() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function Verification() {
 
   const { setIsLogged } = useSessionStore();
 
-  const { email, password } = useLocalSearchParams();
+  const { email, mobile } = useLocalSearchParams();
 
   const inputRefs = useRef<Array<TextInput | null>>([
     null,
@@ -87,20 +88,48 @@ export default function Verification() {
     const code = verificationCode.join("");
     if (code.length === 6) {
       setLoading(true);
-      const RequestBody = {
+      const RequestBody: any = {
         verification_code: code,
-        email: email,
       };
 
+      const emailParam = Array.isArray(email) ? email[0] : email;
+      const mobileParam = Array.isArray(mobile) ? mobile[0] : mobile;
+
+      if (emailParam) RequestBody.email = emailParam;
+      if (mobileParam) RequestBody.mobile = mobileParam;
+      console.log("Request Body:", RequestBody);
       await axiosApi
         .post("verify-code", RequestBody)
         .then((response) => {
           if (response.status === 200) {
-            router.push({
-              pathname: "/auth/createAccount",
-              params: {
-                email: email.toString(),
+            console.log("Verification successful:", response.data);
+
+            Toast.show({
+              type: "success",
+              text1: "Verification Successful",
+              text2: "You can now create your account",
+              position: "top",
+              autoHide: true,
+              topOffset: 60,
+              onHide: () => {
+                router.push({
+                  pathname: "/auth/createAccount",
+                  params: {
+                    email: email?.toString() || "",
+                    mobile: mobile?.toString() || "",
+                  },
+                });
               },
+            });
+          } else {
+            Toast.show({
+              type: "error",
+              text1: "Verification Failed",
+              text2: response.data.message || "An unknown error occurred",
+              position: "top",
+              autoHide: true,
+              visibilityTime: 1000,
+              topOffset: 60,
             });
           }
         })

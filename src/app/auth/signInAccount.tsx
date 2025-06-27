@@ -69,9 +69,13 @@ export default function loginAccount() {
               text1: "Login Successful",
               text2: `Welcome back ${response.data.data.user.first_name}`,
               autoHide: true,
-              visibilityTime: 3000,
+              visibilityTime: 1000,
+              topOffset: 60,
+              position: "top",
+              onHide: () => {
+                router.replace("/(tabs)/home");
+              },
             });
-            router.replace("/(tabs)/home");
           }
         })
         .finally(() => {
@@ -87,7 +91,8 @@ export default function loginAccount() {
         text1: "Login Failed",
         text2: errorMessage,
         autoHide: true,
-        visibilityTime: 3000,
+        visibilityTime: 1000,
+        topOffset: 60,
       });
     }
   };

@@ -58,6 +58,9 @@ export default function EditProfile() {
           type: "success",
           text1: "Password Updated",
           text2: "Your password has been changed successfully.",
+          topOffset: 60,
+          autoHide: true,
+          visibilityTime: 1000,
         });
         setIsModalVisible(false);
       }
@@ -66,6 +69,9 @@ export default function EditProfile() {
         type: "error",
         text1: "Update Failed",
         text2: "Failed to update password",
+        topOffset: 60,
+        autoHide: true,
+        visibilityTime: 2000,
       });
     } finally {
       setPassLoading(false);
@@ -102,7 +108,8 @@ export default function EditProfile() {
           text1: "Cannot update",
           text2: "Provide new values",
           autoHide: true,
-          visibilityTime: 4000,
+          visibilityTime: 2000,
+          topOffset: 60,
         });
       } else {
         try {
@@ -121,7 +128,8 @@ export default function EditProfile() {
                   text1: "Update Success",
                   text2: `Updated ${firstName}'s profile!`,
                   autoHide: true,
-                  visibilityTime: 3000,
+                  visibilityTime: 1000,
+                  topOffset: 60,
                 });
 
                 const updatedUserData = {
@@ -160,7 +168,8 @@ export default function EditProfile() {
             text1: "Cannot update",
             text2: "Error updating profile",
             autoHide: true,
-            visibilityTime: 4000,
+            visibilityTime: 2000,
+            topOffset: 60,
           });
         }
       }
@@ -170,6 +179,9 @@ export default function EditProfile() {
         type: "error",
         text1: "Update Failed",
         text2: "Cannot update profile",
+        topOffset: 60,
+        autoHide: true,
+        visibilityTime: 2000,
       });
     }
   };

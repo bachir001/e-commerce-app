@@ -66,7 +66,7 @@ function getErrorMessage(error: any): string {
     return error.message;
   }
   // If it's an object, try to stringify it for more details
-  if (typeof error === 'object' && error !== null) {
+  if (typeof error === "object" && error !== null) {
     try {
       return JSON.stringify(error);
     } catch (e) {
@@ -75,7 +75,6 @@ function getErrorMessage(error: any): string {
   }
   return String(error || "An unknown error occurred.");
 }
-
 
 export const useCartStore = create<CartState>()(
   persist(
@@ -120,7 +119,8 @@ export const useCartStore = create<CartState>()(
           }
 
           const json: FetchCartApiResponse = await res.json();
-          if (!json.status) throw new Error(json.message || "Failed to load cart");
+          if (!json.status)
+            throw new Error(json.message || "Failed to load cart");
 
           // Map raw API response data to CartItem type
           const items: CartItem[] = json.data.map((raw: CartItemResponse) => ({
@@ -136,14 +136,17 @@ export const useCartStore = create<CartState>()(
         } catch (err: any) {
           const msg = getErrorMessage(err); // Use the helper to get message
           set({ loading: false, error: msg }); // Set loading false and update error
-          
+
           // Show toast only if there are no items in the cart to avoid excessive toasts
           if (get().items.length === 0) {
             Toast.show({
               type: "error",
               text1: "Cart Error",
               text2: msg,
-              position: "bottom",
+              position: "top",
+              autoHide: true,
+              visibilityTime: 2000,
+              topOffset: 60,
             });
           }
         }
@@ -247,11 +250,15 @@ export const useCartStore = create<CartState>()(
           Toast.show({
             type: "success",
             text1: "Cart Updated",
-            position: "bottom",
+            position: "top",
+            autoHide: true,
+            visibilityTime: 1000,
+            topOffset: 60,
+            text2: `Added ${quantity} item(s) to cart`,
           });
         } catch (err: any) {
           const msg = getErrorMessage(err); // Use the helper to get message
-          
+
           // Revert to the previous state only if there was a definitive error that
           // means the optimistic update was incorrect.
           // For network issues, it's better to show an error and let user retry.
@@ -263,7 +270,10 @@ export const useCartStore = create<CartState>()(
             type: "error",
             text1: isStockErr ? "Out of Stock" : "Cart Error",
             text2: msg,
-            position: "bottom",
+            position: "top",
+            autoHide: true,
+            visibilityTime: 2000,
+            topOffset: 60,
           });
         } finally {
           // Ensure loading state is always turned off

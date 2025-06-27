@@ -157,7 +157,7 @@ export default function CartScreen(): React.ReactElement {
     async (cartItemId: string) => {
       try {
         const sessionId = await getOrCreateSessionId(); // Get session ID
-        
+
         await axios.delete(
           "https://api-gocami-test.gocami.com/api/cart/remove",
           {
@@ -165,15 +165,16 @@ export default function CartScreen(): React.ReactElement {
               "Content-Type": "application/json",
               "x-session": sessionId,
             },
-            data: { cart_item_id: cartItemId } // Send item ID in request body
+            data: { cart_item_id: cartItemId }, // Send item ID in request body
           }
         );
 
         await fetchCart(true); // Force re-fetch cart to update UI
         Toast.show({
-            type: "success",
-            text1: "Item Removed",
-            position: "bottom",
+          type: "success",
+          text1: "Item Removed",
+          position: "top",
+          topOffset: 60,
         });
       } catch (err) {
         console.error("Error removing item:", err);
@@ -181,7 +182,8 @@ export default function CartScreen(): React.ReactElement {
           type: "error",
           text1: "Remove Error",
           text2: "Couldn't remove item from cart",
-          position: "bottom",
+          position: "top",
+          topOffset: 60,
         });
       }
     },
@@ -237,7 +239,10 @@ export default function CartScreen(): React.ReactElement {
             <Text style={styles.qtyButton}>+</Text>
           </Pressable>
         </View>
-        <Pressable onPress={() => handleRemove(item.id)} disabled={isCartLoading}>
+        <Pressable
+          onPress={() => handleRemove(item.id)}
+          disabled={isCartLoading}
+        >
           <MaterialIcons name="delete-outline" size={24} color="#E53935" />
         </Pressable>
       </View>

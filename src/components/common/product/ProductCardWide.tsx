@@ -123,6 +123,7 @@ const ProductCardWide = React.memo(
           text2: "Product added to wishlist.",
           autoHide: true,
           visibilityTime: 1000,
+          topOffset: 60,
         });
       } catch (err) {
         console.error("Error adding to wishlist:", err);
@@ -133,6 +134,7 @@ const ProductCardWide = React.memo(
           text2: "Failed to add product to wishlist.",
           autoHide: true,
           visibilityTime: 2000,
+          topOffset: 60,
         });
       }
     }, [product, isLogged, token]);

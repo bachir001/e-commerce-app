@@ -184,6 +184,7 @@ const ProductCard = React.memo(
                 text2: "Product added to wishlist.",
                 autoHide: true,
                 visibilityTime: 1000,
+                topOffset: 60,
               });
             } else {
               Toast.show({
@@ -191,7 +192,8 @@ const ProductCard = React.memo(
                 text1: "Error",
                 text2: "Failed to add product to wishlist.",
                 autoHide: true,
-                visibilityTime: 1000,
+                visibilityTime: 2000,
+                topOffset: 60,
               });
               setIsFavorite(false);
             }
@@ -205,6 +207,7 @@ const ProductCard = React.memo(
           text2: "Failed to add product to wishlist.",
           autoHide: true,
           visibilityTime: 2000,
+          topOffset: 60,
         });
       }
     }, [product]);

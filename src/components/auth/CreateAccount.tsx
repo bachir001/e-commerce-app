@@ -13,7 +13,7 @@ import { SetStateAction, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AuthHeader from "./AuthHeader";
 import { CREATE_INPUTS } from "@/constants/createInputs";
-import { Link, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Picker } from "@react-native-picker/picker";
 import Checkbox from "expo-checkbox";
 import Toast from "react-native-toast-message";
@@ -31,16 +31,19 @@ interface CompleteSignUp {
   last_name: string;
   terms: 1;
   gender_id: 1 | 2;
-  email: string;
+  email?: string;
+  mobile?: string;
 }
 
 const passwordRegex: RegExp =
   /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
 
-export default function CreateAccount({ email }: { email: string }) {
+export default function CreateAccount() {
   const { setIsLogged, setToken, setUser } = useSessionStore();
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
+
+  const { email, mobile } = useLocalSearchParams();
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -48,12 +51,11 @@ export default function CreateAccount({ email }: { email: string }) {
   const [lastName, setLastName] = useState("");
   const [selectedGender, setSelectedGender] = useState<1 | 2>(1);
   const [termAccepted, setTermAccepted] = useState(true);
-  const [mobile, setMobile] = useState("");
 
   const validateSignUp = (): string => {
     const messages: string[] = [];
 
-    if (!email || !firstName || !lastName || !selectedGender || !termAccepted) {
+    if (!firstName || !lastName || !selectedGender || !termAccepted) {
       messages.push("All fields are required!");
     }
 
@@ -63,8 +65,11 @@ export default function CreateAccount({ email }: { email: string }) {
     if (lastName.length < 3)
       messages.push("Last name must be 3 characters long or more");
 
-    if (email.length < 1 || !email.includes("@"))
-      messages.push("Invalid email format");
+    // if (
+    //   (email !== undefined && email.length < 1) ||
+    //   (email !== undefined && !email.includes("@"))
+    // )
+    //   messages.push("Invalid email format");
 
     if (!passwordRegex.test(password))
       messages.push(
@@ -91,6 +96,7 @@ export default function CreateAccount({ email }: { email: string }) {
         position: "top",
         autoHide: true,
         topOffset: 60,
+        visibilityTime: 2000,
       });
       return;
     }
@@ -102,8 +108,13 @@ export default function CreateAccount({ email }: { email: string }) {
       last_name: lastName,
       gender_id: selectedGender,
       terms: 1,
-      email: email,
     };
+
+    const emailParam = Array.isArray(email) ? email[0] : email;
+    const mobileParam = Array.isArray(mobile) ? mobile[0] : mobile;
+
+    if (emailParam) RequestBody.email = emailParam;
+    if (mobileParam) RequestBody.mobile = mobileParam;
 
     try {
       setLoading(true);
@@ -113,10 +124,12 @@ export default function CreateAccount({ email }: { email: string }) {
       );
 
       if (response.status === 200) {
-        const LoginBody = {
-          email,
+        const LoginBody: any = {
           password,
         };
+
+        if (emailParam) LoginBody.email = emailParam;
+        if (mobileParam) LoginBody.mobile = mobileParam;
 
         const loginResponse = await axiosApi.post(
           "https://api-gocami-test.gocami.com/api/login",
@@ -138,14 +151,17 @@ export default function CreateAccount({ email }: { email: string }) {
           setUser(loginResponse.data.data.user);
           setToken(loginResponse.data.data.token);
 
-          router.replace("/(tabs)/home");
           Toast.show({
             type: "success",
             text1: "Registration Successful",
             text2: "Please enter verification code",
             position: "top",
             autoHide: true,
+            visibilityTime: 1000,
             topOffset: 60,
+            onHide: () => {
+              router.replace("/(tabs)/home");
+            },
           });
         }
       } else {
@@ -154,8 +170,9 @@ export default function CreateAccount({ email }: { email: string }) {
           text1: "Registration Failed",
           text2: response.data.message || "Account Already Exists",
           position: "top",
-          autoHide: false,
+          autoHide: true,
           topOffset: 60,
+          visibilityTime: 1000,
         });
       }
     } catch (err: any) {
@@ -167,6 +184,7 @@ export default function CreateAccount({ email }: { email: string }) {
         position: "top",
         autoHide: true,
         topOffset: 60,
+        visibilityTime: 2000,
       });
     } finally {
       setLoading(false);

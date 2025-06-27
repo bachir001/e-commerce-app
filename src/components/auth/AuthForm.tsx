@@ -23,6 +23,8 @@ const separatorGap = 4;
 const OR_WIDTH = 14;
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const phoneRegex =
+  /^(?:[14569]\d{6}|3\d{6}|7(?:[01]\d{5}|[2-57]\d{5}|6[013-9]\d{4}|8[7-9]\d{4}|9[1-3]\d{4})|8(?:[02-9]\d{5}|1[2-46-8]\d{4}))$/;
 
 export default function AuthForm({ authType = "sign-up" }: AuthParams) {
   const { linesWidth } = React.useMemo(() => {
@@ -34,6 +36,7 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
 
   const [activeTab, setActiveTab] = useState("phone");
   const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
 
   return (
     <SafeAreaView
@@ -90,7 +93,6 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
           </View>
 
           <View className="flex flex-col gap-5">
-            {/* Conditional Input based on activeTab */}
             {activeTab === "phone" ? (
               <View className="flex flex-row bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 items-center shadow-sm">
                 <Text className="text-sm font-medium text-gray-700 mr-3">
@@ -109,6 +111,7 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
                   placeholder="Phone number"
                   className="w-full text-gray-700"
                   placeholderTextColor="#9CA3AF"
+                  onChangeText={setMobile}
                 />
               </View>
             ) : (
@@ -139,9 +142,28 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
                     Toast.show({
                       type: "error",
                       autoHide: true,
-                      visibilityTime: 2500,
+                      visibilityTime: 2000,
                       text1: "Invalid Email Address",
                       text2: "Please check the format and try again.",
+                      topOffset: 60,
+                    });
+                  }
+                } else {
+                  if (mobile !== "" && mobile.length === 8) {
+                    router.push({
+                      pathname: "/auth/confirmation",
+                      params: {
+                        mobile: mobile,
+                      },
+                    });
+                  } else {
+                    Toast.show({
+                      type: "error",
+                      autoHide: true,
+                      visibilityTime: 2000,
+                      text1: "Invalid Phone Number",
+                      text2: "Please enter a valid phone number.",
+                      topOffset: 60,
                     });
                   }
                 }

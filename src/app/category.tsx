@@ -144,6 +144,10 @@ export default function Category() {
         }
       } catch (err) {
         Toast.show({
+          topOffset: 60,
+          position: "top",
+          autoHide: true,
+          visibilityTime: 1000,
           type: "error",
           text1: "Failed to fetch Filters",
           text2:
