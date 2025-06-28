@@ -219,7 +219,7 @@ export default function ProductDetailsScreen(): React.ReactElement {
 
       setProductDetailLoading(true);
       try {
-        const response = await axiosApi.get(`getProduct/${product.slug}`);
+        const response = await axiosApi.get(`/getProduct/${product.slug}`);
         if (response.status === 200) {
           setProductDetail(response.data.data.mainDetail);
         }

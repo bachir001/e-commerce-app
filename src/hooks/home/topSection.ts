@@ -6,7 +6,7 @@ export function useBrands() {
   return useQuery({
     queryKey: ["brands"],
     queryFn: () =>
-      axiosApi.get("get-brand-data").then((res) => res.data.data || []),
+      axiosApi.get("/get-brand-data").then((res) => res.data.data || []),
     staleTime: 24 * 1000 * 60 * 60,
     retry: 2,
   });
@@ -17,7 +17,7 @@ export function useSliders() {
     queryKey: ["sliders"],
     queryFn: () =>
       axiosApi
-        .get("getSlider/home-slider")
+        .get("/getSlider/home-slider")
         .then((res) => res.data.data.slides || []),
     staleTime: 24 * 1000 * 60 * 60,
     retry: 2,
@@ -28,7 +28,7 @@ export function useMegaCategories() {
   return useQuery({
     queryKey: ["megaCategories"],
     queryFn: () =>
-      axiosApi.get("getMegaCategories").then((res) => res.data.data || []),
+      axiosApi.get("/getMegaCategories").then((res) => res.data.data || []),
     staleTime: 24 * 1000 * 60 * 60,
     retry: 2,
   });

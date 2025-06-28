@@ -6,7 +6,7 @@ export default function useGetRelatedProducts(slug: string) {
   return useQuery({
     queryKey: ["related-products", slug],
     queryFn: async (): Promise<Product[]> => {
-      const response = await axiosApi.get(`related-products/${slug}`);
+      const response = await axiosApi.get(`/related-products/${slug}`);
 
       if (!response) {
         throw new Error("Cannot get related products");

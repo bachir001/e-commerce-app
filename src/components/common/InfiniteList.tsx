@@ -58,7 +58,7 @@ const InfiniteList = ({
     try {
       const response = await axiosApi.get(
         `${
-          isBrand ? "get-brand-products" : "getCategoryData"
+          isBrand ? "/get-brand-products" : "/getCategoryData"
         }/${encodeURIComponent(slug)}/`,
         {
           params: {

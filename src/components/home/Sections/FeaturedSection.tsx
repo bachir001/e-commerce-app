@@ -6,6 +6,7 @@ import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import type { HomePageSectionProp } from "@/constants/HomePageSections";
 import { useAppDataStore } from "@/store/useAppDataStore";
 import DotsLoader from "@/components/common/AnimatedLayout";
+import ErrorState from "@/components/common/ErrorState";
 
 interface FeaturedSectionProps extends HomePageSectionProp {
   color?: string;
@@ -46,7 +47,7 @@ const FeaturedSection = React.memo(
     list,
     setLoading,
   }: FeaturedSectionProps) => {
-    const { data, isLoading } = useFeaturedSection(
+    const { data, isLoading, error, isError, refetch } = useFeaturedSection(
       type,
       fetchParams,
       list ? false : true
@@ -81,9 +82,18 @@ const FeaturedSection = React.memo(
       return <DotsLoader color={color} text={`Loading ${title}`} />;
     }
 
-    // Create a light version of the color for the background
+    if (isError) {
+      return (
+        <ErrorState
+          onRetry={refetch}
+          title={`Failed to load ${title}`}
+          subtitle={error.message}
+        />
+      );
+    }
+
     const bgColorClass = "bg-gray-50";
-    const lightColorStyle = { backgroundColor: `${color}10` }; // 10% opacity version of the color
+    const lightColorStyle = { backgroundColor: `${color}10` };
 
     return (
       <View

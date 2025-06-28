@@ -160,7 +160,7 @@ export default function AddressForm({
   const fetchGovernorates = async () => {
     try {
       setGovernorateLoading(true);
-      const response = await axiosApi.get("governorates");
+      const response = await axiosApi.get("/governorates");
       if (response.data.status) {
         setGovernorates(response.data.data);
       }
@@ -175,7 +175,7 @@ export default function AddressForm({
   const fetchCities = async (code: string) => {
     try {
       setCityLoading(true);
-      const response = await axiosApi.get(`cities/${code}`);
+      const response = await axiosApi.get(`/cities/${code}`);
 
       console.log("CITIESSS:", response.data.data);
 

@@ -48,7 +48,7 @@ export default function loginAccount() {
       if (phoneNumber.length >= 1) RequestBody.mobile = `961${phoneNumber}`;
 
       await axiosApi
-        .post("login", RequestBody)
+        .post("/login", RequestBody)
         .then(async (response) => {
           if (response.data.status) {
             loginOneSignal(response.data.data.user.id.toString());
@@ -277,7 +277,7 @@ export default function loginAccount() {
 
             {password.length >= 1 ? (
               <TouchableOpacity
-                className="py-4 rounded-2xl mb-6"
+                className="py-4 rounded-2xl mb-6 mt-3"
                 style={{
                   backgroundColor: Colors.PRIMARY,
                   shadowColor: Colors.PRIMARY,

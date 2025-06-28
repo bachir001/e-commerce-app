@@ -67,7 +67,7 @@ function AppWithProviders() {
 
   const fetchWishlist = async (token: string) => {
     try {
-      const response = await axiosApi.get("favorite", {
+      const response = await axiosApi.get("/favorite", {
         headers: {
           Authorization: `Bearer ${token}`,
         },

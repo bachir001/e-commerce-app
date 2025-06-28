@@ -39,7 +39,7 @@ export default function ResetPassword() {
         return;
       }
 
-      if (mobile.length > 0 && !phoneRegex.test(mobile)) {
+      if (mobile === "" && mobile.length !== 8) {
         Toast.show({
           type: "error",
           text1: "Invalid Phone Number",
@@ -51,7 +51,35 @@ export default function ResetPassword() {
         return;
       }
 
-      const response = await axiosApi.post("/password/forgot");
+      if (email.length === 0 && mobile.length === 0) {
+        Toast.show({
+          type: "error",
+          text1: "Input Required",
+          text2: "Please enter either your email or phone number.",
+          topOffset: 60,
+          visibilityTime: 2000,
+        });
+        setLoading(false);
+        return;
+      }
+
+      const RequestBody: any = {};
+
+      if (email.length > 0) {
+        RequestBody.email = email;
+        RequestBody.verification_method = "email";
+      }
+
+      if (mobile.length > 0) {
+        RequestBody.mobile = mobile;
+        RequestBody.verification_method = "whatsapp";
+      }
+
+      const response = await axiosApi.post("/password/forgot", RequestBody);
+
+      if (response.status === 200) {
+        router.navigate("/auth/verification");
+      }
     } catch (err) {
       console.error("Error during password reset:", err);
       Toast.show({
@@ -61,6 +89,8 @@ export default function ResetPassword() {
         topOffset: 60,
         visibilityTime: 2000,
       });
+    } finally {
+      setLoading(false);
     }
   };
 

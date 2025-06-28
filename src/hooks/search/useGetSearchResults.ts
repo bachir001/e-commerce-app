@@ -7,7 +7,7 @@ export default function useGetSearchResults(query: string) {
     queryKey: ["search-products", query],
     queryFn: async (): Promise<Product[]> => {
       const response = await axiosApi.get(
-        `search?q=${encodeURIComponent(query.trim())}&limit=10`
+        `/search?q=${encodeURIComponent(query.trim())}&limit=10`
       );
       return response.data.data.results as Product[];
     },

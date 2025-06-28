@@ -177,8 +177,8 @@ const ProductCard = React.memo(
         }
 
         const endpoint = isCurrentlyFavorite
-          ? `favorite/remove`
-          : `favorite/add`;
+          ? `/favorite/remove`
+          : `/favorite/add`;
         const response = await axiosApi.post(endpoint, WishListBody, {
           headers: {
             "Content-Type": "application/json",

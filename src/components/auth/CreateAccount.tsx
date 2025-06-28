@@ -118,7 +118,7 @@ export default function CreateAccount() {
 
     try {
       setLoading(true);
-      const response = await axiosApi.post(`register/complete`, RequestBody);
+      const response = await axiosApi.post(`/register/complete`, RequestBody);
 
       if (response.status === 200) {
         const LoginBody: any = {
@@ -128,7 +128,7 @@ export default function CreateAccount() {
         if (emailParam) LoginBody.email = emailParam;
         if (mobileParam) LoginBody.mobile = mobileParam;
 
-        const loginResponse = await axiosApi.post("login", LoginBody);
+        const loginResponse = await axiosApi.post("/login", LoginBody);
 
         if (loginResponse.data.status) {
           await loginOneSignal(loginResponse.data.data.user.id.toString());

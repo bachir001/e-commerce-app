@@ -11,6 +11,7 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import useGetCategoriesData from "@/hooks/categories/useGetCategoriesData";
 import CategoryItem from "@/components/categories/CategoryItem";
 import DotsLoader from "@/components/common/AnimatedLayout";
+import ErrorState from "@/components/common/ErrorState";
 
 export interface Category {
   id: number;
@@ -65,8 +66,13 @@ const LoadingComponent = React.memo(() => (
 ));
 
 export default function CategoriesScreen() {
-  const { data: categories, isLoading: isCategoriesLoading } =
-    useGetCategoriesData();
+  const {
+    data: categories,
+    isLoading: isCategoriesLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetCategoriesData();
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -99,6 +105,16 @@ export default function CategoriesScreen() {
 
   if (isCategoriesLoading) {
     return <LoadingComponent />;
+  }
+
+  if (isError) {
+    return (
+      <ErrorState
+        onRetry={refetch}
+        title="Failed to load categories"
+        subtitle={error.message}
+      />
+    );
   }
 
   return (

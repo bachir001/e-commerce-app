@@ -27,7 +27,7 @@ export default function useGetProductDetails(slug: string) {
     queryFn: async () => {
       console.log("I ran");
       const response: AxiosResponse<GetProductApiResponse> = await axiosApi.get(
-        `getProduct/${slug}`
+        `/getProduct/${slug}`
       );
       if (!response) {
         throw new Error("Cannot get product");

@@ -16,7 +16,7 @@ export default function useInfiniteProductList({
     queryFn: async ({ pageParam = 1 }) => {
       try {
         const response = await axiosApi.get(
-          `${url}?page=${pageParam}&per_page=20`
+          `/${url}?page=${pageParam}&per_page=20`
         );
 
         console.log(

@@ -59,7 +59,7 @@ export default function AddressPage() {
     enabled: typeof token === "string" && token.length > 0,
     retry: 0,
     queryFn: async () => {
-      const response = await axiosApi.get("addresses", {
+      const response = await axiosApi.get("/addresses", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -105,7 +105,7 @@ export default function AddressPage() {
       };
 
       const response = await axiosApi.post(
-        `addresses/remove/${address.id}?_method=DELETE`,
+        `/addresses/remove/${address.id}?_method=DELETE`,
         {},
         HeaderData
       );

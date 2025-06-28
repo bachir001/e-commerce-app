@@ -159,7 +159,7 @@ export default function CartScreen(): React.ReactElement {
       try {
         const sessionId = await getOrCreateSessionId(); // Get session ID
 
-        await axiosApi.delete("cart/remove", {
+        await axiosApi.delete("/cart/remove", {
           headers: {
             "Content-Type": "application/json",
             "x-session": sessionId,

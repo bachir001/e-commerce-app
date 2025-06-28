@@ -48,7 +48,7 @@ export default function EditProfile() {
       setPassLoading(true);
 
       const response = await axiosApi.post(
-        "users-data/update",
+        "/users-data/update",
         { password: newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -116,7 +116,7 @@ export default function EditProfile() {
           setLoading(true);
 
           await axiosApi
-            .post("users-data/update", updateBody, {
+            .post("/users-data/update", updateBody, {
               headers: {
                 Authorization: `Bearer ${token}`,
               },

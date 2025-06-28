@@ -48,7 +48,7 @@ const ProductInfiniteList = memo(function ProductInfiniteList({
     }
 
     try {
-      const response = await axiosApi.get(`${url}?page=${page}&per_page=20`);
+      const response = await axiosApi.get(`/${url}?page=${page}&per_page=20`);
 
       if (response.status === 200) {
         const newProducts = response.data.data.relatedProducts?.results || [];

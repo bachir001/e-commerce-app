@@ -99,7 +99,7 @@ export default function Verification() {
       if (mobileParam) RequestBody.mobile = mobileParam;
       console.log("Request Body:", RequestBody);
       await axiosApi
-        .post("verify-code", RequestBody)
+        .post("/verify-code", RequestBody)
         .then((response) => {
           if (response.status === 200) {
             console.log("Verification successful:", response.data);

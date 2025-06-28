@@ -21,6 +21,7 @@ import AnimatedLoader from "@/components/common/AnimatedLayout";
 import { ChevronRight } from "lucide-react-native";
 import { router } from "expo-router";
 import DotsLoader from "@/components/common/AnimatedLayout";
+import ErrorState from "@/components/common/ErrorState";
 
 interface MegaCategoryInfo {
   status: boolean;
@@ -127,7 +128,13 @@ const SpecificSection = React.memo(
   }: SpecificSectionProps) => {
     const isCategoryPressable = useRef(true);
 
-    const { data: metaCategoryInfo, isLoading } = useQuery({
+    const {
+      data: metaCategoryInfo,
+      isLoading,
+      isError,
+      error,
+      refetch,
+    } = useQuery({
       queryKey: ["metaCategoryInfo", type],
       queryFn: async ({ signal }) => {
         const response = await axiosApi.get<MegaCategoryInfo>(
@@ -203,6 +210,16 @@ const SpecificSection = React.memo(
 
     if (isLoading) {
       return <DotsLoader color={color} text={`Loading ${title}`} />;
+    }
+
+    if (isError) {
+      return (
+        <ErrorState
+          onRetry={refetch}
+          title={`Failed to load ${title}`}
+          subtitle={error.message}
+        />
+      );
     }
 
     return (

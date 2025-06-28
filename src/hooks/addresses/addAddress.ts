@@ -19,7 +19,7 @@ export default function useAddAddress() {
       };
 
       const response = await axiosApi.post(
-        "addresses/add",
+        "/addresses/add",
         addressData,
         HeaderData
       );

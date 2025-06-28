@@ -139,7 +139,7 @@ export default function ShippingScreen(): React.ReactElement {
   // Fetch governorates
   useEffect(() => {
     axiosApi
-      .get("governorates")
+      .get("/governorates")
       .then((response) => {
         if (response.data.status) {
           setGovernorateList(response.data.data);
@@ -158,7 +158,7 @@ export default function ShippingScreen(): React.ReactElement {
     const gov = governorateList.find((g) => g.id === selectedGovernorateId);
     if (!gov) return;
     axiosApi
-      .get(`cities/${gov.code}`)
+      .get(`/cities/${gov.code}`)
       .then((response) => {
         if (response.data.status) {
           setCityList(response.data.data);
@@ -177,7 +177,7 @@ export default function ShippingScreen(): React.ReactElement {
     const city = cityList.find((c) => c.id === selectedCityId);
     if (!city) return;
     axiosApi
-      .get(`areas/${encodeURIComponent(city.code)}`)
+      .get(`/areas/${encodeURIComponent(city.code)}`)
       .then((response) => {
         if (response.data.status) {
           setAreaList(response.data.data);

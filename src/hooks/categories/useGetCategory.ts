@@ -15,7 +15,7 @@ export default function useGetCategoryRelatedCategories(
     queryKey: ["categoryData", slug],
     queryFn: async () => {
       const response = await axiosApi.get(
-        `getCategoryData/${slug}?page=1&per_page=1`
+        `/getCategoryData/${slug}?page=1&per_page=1`
       );
 
       if (response.status === 200) {

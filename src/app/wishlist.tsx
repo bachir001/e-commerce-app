@@ -27,7 +27,7 @@ export default function Wishlist() {
   const fetchWishList = async () => {
     try {
       console.log(token);
-      const response = await axiosApi.get("favorite", {
+      const response = await axiosApi.get("/favorite", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",

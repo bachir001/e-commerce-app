@@ -34,7 +34,7 @@ export default function Confirmation() {
       console.log(mobile);
 
       await axiosApi
-        .post(`register`, RequestBody)
+        .post(`/register`, RequestBody)
         .then(async (response) => {
           if (response.status === 200) {
             Toast.show({

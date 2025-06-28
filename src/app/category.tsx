@@ -112,7 +112,7 @@ export default function Category() {
       try {
         setLoading(true);
         const response = await axiosApi.get(
-          `filters?model_id=${Number(id)}&model_type=${
+          `/filters?model_id=${Number(id)}&model_type=${
             brand ? "brand" : "category"
           }`
         );

@@ -110,7 +110,7 @@ const ProductCardWide = React.memo(
           WishListBody.product_id = Number(product.id);
         }
 
-        await axiosApi.post(`favorite/add`, WishListBody, {
+        await axiosApi.post(`/favorite/add`, WishListBody, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
