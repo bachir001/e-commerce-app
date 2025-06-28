@@ -24,7 +24,7 @@ export default function Verification() {
 
   const { setIsLogged } = useSessionStore();
 
-  const { email, mobile } = useLocalSearchParams();
+  const { email, mobile, isReset } = useLocalSearchParams();
 
   const inputRefs = useRef<Array<TextInput | null>>([
     null,
@@ -88,9 +88,13 @@ export default function Verification() {
     const code = verificationCode.join("");
     if (code.length === 6) {
       setLoading(true);
-      const RequestBody: any = {
-        verification_code: code,
-      };
+      const RequestBody: any = {};
+
+      if (isReset) {
+        RequestBody.code = code;
+      } else {
+        RequestBody.verification_code = code;
+      }
 
       const emailParam = Array.isArray(email) ? email[0] : email;
       const mobileParam = Array.isArray(mobile) ? mobile[0] : mobile;
@@ -98,29 +102,26 @@ export default function Verification() {
       if (emailParam) RequestBody.email = emailParam;
       if (mobileParam) RequestBody.mobile = mobileParam;
       console.log("Request Body:", RequestBody);
+
+      const url: string = isReset ? "/password/verify-code" : "/verify-code";
+
       await axiosApi
-        .post("/verify-code", RequestBody)
+        .post(url, RequestBody)
         .then((response) => {
           if (response.status === 200) {
-            console.log("Verification successful:", response.data);
-
-            Toast.show({
-              type: "success",
-              text1: "Verification Successful",
-              text2: "You can now create your account",
-              position: "top",
-              autoHide: true,
-              topOffset: 60,
-              onHide: () => {
-                router.navigate({
-                  pathname: "/auth/createAccount",
-                  params: {
-                    email: email?.toString() || "",
-                    mobile: mobile?.toString() || "",
-                  },
-                });
-              },
-            });
+            if (!isReset) {
+              router.navigate({
+                pathname: "/auth/createAccount",
+                params: {
+                  email: email?.toString() || "",
+                  mobile: mobile?.toString() || "",
+                },
+              });
+            } else {
+              router.navigate({
+                pathname: "/auth/completeReset",
+              });
+            }
           } else {
             Toast.show({
               type: "error",

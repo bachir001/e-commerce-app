@@ -35,7 +35,7 @@ interface CompleteSignUp {
   mobile?: string;
 }
 
-const passwordRegex: RegExp =
+export const passwordRegex: RegExp =
   /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
 
 export default function CreateAccount() {
@@ -145,18 +145,7 @@ export default function CreateAccount() {
           setUser(loginResponse.data.data.user);
           setToken(loginResponse.data.data.token);
 
-          Toast.show({
-            type: "success",
-            text1: "Registration Successful",
-            text2: "Please enter verification code",
-            position: "top",
-            autoHide: true,
-            visibilityTime: 1000,
-            topOffset: 60,
-            onHide: () => {
-              router.replace("/(tabs)/home");
-            },
-          });
+          router.replace("/(tabs)/home");
         }
       } else {
         Toast.show({

@@ -37,26 +37,11 @@ export default function Confirmation() {
         .post(`/register`, RequestBody)
         .then(async (response) => {
           if (response.status === 200) {
-            Toast.show({
-              type: "success",
-              text1: "Register Successful",
-              text2:
-                response.data.message ||
-                `Please check your ${
-                  mobile !== undefined ? "phone" : "email"
-                } for verification`,
-              position: "top",
-              autoHide: true,
-              topOffset: 60,
-              visibilityTime: 500,
-              onHide: () => {
-                router.navigate({
-                  pathname: "/auth/verification",
-                  params: {
-                    email,
-                    mobile: `961${mobile}`,
-                  },
-                });
+            router.navigate({
+              pathname: "/auth/verification",
+              params: {
+                email,
+                mobile: `961${mobile}`,
               },
             });
           } else {

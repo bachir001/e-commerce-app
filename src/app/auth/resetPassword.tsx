@@ -78,7 +78,12 @@ export default function ResetPassword() {
       const response = await axiosApi.post("/password/forgot", RequestBody);
 
       if (response.status === 200) {
-        router.navigate("/auth/verification");
+        router.navigate({
+          pathname: "/auth/verification",
+          params: {
+            isReset: "true",
+          },
+        });
       }
     } catch (err) {
       console.error("Error during password reset:", err);
