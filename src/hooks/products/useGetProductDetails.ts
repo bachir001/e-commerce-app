@@ -1,5 +1,5 @@
 import axiosApi from "@/apis/axiosApi";
-import { Category } from "@/app/(tabs)/home/ProductDetails";
+import { Category } from "@/app/(tabs)/index/ProductDetails";
 import { Brand, Product } from "@/types/globalTypes";
 import { useQuery } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";

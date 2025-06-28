@@ -3,6 +3,7 @@
     "name": "GoCami",
     "slug": "gocami",
     "version": "1.0.0",
+    "main": "expo-router/entry",
     "orientation": "portrait",
     "scheme": "myapp",
     "platforms": ["ios", "android", "web"],

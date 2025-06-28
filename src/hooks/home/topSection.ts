@@ -33,3 +33,18 @@ export function useMegaCategories() {
     retry: 2,
   });
 }
+
+export function useWishlist(token: string | null) {
+  return useQuery({
+    queryKey: ["wishlist", token],
+    queryFn: () => {
+      if (!token) return [];
+      return axiosApi
+        .get("/favorite", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => res.data.data || []);
+    },
+    enabled: !!token,
+  });
+}

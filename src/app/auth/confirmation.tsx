@@ -11,8 +11,7 @@ import DotsLoader from "@/components/common/AnimatedLayout";
 export default function Confirmation() {
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
-  const { email, mobile } = useLocalSearchParams(); //either email or mobile will be available
-
+  const { email, mobile } = useLocalSearchParams();
   const handleBack = () => {
     router.back();
   };
@@ -41,7 +40,7 @@ export default function Confirmation() {
               pathname: "/auth/verification",
               params: {
                 email,
-                mobile: `961${mobile}`,
+                mobile: mobile,
               },
             });
           } else {

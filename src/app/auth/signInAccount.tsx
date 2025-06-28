@@ -33,7 +33,7 @@ export default function loginAccount() {
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
-  const { setIsLogged } = useSessionStore();
+  const { setIsLogged, setUser, setToken } = useSessionStore();
 
   const router = useRouter();
 
@@ -63,6 +63,8 @@ export default function loginAccount() {
             ]);
 
             setIsLogged(true);
+            setUser(response.data.data.user);
+            setToken(response.data.data.token);
             Toast.show({
               type: "success",
               text1: "Login Successful",
