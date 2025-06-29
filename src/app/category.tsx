@@ -9,13 +9,12 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
-  SafeAreaView,
-  StatusBar,
+  View,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 const sortOptions = [
@@ -43,9 +42,11 @@ interface Params {
   brand_id?: string | number;
   color_id?: string | number;
   size_id?: string | number;
+  attribute_type_id?: string | number;
 }
 
 export default function Category() {
+  const insets = useSafeAreaInsets();
   const { slug, color, id, brand } = useLocalSearchParams();
   const [query, setQuery] = useState("");
 
@@ -59,6 +60,7 @@ export default function Category() {
   const [brands, setBrands] = useState([]);
   const [colors, setColors] = useState([]);
   const [sizes, setSizes] = useState([]);
+  const [attributes, setAttributes] = useState([]);
 
   const [minValue, setMinValue] = useState(0);
   const [maxValue, setMaxValue] = useState(1);
@@ -68,6 +70,7 @@ export default function Category() {
   const [brandIds, setBrandIds] = useState<any[]>([]);
   const [colorIds, setColorIds] = useState<any[]>([]);
   const [sizeIds, setSizeIds] = useState<any[]>([]);
+  const [attributeIds, setAttributeIds] = useState<any[]>([]);
 
   const handleSortOptionPress = (paramValue: string) => {
     setSelectedSortOption(paramValue);
@@ -79,6 +82,7 @@ export default function Category() {
     const brandIdParams = createIdParams(brandIds, "brand_id");
     const colorIdParams = createIdParams(colorIds, "color_id");
     const sizeIdParams = createIdParams(sizeIds, "size_id");
+    const attributeIdParams = createIdParams(attributeIds, "attribute_type_id");
 
     const params: Params = {
       sort: selectedSortOption ? selectedSortOption : "default",
@@ -104,8 +108,21 @@ export default function Category() {
       params.size_id = sizeIdParams.size_id ? sizeIdParams.size_id : 0;
     }
 
+    if (attributeIdParams?.attribute_type_id) {
+      params.attribute_type_id = attributeIdParams.attribute_type_id
+        ? attributeIdParams.attribute_type_id
+        : 0;
+    }
+
     return params;
-  }, [selectedSortOption, categoryIds, brandIds, colorIds, sizeIds]);
+  }, [
+    selectedSortOption,
+    categoryIds,
+    brandIds,
+    colorIds,
+    sizeIds,
+    attributeIds,
+  ]);
 
   useEffect(() => {
     const fetchFilters = async () => {
@@ -120,7 +137,6 @@ export default function Category() {
         console.log(response.data);
 
         if (response.status === 200) {
-          // console.log(response.data);
           if (response.data.data.categories) {
             setCategories(response.data.data.categories);
           }
@@ -140,6 +156,10 @@ export default function Category() {
 
           if (response.data.data.sizes) {
             setSizes(response.data.data.sizes);
+          }
+
+          if (response.data.data.attributes) {
+            setAttributes(response.data.data.attributes);
           }
         }
       } catch (err) {
@@ -166,18 +186,24 @@ export default function Category() {
 
   useEffect(() => {
     setActiveTab(null);
-  }, [categoryIds, brandIds, colorIds, sizeIds]);
+  }, [categoryIds, brandIds, colorIds, sizeIds, attributeIds]);
 
   return (
-    <SafeAreaView
+    <View
       className="flex-1 bg-gray-50"
       style={{
-        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
       }}
     >
-      <View className="bg-white pb-4 shadow-sm ">
+      <View
+        className="bg-white pb-4 shadow-sm"
+        style={{
+          paddingTop: Platform.OS === "android" ? 8 : 0,
+        }}
+      >
         <View
-          className="flex-row items-center bg-gray-100 rounded-lg mx-4 mt-4 px-3 py-2 border border-gray-200"
+          className="flex-row items-center bg-gray-100 rounded-lg mx-4 mt-2 px-3 py-2 border border-gray-200"
           style={{
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 1 },
@@ -211,7 +237,7 @@ export default function Category() {
           ) : null}
         </View>
 
-        <View className="flex-row justify-between items-center mx-4 mt-4 ">
+        <View className="flex-row justify-between items-center mx-4 mt-4">
           <TouchableOpacity
             className={`flex-1 mr-2 rounded-lg ${
               activeTab === "sort" ? "bg-indigo-700" : "bg-indigo-600"
@@ -272,7 +298,7 @@ export default function Category() {
 
       {activeTab === "sort" ? (
         <View
-          className=" bg-white rounded-b-lg shadow-lg mx-4"
+          className="bg-white rounded-b-lg shadow-lg mx-4"
           style={{
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 4 },
@@ -336,7 +362,9 @@ export default function Category() {
         setColorIds={setColorIds}
         sizes={sizes}
         setSizeIds={setSizeIds}
+        attributes={attributes}
+        setAttributeIds={setAttributeIds}
       />
-    </SafeAreaView>
+    </View>
   );
 }
