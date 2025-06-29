@@ -126,6 +126,12 @@ const InfiniteList = ({
     }
   }, [page, fetchProducts]);
 
+  useEffect(() => {
+    if (isRefreshing) {
+      fetchProducts();
+    }
+  }, [isRefreshing, fetchProducts]);
+
   const loadMore = useCallback(() => {
     if (!isLoading && !isLoadingMore && !isRefreshing && page < totalPages) {
       setPage((prev) => prev + 1);
