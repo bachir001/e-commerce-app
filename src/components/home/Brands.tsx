@@ -18,7 +18,6 @@ const { width: screenWidth } = Dimensions.get("window");
 const itemWidth = (screenWidth - 60) / 2;
 
 const BrandComponent = React.memo(({ name, image, slug, id }: Brand) => {
-  const isPressable = useRef(true);
   return (
     <TouchableOpacity
       className="mx-2 bg-white rounded-xl overflow-hidden"
@@ -32,10 +31,7 @@ const BrandComponent = React.memo(({ name, image, slug, id }: Brand) => {
         elevation: 4,
       }}
       onPress={() => {
-        if (!isPressable.current) return;
-        isPressable.current = false;
-
-        router.push({
+        router.navigate({
           pathname: "category",
           params: {
             brand: "brand",
@@ -44,10 +40,6 @@ const BrandComponent = React.memo(({ name, image, slug, id }: Brand) => {
             color: "#5e3ebd",
           },
         });
-
-        setTimeout(() => {
-          isPressable.current = true;
-        }, 1500);
       }}
     >
       <View className="flex-1 items-center justify-center p-2">

@@ -49,7 +49,7 @@ async function prefetchInitialData() {
       await queryClient.prefetchQuery({
         queryKey: ["wishlist", token],
         queryFn: () =>
-          axios
+          axiosApi
             .get("/favorite", {
               headers: { Authorization: `Bearer ${token}` },
             })
@@ -75,3 +75,4 @@ async function initializeApp() {
 initializeApp();
 
 import "expo-router/entry";
+import axiosApi from "@/apis/axiosApi";

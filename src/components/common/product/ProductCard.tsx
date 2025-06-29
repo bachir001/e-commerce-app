@@ -13,8 +13,9 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
 import { useSessionStore } from "@/store/useSessionStore";
-import { useAppDataStore } from "@/store/useAppDataStore";
 import ProductCardWide from "./ProductCardWide";
+import { queryClient } from "index";
+import { useQuery } from "@tanstack/react-query";
 
 interface Props {
   product: Product;
@@ -36,7 +37,23 @@ const ProductCard = React.memo(
     const [timeLeft, setTimeLeft] = useState<string>("");
     const [isFavorite, setIsFavorite] = useState<boolean>(false);
     const { isLogged, token } = useSessionStore();
-    const { wishList, setWishList } = useAppDataStore();
+
+    const { data: wishListFromQuery } = useQuery<Product[], Error>({
+      queryKey: ["wishlist", token],
+      queryFn: async () => {
+        if (!token) {
+          return [];
+        }
+        const response = await axiosApi.get("/favorite", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data.data || [];
+      },
+      enabled: !!token,
+      staleTime: 5 * 60 * 1000,
+      gcTime: 1000 * 60 * 60,
+      refetchOnWindowFocus: true,
+    });
 
     const isPressable = useRef(true);
 
@@ -118,11 +135,19 @@ const ProductCard = React.memo(
     }, [productData?.endDate]);
 
     useEffect(() => {
-      if (wishList && product) {
-        const isInWishlist = wishList.some((item) => item.id === product.id);
+      if (wishListFromQuery && product) {
+        const isInWishlist = wishListFromQuery.some(
+          (item: Product) => item.id === product.id
+        );
         setIsFavorite(isInWishlist);
       }
-    }, [wishList, product]);
+    }, [wishListFromQuery, product]);
+
+    useEffect(() => {
+      return () => {
+        isPressable.current = true;
+      };
+    }, []);
 
     const navigateToProductDetails = useCallback(() => {
       if (!isPressable.current) return;
@@ -177,7 +202,7 @@ const ProductCard = React.memo(
         }
 
         const endpoint = isCurrentlyFavorite
-          ? `/favorite/remove`
+          ? `/favorite/remove?_method=DELETE`
           : `/favorite/add`;
         const response = await axiosApi.post(endpoint, WishListBody, {
           headers: {
@@ -197,14 +222,6 @@ const ProductCard = React.memo(
             visibilityTime: 1000,
             topOffset: 60,
           });
-
-          if (setWishList) {
-            if (isCurrentlyFavorite) {
-              setWishList(wishList.filter((item) => item.id !== product.id));
-            } else {
-              setWishList([...wishList, product]);
-            }
-          }
         } else {
           Toast.show({
             type: "error",
@@ -228,7 +245,7 @@ const ProductCard = React.memo(
           topOffset: 60,
         });
       }
-    }, [isLogged, token, product, isFavorite, wishList, setWishList]);
+    }, [isLogged, token, product, isFavorite]);
 
     if (!productData) return null;
 

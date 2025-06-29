@@ -25,8 +25,6 @@ export default function CategoryHeader({
 
   const accentColor = variant === "purple" ? "#FACC15" : "#5e3ebd";
 
-  const isPressableViewAll = useRef(true);
-
   return (
     <LinearGradient
       colors={gradientColors}
@@ -57,14 +55,7 @@ export default function CategoryHeader({
             backgroundColor: `${accentColor}20`,
           }}
           onPress={() => {
-            if (!isPressableViewAll.current) return;
-            isPressableViewAll.current = false;
-
-            router.push("/(tabs)/categories");
-
-            setTimeout(() => {
-              isPressableViewAll.current = true;
-            }, 1500);
+            router.navigate("/(tabs)/categories");
           }}
         >
           <Text style={{ color: accentColor }} className="font-bold text-base">

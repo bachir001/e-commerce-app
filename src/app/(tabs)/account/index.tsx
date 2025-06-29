@@ -191,7 +191,7 @@ export default function AccountScreen() {
                       {user?.first_name || "User"} {user?.last_name || ""}
                     </Text>
                     <Text className="text-sm text-gray-500">
-                      {user?.email || "user@example.com"}
+                      {user?.email || "+" + user?.mobile}
                     </Text>
                   </View>
                 </View>

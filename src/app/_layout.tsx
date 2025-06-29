@@ -4,6 +4,8 @@ import { useCallback, useEffect } from "react";
 import { ImageBackground } from "react-native";
 import Toast from "react-native-toast-message";
 import ErrorState from "@/components/common/ErrorState";
+import * as SecureStore from "expo-secure-store";
+
 import {
   useBrands,
   useMegaCategories,
@@ -24,7 +26,7 @@ const newArrivalsOptions = {
 };
 
 function AppLayout() {
-  const { setSessionId } = useSessionStore();
+  const { setSessionId, setToken, setUser, setIsLogged } = useSessionStore();
   const { setBrands, setSliders, setMegaCategories, setNewArrivals } =
     useAppDataStore();
 
@@ -38,6 +40,26 @@ function AppLayout() {
 
   const initializeSession = useCallback(async () => {
     const id = await getOrCreateSessionId();
+
+    //check for token
+    const token = await SecureStore.getItemAsync("token");
+    console.log("HELLO");
+    console.log(token);
+    if (!token) {
+      setUser(null);
+      setIsLogged(false);
+      setToken(null);
+    } else {
+      setIsLogged(true);
+      setToken(token);
+      const userJSON = await SecureStore.getItemAsync("user");
+
+      if (userJSON) {
+        const userParsed = JSON.parse(userJSON);
+        setUser(userParsed);
+      }
+    }
+
     setSessionId(id);
   }, []);
 
