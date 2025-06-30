@@ -11,10 +11,9 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
-
 import { Colors } from "@/constants/Colors";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSessionStore } from "@/store/useSessionStore";
 import DotsLoader from "@/components/common/AnimatedLayout";
 
@@ -48,25 +47,29 @@ export default function AddressPage() {
 
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const { token } = useSessionStore();
+  const queryClient = useQueryClient();
 
   const {
     data: addresses = [],
     isLoading: addressesLoading,
     refetch: refetchAddresses,
   } = useQuery({
-    queryKey: ["addresses"],
-    enabled: typeof token === "string" && token.length > 0,
+    queryKey: ["addresses", token],
     retry: 0,
     queryFn: async () => {
-      const response = await axiosApi.get("/addresses", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const sortedDefault = [...response.data.data].sort(
-        (a, b) => b.is_default - a.is_default
-      );
-      return sortedDefault;
+      if (token && typeof token === "string") {
+        const response = await axiosApi.get("/addresses", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const sortedDefault = [...response.data.data].sort(
+          (a, b) => b.is_default - a.is_default
+        );
+        return sortedDefault;
+      }
+
+      return [];
     },
     staleTime: 1000 * 60 * 60 * 24,
   });
@@ -108,7 +111,9 @@ export default function AddressPage() {
         {},
         HeaderData
       );
+
       if (response.data.status) {
+        queryClient.invalidateQueries({ queryKey: ["addresses", token] });
         Toast.show({
           type: "success",
           text1: "Success",
@@ -117,10 +122,6 @@ export default function AddressPage() {
           visibilityTime: 1000,
           topOffset: 60,
         });
-
-        setAddresses(
-          addresses.filter((address_: Address) => address_.id !== address.id)
-        );
       } else {
         Toast.show({
           type: "error",

@@ -39,18 +39,6 @@ export default function ResetPassword() {
         return;
       }
 
-      if (mobile === "" && mobile.length !== 8) {
-        Toast.show({
-          type: "error",
-          text1: "Invalid Phone Number",
-          text2: "Please enter a valid phone number.",
-          topOffset: 60,
-          visibilityTime: 2000,
-        });
-        setLoading(false);
-        return;
-      }
-
       if (email.length === 0 && mobile.length === 0) {
         Toast.show({
           type: "error",

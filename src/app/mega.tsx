@@ -61,7 +61,7 @@ export default function Mega() {
 
   const renderBestSellers = useCallback(
     ({ item, index }: { item: Product; index: number }) => (
-      <ProductCard product={item} innerColor={color as string} simplified />
+      <ProductCard product={item} innerColor={color as string} />
     ),
     [color]
   );

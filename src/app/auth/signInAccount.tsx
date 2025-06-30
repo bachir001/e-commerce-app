@@ -65,17 +65,15 @@ export default function loginAccount() {
             setIsLogged(true);
             setUser(response.data.data.user);
             setToken(response.data.data.token);
+            router.replace("/(tabs)/home");
+          } else {
             Toast.show({
-              type: "success",
-              text1: "Login Successful",
-              text2: `Welcome back ${response.data.data.user.first_name}`,
+              type: "error",
+              text1: "Login Failed",
+              text2: response.data.message,
               autoHide: true,
-              visibilityTime: 1000,
+              visibilityTime: 2000,
               topOffset: 60,
-              position: "top",
-              onHide: () => {
-                router.replace("/(tabs)/home");
-              },
             });
           }
         })
@@ -92,7 +90,7 @@ export default function loginAccount() {
         text1: "Login Failed",
         text2: errorMessage,
         autoHide: true,
-        visibilityTime: 1000,
+        visibilityTime: 2000,
         topOffset: 60,
       });
     }
@@ -292,7 +290,7 @@ export default function loginAccount() {
                 disabled={loading}
               >
                 {loading ? (
-                  <DotsLoader size="small" color="white" />
+                  <ActivityIndicator size="small" color="white" />
                 ) : (
                   <Text className="text-white text-center font-bold text-base">
                     Sign In
