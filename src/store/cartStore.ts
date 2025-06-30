@@ -244,7 +244,8 @@ export const useCartStore = create<CartState>()(
           Toast.show({
             type: "success",
             text1: "Cart Updated",
-            position: "top",      // ← was "bottom"
+            position: "top",     
+            visibilityTime: 2000,
             topOffset: 50, 
           });
         } catch (err: any) {
@@ -261,7 +262,8 @@ export const useCartStore = create<CartState>()(
             type: "error",
             text1: isStockErr ? "Out of Stock" : "Cart Error",
             text2: msg,
-            position: "top",      // ← was "bottom"
+            position: "top", 
+            visibilityTime: 2000,
             topOffset: 50, 
           });
         } finally {
