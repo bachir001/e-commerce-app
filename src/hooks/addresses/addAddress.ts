@@ -1,14 +1,14 @@
 import axiosApi from "@/apis/axiosApi";
-import { queryClient } from "@/app/_layout";
 import { useSessionStore } from "@/store/useSessionStore";
 import { SessionContextValue } from "@/types/globalTypes";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 
 import Toast from "react-native-toast-message";
 
 export default function useAddAddress() {
   const { token } = useSessionStore();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (addressData: any) => {

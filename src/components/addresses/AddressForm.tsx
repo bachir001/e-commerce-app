@@ -414,7 +414,7 @@ export default function AddressForm({
               }}
             >
               {addAddressMutation.isPending ? (
-                <DotsLoader size="small" color="white" />
+                <ActivityIndicator size="small" color="white" />
               ) : (
                 <Text className="text-white font-semibold">
                   {type === "create" ? "Create Address" : "Update Address"}

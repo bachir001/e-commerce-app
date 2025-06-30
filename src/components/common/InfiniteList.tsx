@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import ProductCard from "./product/ProductCard";
 import type { Product } from "@/types/globalTypes";
-import axios from "axios";
 import DotsLoader from "./AnimatedLayout";
 import EmptyState from "./EmptyList";
 import ErrorState from "./ErrorState";
