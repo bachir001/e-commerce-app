@@ -68,9 +68,9 @@ export default function useAddAddress() {
         bottomOffset: 40,
       });
     },
-    // onSettled: () => {
-    //   queryClient.invalidateQueries({queryKey: ["addresses"]});
-    // },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["addresses", token] });
+    },
     onSuccess: (data) => {
       router.back();
 

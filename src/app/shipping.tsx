@@ -11,18 +11,22 @@ import {
   StyleSheet,
   Dimensions,
   Image,
+  TouchableOpacity,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from "axios";
 import { z } from "zod";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 import { useCartStore } from "@/store/cartStore";
 import { getOrCreateSessionId } from "@/lib/session";
-import { useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
+import { useQueryClient } from "@tanstack/react-query";
+import useGetAddresses from "@/hooks/addresses/useGetAddresses";
+import { FontAwesome5 } from "@expo/vector-icons";
+import { Address } from "@/types/globalTypes";
+import { useSessionStore } from "@/store/useSessionStore";
 
 interface Governorate {
   id: number;
@@ -91,17 +95,8 @@ export default function ShippingScreen(): React.ReactElement {
   const colorScheme = isDarkMode ? "dark" : "light";
   const styles = createStyles(colorScheme);
 
-  // Contact state
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [dateOfBirth, setDateOfBirth] = useState<Date>(new Date());
-  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
-  const [mobileNumber, setMobileNumber] = useState<string>("");
-  const [emailAddress, setEmailAddress] = useState<string>("");
+  const { isLogged, token } = useSessionStore();
 
-  // Address state
-  const [streetAddress1, setStreetAddress1] = useState<string>("");
-  const [streetAddress2, setStreetAddress2] = useState<string>("");
   const [governorateList, setGovernorateList] = useState<Governorate[]>([]);
   const [selectedGovernorateId, setSelectedGovernorateId] = useState<number>();
   const [cityList, setCityList] = useState<City[]>([]);
@@ -109,13 +104,15 @@ export default function ShippingScreen(): React.ReactElement {
   const [areaList, setAreaList] = useState<Area[]>([]);
   const [selectedArea, setSelectedArea] = useState<Area>();
 
+  const [addressId, setAddressId] = useState<number | null>(null);
+  const [deliveryPrice, setDeliveryPrice] = useState<number | null>(null);
+
   // Additional info
-  const [gender, setGender] = useState<"male" | "female">("male");
   const [additionalNotes, setAdditionalNotes] = useState<string>("");
   const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">(
     "delivery"
   );
-  const [couponCode, setCouponCode] = useState<string>("");
+  // const [couponCode, setCouponCode] = useState<string>("");
 
   // Cart store
   const cartItems = useCartStore((state) => state.items);
@@ -127,6 +124,15 @@ export default function ShippingScreen(): React.ReactElement {
   const deliveryCost =
     deliveryMethod === "delivery" && selectedArea ? selectedArea.price : 0;
   const grandTotal = subtotalAmount + deliveryCost;
+
+  const [clickAddresses, setClickAddresses] = useState(false);
+
+  const queryClient = useQueryClient();
+  const {
+    data: addresses,
+    isLoading: addressesLoading,
+    isError: addressesError,
+  } = useGetAddresses();
 
   // Helpers
   function formatDateAsYMD(date: Date): string {
@@ -187,64 +193,52 @@ export default function ShippingScreen(): React.ReactElement {
   }, [selectedCityId, cityList]);
 
   // Submission
-  async function handlePlaceOrder(): Promise<void> {
-    try {
-      const formData = {
-        firstName,
-        lastName,
-        dateOfBirth,
-        mobileNumber,
-        emailAddress,
-        streetAddress1,
-        streetAddress2,
-        governorateId: selectedGovernorateId,
-        cityId: selectedCityId,
-        areaId: selectedArea?.id,
-        gender,
-        deliveryMethod,
-      };
+  async function handleCheckout(): Promise<void> {
+    if (!isLogged) {
+      Toast.show({
+        type: "error",
+        text1: "Cannot Place Order",
+        text2: "Please log in before placing an order",
+        topOffset: 60,
+        position: "top",
+        autoHide: true,
+        visibilityTime: 2000,
+      });
 
-      const result = shippingSchema.safeParse(formData);
-      if (!result.success) {
-        const issue = result.error.issues[0];
-        Toast.show({
-          type: "error",
-          text1: "Validation Error",
-          text2: `${issue.path[0]}: ${issue.message}`,
-          topOffset: 60,
-          position: "top",
-          autoHide: true,
-          visibilityTime: 1000,
-        });
-        return;
-      }
+      return;
+    }
+
+    try {
+      // const result = shippingSchema.safeParse(formData);
+      // if (!result.success) {
+      //   const issue = result.error.issues[0];
+      //   Toast.show({
+      //     type: "error",
+      //     text1: "Validation Error",
+      //     text2: `${issue.path[0]}: ${issue.message}`,
+      //     topOffset: 60,
+      //     position: "top",
+      //     autoHide: true,
+      //     visibilityTime: 1000,
+      //   });
+      //   return;
+      // }
 
       const sessionId = await getOrCreateSessionId();
       const pickUpFlag = deliveryMethod === "pickup" ? 1 : 0;
       const requestBody = {
-        first_name: firstName,
-        last_name: lastName,
-        mobile: mobileNumber,
-        email: emailAddress,
-        gender_id: gender === "male" ? 1 : 2,
-        date_of_birth: formatDateAsYMD(dateOfBirth),
-        street: streetAddress1,
-        street_2: streetAddress2,
-        governorate_id: selectedGovernorateId,
-        city_id: selectedCityId,
-        area_id: selectedArea?.id,
-        country_id: 1,
-        postal_code: "",
-        password: "",
         note: additionalNotes,
         pick_up: pickUpFlag,
-        delivery_price: deliveryCost,
+        delivery_price: deliveryPrice,
+        address_id: addressId,
       };
 
-      const response = await axiosApi.post("checkout-data", requestBody, {
-        headers: { "x-session": sessionId },
+      const response = await axiosApi.post("/checkout-data", requestBody, {
+        headers: { "x-session": sessionId, Authorization: `Bearer ${token}` },
+        withCredentials: true,
       });
 
+      console.log(response.status);
       if (response.data.status) {
         Toast.show({
           type: "success",
@@ -253,7 +247,7 @@ export default function ShippingScreen(): React.ReactElement {
           topOffset: 60,
           position: "top",
           autoHide: true,
-          visibilityTime: 500,
+          visibilityTime: 1000,
           onHide: () => {
             router.replace("/(tabs)/home");
           },
@@ -292,6 +286,49 @@ export default function ShippingScreen(): React.ReactElement {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.screenTitle}>Shipping Information</Text>
+
+        <View>
+          <TouchableOpacity
+            className="flex flex-row justify-between items-center h-11 p-3"
+            onPress={() => {
+              setClickAddresses(!clickAddresses);
+            }}
+          >
+            <Text>Address</Text>
+
+            {!clickAddresses ? (
+              <FontAwesome5 name="chevron-down" size={14} color={"#6B7280"} />
+            ) : (
+              <FontAwesome5 name="chevron-up" size={14} color={"#6B7280"} />
+            )}
+          </TouchableOpacity>
+
+          {clickAddresses ? (
+            <View>
+              {addresses &&
+                addresses.length > 0 &&
+                addresses.map((address) => (
+                  <TouchableOpacity
+                    key={address.id}
+                    className="p-5 border border-black"
+                    onPress={() => {
+                      setAddressId(address.id);
+                      setDeliveryPrice(address.delivery_price);
+                    }}
+                  >
+                    <Text>{address.name}</Text>
+                  </TouchableOpacity>
+                ))}
+            </View>
+          ) : addresses?.length === 0 ? (
+            <Link
+              href="/addresses/addAddress"
+              className="font-bold text-red-600 text-xl"
+            >
+              NO ADDRESSES FOUND, CLICK HERE
+            </Link>
+          ) : null}
+        </View>
 
         {/* Additional Information Card */}
         <View style={styles.card}>
@@ -382,7 +419,7 @@ export default function ShippingScreen(): React.ReactElement {
             <Text style={styles.totalValue}>${grandTotal.toFixed(2)}</Text>
           </View>
 
-          <View style={styles.couponRow}>
+          {/* <View style={styles.couponRow}>
             <TextInput
               style={[styles.input, styles.couponInput]}
               placeholder="Enter Your Coupon Code"
@@ -392,9 +429,14 @@ export default function ShippingScreen(): React.ReactElement {
             <Pressable style={styles.couponButton}>
               <Text style={styles.couponButtonText}>Apply</Text>
             </Pressable>
-          </View>
+          </View> */}
 
-          <Pressable style={styles.placeOrderButton} onPress={handlePlaceOrder}>
+          <Pressable
+            style={styles.placeOrderButton}
+            onPress={() => {
+              handleCheckout();
+            }}
+          >
             <Text style={styles.placeOrderText}>PLACE ORDER</Text>
           </Pressable>
         </View>
