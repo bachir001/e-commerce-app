@@ -1,6 +1,6 @@
 // app/(tabs)/cart/ShippingScreen.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -10,18 +10,19 @@ import {
   Pressable,
   StyleSheet,
   Dimensions,
-  Image
-} from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import axios from 'axios';
-import { z } from 'zod';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
-import { useCartStore } from '@/store/cartStore';
-import { getOrCreateSessionId } from '@/lib/session';
-import { useRouter } from 'expo-router';
-import Toast from 'react-native-toast-message';
+  Image,
+} from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import axios from "axios";
+import { z } from "zod";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
+import { useCartStore } from "@/store/cartStore";
+import { getOrCreateSessionId } from "@/lib/session";
+import { useRouter } from "expo-router";
+import Toast from "react-native-toast-message";
+import axiosApi from "@/apis/axiosApi";
 
 interface Governorate {
   id: number;
@@ -47,51 +48,60 @@ interface Area {
 
 const shippingSchema = z
   .object({
-    firstName: z.string().min(1, 'First name is required'),
-    lastName: z.string().min(1, 'Last name is required'),
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
     dateOfBirth: z.date(),
     mobileNumber: z
       .string()
-      .min(8, 'Mobile number must be 8 digits')
-      .max(8, 'Mobile number must be 8 digits')
-      .regex(/^\d+$/, 'Must contain only numbers'),
-    emailAddress: z.string().email('Invalid email address').optional().or(z.literal('')),
-    streetAddress1: z.string().min(1, 'Street address is required'),
+      .min(8, "Mobile number must be 8 digits")
+      .max(8, "Mobile number must be 8 digits")
+      .regex(/^\d+$/, "Must contain only numbers"),
+    emailAddress: z
+      .string()
+      .email("Invalid email address")
+      .optional()
+      .or(z.literal("")),
+    streetAddress1: z.string().min(1, "Street address is required"),
     streetAddress2: z.string().optional(),
-    governorateId: z.number({ required_error: 'Governorate is required' }).optional(),
-    cityId: z.number({ required_error: 'City is required' }).optional(),
-    areaId: z.number({ required_error: 'Area is required' }).optional(),
-    gender: z.enum(['male', 'female']),
-    deliveryMethod: z.enum(['delivery', 'pickup']),
+    governorateId: z
+      .number({ required_error: "Governorate is required" })
+      .optional(),
+    cityId: z.number({ required_error: "City is required" }).optional(),
+    areaId: z.number({ required_error: "Area is required" }).optional(),
+    gender: z.enum(["male", "female"]),
+    deliveryMethod: z.enum(["delivery", "pickup"]),
   })
-  .refine((data) => {
-    if (data.deliveryMethod === 'delivery') {
-      return !!data.governorateId && !!data.cityId && !!data.areaId;
+  .refine(
+    (data) => {
+      if (data.deliveryMethod === "delivery") {
+        return !!data.governorateId && !!data.cityId && !!data.areaId;
+      }
+      return true;
+    },
+    {
+      message: "All address fields are required for delivery",
+      path: ["governorateId"],
     }
-    return true;
-  }, {
-    message: 'All address fields are required for delivery',
-    path: ['governorateId'],
-  });
+  );
 
 export default function ShippingScreen(): React.ReactElement {
   const router = useRouter();
   const systemColorScheme = useColorScheme();
-  const isDarkMode = systemColorScheme === 'dark';
-  const colorScheme = isDarkMode ? 'dark' : 'light';
+  const isDarkMode = systemColorScheme === "dark";
+  const colorScheme = isDarkMode ? "dark" : "light";
   const styles = createStyles(colorScheme);
 
   // Contact state
-  const [firstName, setFirstName] = useState<string>('');
-  const [lastName, setLastName] = useState<string>('');
+  const [firstName, setFirstName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
   const [dateOfBirth, setDateOfBirth] = useState<Date>(new Date());
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
-  const [mobileNumber, setMobileNumber] = useState<string>('');
-  const [emailAddress, setEmailAddress] = useState<string>('');
+  const [mobileNumber, setMobileNumber] = useState<string>("");
+  const [emailAddress, setEmailAddress] = useState<string>("");
 
   // Address state
-  const [streetAddress1, setStreetAddress1] = useState<string>('');
-  const [streetAddress2, setStreetAddress2] = useState<string>('');
+  const [streetAddress1, setStreetAddress1] = useState<string>("");
+  const [streetAddress2, setStreetAddress2] = useState<string>("");
   const [governorateList, setGovernorateList] = useState<Governorate[]>([]);
   const [selectedGovernorateId, setSelectedGovernorateId] = useState<number>();
   const [cityList, setCityList] = useState<City[]>([]);
@@ -100,37 +110,42 @@ export default function ShippingScreen(): React.ReactElement {
   const [selectedArea, setSelectedArea] = useState<Area>();
 
   // Additional info
-  const [gender, setGender] = useState<'male' | 'female'>('male');
-  const [additionalNotes, setAdditionalNotes] = useState<string>('');
-  const [deliveryMethod, setDeliveryMethod] = useState<'delivery' | 'pickup'>('delivery');
-  const [couponCode, setCouponCode] = useState<string>('');
+  const [gender, setGender] = useState<"male" | "female">("male");
+  const [additionalNotes, setAdditionalNotes] = useState<string>("");
+  const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">(
+    "delivery"
+  );
+  const [couponCode, setCouponCode] = useState<string>("");
 
   // Cart store
   const cartItems = useCartStore((state) => state.items);
-  const subtotalAmount = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotalAmount = cartItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
   const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const deliveryCost =
-    deliveryMethod === 'delivery' && selectedArea ? selectedArea.price : 0;
+    deliveryMethod === "delivery" && selectedArea ? selectedArea.price : 0;
   const grandTotal = subtotalAmount + deliveryCost;
 
   // Helpers
   function formatDateAsYMD(date: Date): string {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   }
 
   // Fetch governorates
   useEffect(() => {
-    axios
-      .get('https://api-gocami-test.gocami.com/api/governorates')
+    axiosApi
+      .get("/governorates")
       .then((response) => {
         if (response.data.status) {
           setGovernorateList(response.data.data);
         }
       })
-      .catch((error) => console.error('Error fetching governorates:', error));
+      .catch((error) => console.error("Error fetching governorates:", error));
   }, []);
 
   // Fetch cities on governorate change
@@ -142,14 +157,14 @@ export default function ShippingScreen(): React.ReactElement {
     }
     const gov = governorateList.find((g) => g.id === selectedGovernorateId);
     if (!gov) return;
-    axios
-      .get(`https://api-gocami-test.gocami.com/api/cities/${gov.code}`)
+    axiosApi
+      .get(`/cities/${gov.code}`)
       .then((response) => {
         if (response.data.status) {
           setCityList(response.data.data);
         }
       })
-      .catch((error) => console.error('Error fetching cities:', error));
+      .catch((error) => console.error("Error fetching cities:", error));
   }, [selectedGovernorateId, governorateList]);
 
   // Fetch areas on city change
@@ -161,14 +176,14 @@ export default function ShippingScreen(): React.ReactElement {
     }
     const city = cityList.find((c) => c.id === selectedCityId);
     if (!city) return;
-    axios
-      .get(`https://newapi.gocami.com/api/areas/${encodeURIComponent(city.code)}`)
+    axiosApi
+      .get(`/areas/${encodeURIComponent(city.code)}`)
       .then((response) => {
         if (response.data.status) {
           setAreaList(response.data.data);
         }
       })
-      .catch((error) => console.error('Error fetching areas:', error));
+      .catch((error) => console.error("Error fetching areas:", error));
   }, [selectedCityId, cityList]);
 
   // Submission
@@ -193,21 +208,25 @@ export default function ShippingScreen(): React.ReactElement {
       if (!result.success) {
         const issue = result.error.issues[0];
         Toast.show({
-          type: 'error',
-          text1: 'Validation Error',
+          type: "error",
+          text1: "Validation Error",
           text2: `${issue.path[0]}: ${issue.message}`,
+          topOffset: 60,
+          position: "top",
+          autoHide: true,
+          visibilityTime: 1000,
         });
         return;
       }
 
       const sessionId = await getOrCreateSessionId();
-      const pickUpFlag = deliveryMethod === 'pickup' ? 1 : 0;
+      const pickUpFlag = deliveryMethod === "pickup" ? 1 : 0;
       const requestBody = {
         first_name: firstName,
         last_name: lastName,
         mobile: mobileNumber,
         email: emailAddress,
-        gender_id: gender === 'male' ? 1 : 2,
+        gender_id: gender === "male" ? 1 : 2,
         date_of_birth: formatDateAsYMD(dateOfBirth),
         street: streetAddress1,
         street_2: streetAddress2,
@@ -215,41 +234,54 @@ export default function ShippingScreen(): React.ReactElement {
         city_id: selectedCityId,
         area_id: selectedArea?.id,
         country_id: 1,
-        postal_code: '',
-        password: '',
+        postal_code: "",
+        password: "",
         note: additionalNotes,
         pick_up: pickUpFlag,
         delivery_price: deliveryCost,
       };
 
-      const response = await axios.post(
-        'https://api-gocami-test.gocami.com/api/checkout-data',
-        requestBody,
-        { headers: { 'x-session': sessionId } }
-      );
+      const response = await axiosApi.post("checkout-data", requestBody, {
+        headers: { "x-session": sessionId },
+      });
 
       if (response.data.status) {
         Toast.show({
-          type: 'success',
-          text1: 'Order Placed',
+          type: "success",
+          text1: "Order Placed",
           text2: `Invoice #${response.data.data.invoice_id}`,
+          topOffset: 60,
+          position: "top",
+          autoHide: true,
+          visibilityTime: 500,
+          onHide: () => {
+            router.replace("/(tabs)/home");
+          },
         });
-        router.replace('/(tabs)/home');
       } else {
-        throw new Error(response.data.message || 'Checkout failed');
+        throw new Error(response.data.message || "Checkout failed");
       }
     } catch (err: any) {
       if (axios.isAxiosError(err) && err.response) {
         Toast.show({
-          type: 'error',
+          type: "error",
           text1: `Checkout Failed (${err.response.status})`,
-          text2: err.response.data?.message || JSON.stringify(err.response.data),
+          text2:
+            err.response.data?.message || JSON.stringify(err.response.data),
+          topOffset: 60,
+          position: "top",
+          autoHide: true,
+          visibilityTime: 1000,
         });
       } else {
         Toast.show({
-          type: 'error',
-          text1: 'Checkout Failed',
-          text2: err.message || 'Unknown error',
+          type: "error",
+          text1: "Checkout Failed",
+          text2: err.message || "Unknown error",
+          topOffset: 60,
+          position: "top",
+          autoHide: true,
+          visibilityTime: 1000,
         });
       }
       console.error(err);
@@ -265,7 +297,7 @@ export default function ShippingScreen(): React.ReactElement {
         <View style={styles.card}>
           <Text style={styles.cardHeader}>Additional Information</Text>
           <TextInput
-            style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
+            style={[styles.input, { height: 100, textAlignVertical: "top" }]}
             placeholder="Add any additional notes or special instructions here..."
             multiline
             value={additionalNotes}
@@ -277,13 +309,20 @@ export default function ShippingScreen(): React.ReactElement {
           {/* <View style={styles.radioGroup}>
             <Pressable onPress={() => setDeliveryMethod('delivery')} style={styles.radioOption}>
               <View style={styles.radioOuter}>
-                {deliveryMethod === 'delivery' && <View style={styles.radioInner} />}
+                {deliveryMethod === "delivery" ? (
+                  <View style={styles.radioInner} />
+                ) : null}
               </View>
               <Text style={styles.radioLabel}>Home Delivery</Text>
             </Pressable>
-            <Pressable onPress={() => setDeliveryMethod('pickup')} style={styles.radioOption}>
+            <Pressable
+              onPress={() => setDeliveryMethod("pickup")}
+              style={styles.radioOption}
+            >
               <View style={styles.radioOuter}>
-                {deliveryMethod === 'pickup' && <View style={styles.radioInner} />}
+                {deliveryMethod === "pickup" ? (
+                  <View style={styles.radioInner} />
+                ) : null}
               </View>
               <Text style={styles.radioLabel}>Store Pickup</Text>
             </Pressable>
@@ -296,15 +335,19 @@ export default function ShippingScreen(): React.ReactElement {
           {cartItems.map((item) => (
             <View key={item.id} style={styles.itemRow}>
               <View style={styles.rowLeft}>
-                <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
+                <Image
+                  fadeDuration={0}
+                  source={{ uri: item.imageUrl }}
+                  style={styles.productImage}
+                />
                 <View style={styles.itemInfo}>
                   <Text style={styles.itemName}>{item.name}</Text>
                   <Text style={styles.itemSku}>SKU: {item.id}</Text>
                 </View>
               </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <Text style={styles.itemPrice}>
-                  ${ (item.price * item.quantity).toFixed(2) }
+                  ${(item.price * item.quantity).toFixed(2)}
                 </Text>
                 <Text style={styles.quantityText}>×{item.quantity}</Text>
               </View>
@@ -314,7 +357,9 @@ export default function ShippingScreen(): React.ReactElement {
           <View style={styles.summaryDivider} />
 
           <View style={styles.summaryRow}>
-            <Text>{cartItems.length} product{cartItems.length > 1 ? 's' : ''}</Text>
+            <Text>
+              {cartItems.length} product{cartItems.length > 1 ? "s" : ""}
+            </Text>
             <Text>(total quantity: {totalQuantity})</Text>
           </View>
           <View style={styles.summaryRow}>
@@ -324,11 +369,11 @@ export default function ShippingScreen(): React.ReactElement {
           <View style={styles.summaryRow}>
             <Text>Delivery</Text>
             <Text>
-              {deliveryMethod === 'delivery'
+              {deliveryMethod === "delivery"
                 ? selectedArea
                   ? `$${deliveryCost.toFixed(2)}`
-                  : '--'
-                : '—'}
+                  : "--"
+                : "—"}
             </Text>
           </View>
           <View style={styles.summaryDivider} />
@@ -359,11 +404,12 @@ export default function ShippingScreen(): React.ReactElement {
   );
 }
 
-const screenWidth = Dimensions.get('window').width;
+const screenWidth = Dimensions.get("window").width;
 
-function createStyles(mode: 'light' | 'dark') {
-  const backgroundColor = mode === 'light' ? '#F3E8FF' : Colors[mode].background;
-  const accentColor = '#5E3EBD';
+function createStyles(mode: "light" | "dark") {
+  const backgroundColor =
+    mode === "light" ? "#F3E8FF" : Colors[mode].background;
+  const accentColor = "#5E3EBD";
   const textColor = Colors[mode].text;
 
   return StyleSheet.create({
@@ -377,19 +423,19 @@ function createStyles(mode: 'light' | 'dark') {
     },
     screenTitle: {
       fontSize: 28,
-      fontWeight: '700',
+      fontWeight: "700",
       color: accentColor,
       marginBottom: 24,
-      alignSelf: 'center',
+      alignSelf: "center",
     },
     card: {
-      backgroundColor: '#FFFFFF',
+      backgroundColor: "#FFFFFF",
       borderRadius: 12,
       padding: 16,
       marginBottom: 24,
       width: screenWidth - 32,
-      alignSelf: 'center',
-      shadowColor: '#000',
+      alignSelf: "center",
+      shadowColor: "#000",
       shadowOpacity: 0.05,
       shadowRadius: 8,
       shadowOffset: { width: 0, height: 2 },
@@ -397,12 +443,12 @@ function createStyles(mode: 'light' | 'dark') {
     },
     cardHeader: {
       fontSize: 18,
-      fontWeight: '600',
+      fontWeight: "600",
       color: accentColor,
       marginBottom: 12,
     },
     input: {
-      width: '100%',
+      width: "100%",
       borderWidth: 1,
       borderColor: accentColor,
       borderRadius: 24,
@@ -412,7 +458,7 @@ function createStyles(mode: 'light' | 'dark') {
       color: textColor,
     },
     picker: {
-      width: '100%',
+      width: "100%",
       borderWidth: 1,
       borderColor: accentColor,
       borderRadius: 24,
@@ -420,12 +466,12 @@ function createStyles(mode: 'light' | 'dark') {
       marginBottom: 12,
     },
     radioGroup: {
-      flexDirection: 'row',
+      flexDirection: "row",
       marginBottom: 12,
     },
     radioOption: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       marginRight: 24,
     },
     radioOuter: {
@@ -435,8 +481,8 @@ function createStyles(mode: 'light' | 'dark') {
       borderColor: accentColor,
       borderRadius: 12,
       marginRight: 8,
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
     },
     radioInner: {
       width: 12,
@@ -455,32 +501,32 @@ function createStyles(mode: 'light' | 'dark') {
       marginRight: 12,
     },
     itemRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
       marginBottom: 12,
     },
     rowLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
     },
     itemInfo: {
       marginLeft: 12,
     },
     itemName: {
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: "500",
       maxWidth: 120,
       color: textColor,
     },
     itemSku: {
       fontSize: 12,
-      color: '#666666',
+      color: "#666666",
       marginTop: 4,
     },
     itemPrice: {
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: "600",
       color: textColor,
     },
     quantityText: {
@@ -490,25 +536,25 @@ function createStyles(mode: 'light' | 'dark') {
     },
     summaryDivider: {
       height: 1,
-      backgroundColor: '#EEEEEE',
+      backgroundColor: "#EEEEEE",
       marginVertical: 12,
     },
     summaryRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
+      flexDirection: "row",
+      justifyContent: "space-between",
       marginBottom: 8,
     },
     totalLabel: {
-      fontWeight: '700',
+      fontWeight: "700",
     },
     totalValue: {
       fontSize: 16,
-      fontWeight: '700',
-      color: '#F59E0B',
+      fontWeight: "700",
+      color: "#F59E0B",
     },
     couponRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       marginTop: 12,
       marginBottom: 12,
     },
@@ -519,25 +565,25 @@ function createStyles(mode: 'light' | 'dark') {
       height: 48,
     },
     couponButton: {
-      backgroundColor: '#FBBF24',
+      backgroundColor: "#FBBF24",
       borderRadius: 8,
       paddingVertical: 10,
       paddingHorizontal: 16,
     },
     couponButtonText: {
-      color: '#FFFFFF',
-      fontWeight: '600',
+      color: "#FFFFFF",
+      fontWeight: "600",
     },
     placeOrderButton: {
       backgroundColor: accentColor,
       borderRadius: 8,
       paddingVertical: 16,
-      alignItems: 'center',
+      alignItems: "center",
     },
     placeOrderText: {
-      color: '#FFFFFF',
+      color: "#FFFFFF",
       fontSize: 16,
-      fontWeight: '600',
-    }
+      fontWeight: "600",
+    },
   });
 }

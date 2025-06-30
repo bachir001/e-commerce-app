@@ -6,7 +6,7 @@ export default function useGetPopularSearches() {
     queryKey: ["popularSearches"],
     queryFn: async () => {
       try {
-        const response = await axiosApi.get("search/popular");
+        const response = await axiosApi.get("/search/popular");
 
         return response.data.data || [];
       } catch (err) {

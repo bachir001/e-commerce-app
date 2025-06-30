@@ -21,7 +21,12 @@ export default function AccountHeader({
     <View className="bg-white px-4 py-5 shadow-sm">
       <View className="flex flex-row justify-between items-center mb-6">
         <View className="flex flex-row items-center">
-          <Image source={logo} className="w-28 h-8 mr-2" resizeMode="contain" />
+          <Image
+            source={logo}
+            className="w-28 h-8 mr-2"
+            resizeMode="contain"
+            fadeDuration={0}
+          />
           <Text className="text-xl font-bold text-gray-800">Go Cami</Text>
         </View>
 

@@ -59,7 +59,7 @@ export default function AddressPage() {
     enabled: typeof token === "string" && token.length > 0,
     retry: 0,
     queryFn: async () => {
-      const response = await axiosApi.get("addresses", {
+      const response = await axiosApi.get("/addresses", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -73,7 +73,7 @@ export default function AddressPage() {
   });
 
   const handleEdit = (address: Address) => {
-    router.push({
+    router.navigate({
       pathname: "/addresses/editAddress",
       params: {
         address: JSON.stringify(address),
@@ -82,7 +82,7 @@ export default function AddressPage() {
   };
 
   const handleShowAll = (address: Address) => {
-    router.push({
+    router.navigate({
       pathname: "/addresses/addressDetails",
       params: {
         address: JSON.stringify(address),
@@ -91,7 +91,7 @@ export default function AddressPage() {
   };
 
   const handleAddAddress = () => {
-    router.push("/addresses/addAddress");
+    router.navigate("/addresses/addAddress");
   };
 
   const handleDelete = async (address: Address) => {
@@ -105,7 +105,7 @@ export default function AddressPage() {
       };
 
       const response = await axiosApi.post(
-        `addresses/remove/${address.id}?_method=DELETE`,
+        `/addresses/remove/${address.id}?_method=DELETE`,
         {},
         HeaderData
       );
@@ -115,7 +115,7 @@ export default function AddressPage() {
           text1: "Success",
           text2: "Address deleted successfully",
           autoHide: true,
-          visibilityTime: 2000,
+          visibilityTime: 1000,
           topOffset: 60,
         });
 
@@ -128,7 +128,7 @@ export default function AddressPage() {
           text1: "Error",
           text2: response.data.message || "Failed to delete address",
           autoHide: true,
-          visibilityTime: 2000,
+          visibilityTime: 1000,
           topOffset: 60,
         });
       }
@@ -142,7 +142,7 @@ export default function AddressPage() {
         text1: "Error",
         text2: "Something went wrong while deleting the address",
         autoHide: true,
-        visibilityTime: 2000,
+        visibilityTime: 1000,
         topOffset: 60,
       });
       setDeleteLoading(false);
@@ -184,7 +184,7 @@ export default function AddressPage() {
                       text1: "Error",
                       text2: "Something went wrong while refreshing",
                       autoHide: true,
-                      visibilityTime: 2000,
+                      visibilityTime: 1000,
                       topOffset: 60,
                     });
                     setRefreshing(false);

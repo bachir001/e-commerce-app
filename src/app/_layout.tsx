@@ -1,10 +1,11 @@
-import "../../global.css";
-import * as SecureStore from "expo-secure-store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { getOrCreateSessionId } from "@/lib/session";
 import { Stack } from "expo-router";
+import { useCallback, useEffect } from "react";
 import { ImageBackground } from "react-native";
+import Toast from "react-native-toast-message";
+import ErrorState from "@/components/common/ErrorState";
+import * as SecureStore from "expo-secure-store";
+
 import {
   useBrands,
   useMegaCategories,
@@ -13,13 +14,10 @@ import {
 import { useFeaturedSection } from "@/hooks/home/featuredSections";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useAppDataStore } from "@/store/useAppDataStore";
-import { initOneSignalNew } from "@/Services/OneSignalService";
+import { getOrCreateSessionId } from "@/lib/session";
 
-import ErrorState from "@/components/common/ErrorState";
-import Toast from "react-native-toast-message";
-import axiosApi from "@/apis/axiosApi";
-
-export const queryClient = new QueryClient({});
+// Create query client instance outside component
+const queryClient = new QueryClient();
 
 const newArrivalsOptions = {
   per_page: 15,
@@ -27,115 +25,74 @@ const newArrivalsOptions = {
   page: 1,
 };
 
-// SplashScreen.preventAutoHideAsync();
+function AppLayout() {
+  const { setSessionId, setToken, setUser, setIsLogged } = useSessionStore();
+  const { setBrands, setSliders, setMegaCategories, setNewArrivals } =
+    useAppDataStore();
 
-function AppWithProviders() {
-  const { setSessionId } = useSessionStore();
-  const {
-    setBrands,
-    setSliders,
-    setMegaCategories,
-    setNewArrivals,
-    setWishList,
-  } = useAppDataStore();
-  const {
-    data: brands,
-    isLoading: loadingBrands,
-    isError: brandErrorBool,
-    error: brandError,
-    refetch: refetchBrands,
-  } = useBrands();
-  const {
-    data: sliders,
-    isLoading: loadingSliders,
-    isError: sliderErrorBool,
-    error: sliderError,
-    refetch: refetchSliders,
-  } = useSliders();
-  const {
-    data: megaCategories,
-    isLoading: loadingMega,
-    isError: megaErrorBool,
-    error: megaError,
-    refetch: refetchMega,
-  } = useMegaCategories();
+  const brandsQuery = useBrands();
+  const slidersQuery = useSliders();
+  const megaQuery = useMegaCategories();
+  const newArrivalsQuery = useFeaturedSection(
+    "new-arrivals",
+    newArrivalsOptions
+  );
 
-  const { data: newArrivals, isLoading: loadingNewArrivals } =
-    useFeaturedSection("new-arrivals", newArrivalsOptions);
+  const initializeSession = useCallback(async () => {
+    const id = await getOrCreateSessionId();
 
-  const { isLogged, token } = useSessionStore();
+    //check for token
+    const token = await SecureStore.getItemAsync("token");
+    console.log("HELLO");
+    console.log(token);
+    if (!token) {
+      setUser(null);
+      setIsLogged(false);
+      setToken(null);
+    } else {
+      setIsLogged(true);
+      setToken(token);
+      const userJSON = await SecureStore.getItemAsync("user");
 
-  const fetchWishlist = async (token: string) => {
-    try {
-      const response = await axiosApi.get("favorite", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      return response.data.data;
-    } catch (err) {
-      console.error("Error fetching wishlist:", err);
+      if (userJSON) {
+        const userParsed = JSON.parse(userJSON);
+        setUser(userParsed);
+      }
     }
-  };
+
+    setSessionId(id);
+  }, []);
 
   useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        const id = await getOrCreateSessionId();
-        const userString = await SecureStore.getItemAsync("user");
-
-        if (token !== null && isLogged) {
-          const wishList = await fetchWishlist(token ?? "");
-          setWishList(wishList || []);
-        } else {
-          setWishList([]);
-        }
-
-        const userParsed = userString ? JSON.parse(userString) : null;
-        setSessionId(id);
-
-        if (brands && !loadingBrands) setBrands(brands);
-        if (sliders && !loadingSliders) setSliders(sliders);
-        if (megaCategories && !loadingMega) {
-          setMegaCategories(megaCategories);
-        }
-        if (newArrivals && !loadingNewArrivals) setNewArrivals(newArrivals);
-      } catch (error) {
-        console.error("Initialization error:", error);
-      }
-    };
-
-    initializeApp();
+    if (brandsQuery.data) setBrands(brandsQuery.data);
+    if (slidersQuery.data) setSliders(slidersQuery.data);
+    if (megaQuery.data) setMegaCategories(megaQuery.data);
+    if (newArrivalsQuery.data) setNewArrivals(newArrivalsQuery.data);
   }, [
-    brands,
-    sliders,
-    megaCategories,
-    newArrivals,
-    isLogged,
-    // loadingBrands,
-    // loadingSliders,
-    // loadingMega,
-    // loadingNewArrivals,
+    brandsQuery.data,
+    slidersQuery.data,
+    megaQuery.data,
+    newArrivalsQuery.data,
   ]);
 
   useEffect(() => {
-    initOneSignalNew();
-    // sendUserNotification('1374',"Welcome","Hello");
-    // sendGenderNotification("male", "Welcome", "Hello");
+    initializeSession();
   }, []);
 
-  const appNotReady = loadingBrands || loadingSliders || loadingMega;
+  const appNotReady =
+    brandsQuery.isLoading || slidersQuery.isLoading || megaQuery.isLoading;
+  const anyError =
+    brandsQuery.isError || slidersQuery.isError || megaQuery.isError;
 
-  if (megaErrorBool || sliderErrorBool || brandErrorBool) {
+  if (anyError) {
     return (
       <ErrorState
         onRetry={() => {
-          refetchBrands();
-          refetchSliders();
-          refetchMega();
+          brandsQuery.refetch();
+          slidersQuery.refetch();
+          megaQuery.refetch();
         }}
-        subtitle={megaError?.message}
+        subtitle="Failed to load initial data"
       />
     );
   }
@@ -166,7 +123,7 @@ function AppWithProviders() {
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppWithProviders />
+      <AppLayout />
     </QueryClientProvider>
   );
 }

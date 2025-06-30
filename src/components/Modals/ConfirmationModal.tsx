@@ -97,7 +97,7 @@ export default function ConfirmationModal({
 
           {/* Buttons */}
           <View className="flex-row gap-3">
-            {!loading && (
+            {!loading ? (
               <TouchableOpacity
                 onPress={onCancel}
                 className="flex-1 py-3 px-4 bg-gray-100 rounded-xl items-center justify-center"
@@ -106,7 +106,7 @@ export default function ConfirmationModal({
                   {cancelButtonText}
                 </Text>
               </TouchableOpacity>
-            )}
+            ) : null}
 
             <TouchableOpacity
               onPress={handleConfirm}

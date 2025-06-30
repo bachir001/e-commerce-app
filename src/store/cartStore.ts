@@ -5,7 +5,10 @@ import { getOrCreateSessionId } from "@/lib/session";
 import { persist, createJSONStorage } from "zustand/middleware";
 import * as SecureStore from "expo-secure-store";
 
-const API_BASE = "https://api-gocami-test.gocami.com/api";
+const API_BASE = process.env.EXPO_PUBLIC_BACKEND_BASE_URL;
+
+//process.env.EXPO_PUBLIC_BACKEND_BASE_URL;
+
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export type CartItem = {
@@ -66,7 +69,7 @@ function getErrorMessage(error: any): string {
     return error.message;
   }
   // If it's an object, try to stringify it for more details
-  if (typeof error === 'object' && error !== null) {
+  if (typeof error === "object" && error !== null) {
     try {
       return JSON.stringify(error);
     } catch (e) {
@@ -119,7 +122,8 @@ export const useCartStore = create<CartState>()(
           }
 
           const json: FetchCartApiResponse = await res.json();
-          if (!json.status) throw new Error(json.message || "Failed to load cart");
+          if (!json.status)
+            throw new Error(json.message || "Failed to load cart");
 
           // Map raw API response data to CartItem type
           const items: CartItem[] = json.data.map((raw: CartItemResponse) => ({
@@ -135,14 +139,17 @@ export const useCartStore = create<CartState>()(
         } catch (err: any) {
           const msg = getErrorMessage(err); // Use the helper to get message
           set({ loading: false, error: msg }); // Set loading false and update error
-          
+
           // Show toast only if there are no items in the cart to avoid excessive toasts
           if (get().items.length === 0) {
             Toast.show({
               type: "error",
               text1: "Cart Error",
               text2: msg,
-              position: "bottom",
+              position: "top",
+              autoHide: true,
+              visibilityTime: 2000,
+              topOffset: 60,
             });
           }
         }

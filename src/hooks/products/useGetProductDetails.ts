@@ -1,5 +1,5 @@
 import axiosApi from "@/apis/axiosApi";
-import { Category } from "@/app/(tabs)/home/ProductDetails";
+import { Category } from "@/app/(tabs)/index/ProductDetails";
 import { Brand, Product } from "@/types/globalTypes";
 import { useQuery } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
@@ -27,7 +27,7 @@ export default function useGetProductDetails(slug: string) {
     queryFn: async () => {
       console.log("I ran");
       const response: AxiosResponse<GetProductApiResponse> = await axiosApi.get(
-        `getProduct/${slug}`
+        `/getProduct/${slug}`
       );
       if (!response) {
         throw new Error("Cannot get product");

@@ -2,6 +2,15 @@ import { useCallback } from "react";
 import { FlatList, ListRenderItem, StyleSheet, View } from "react-native";
 import ThumbnailImage from "./ThumbnailImage";
 import { LinearGradient } from "expo-linear-gradient";
+import type React from "react";
+
+interface ThumbnailCarouselProps {
+  thumbnailCarouselReference: React.RefObject<FlatList<string>>;
+  allImages: string[];
+  activeImageIndex: number;
+  handleThumbnailPress: (index: number) => void;
+  productDetailLoading: boolean;
+}
 
 export default function ThumbnailCarousel({
   thumbnailCarouselReference,
@@ -9,7 +18,7 @@ export default function ThumbnailCarousel({
   activeImageIndex,
   handleThumbnailPress,
   productDetailLoading,
-}) {
+}: ThumbnailCarouselProps): React.ReactElement {
   const renderThumbnailItem: ListRenderItem<string> = useCallback(
     ({ item, index }) => (
       <ThumbnailImage

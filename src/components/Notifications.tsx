@@ -97,13 +97,14 @@ export default function Notifications(props: {}) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            {selected && (
+            {selected ? (
               <>
                 <Text style={styles.modalTitle}>{selected.title}</Text>
 
                 {/* If there’s an imageUrl, render it above the body text */}
                 {selected.imageUrl ? (
                   <Image
+                    fadeDuration={0}
                     source={{ uri: selected.imageUrl! }}
                     style={styles.modalImage}
                     resizeMode="cover"
@@ -122,7 +123,7 @@ export default function Notifications(props: {}) {
                   {format(new Date(selected.timestamp), "PPpp")}
                 </Text>
               </>
-            )}
+            ) : null}
             <Pressable
               style={styles.closeButton}
               onPress={() => setSelected(null)}

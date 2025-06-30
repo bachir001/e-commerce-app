@@ -63,7 +63,7 @@ export default function SearchScreen() {
 
   useEffect(() => {
     const getRecentSearches = async () => {
-      try {                                                  
+      try {
         const stored = await SecureStore.getItemAsync("recentSearches");
         if (stored) {
           const parsed = JSON.parse(stored);
@@ -99,7 +99,7 @@ export default function SearchScreen() {
   }, []);
 
   const onPressItem = useCallback((product: Product) => {
-    router.push({
+    router.navigate({
       pathname: "/ProductDetails",
       params: { productJSON: JSON.stringify(product) },
     });
@@ -114,7 +114,8 @@ export default function SearchScreen() {
         : 0;
 
       return (
-        <Pressable
+        <TouchableOpacity
+          key={item.id}
           onPress={() => onPressItem(item)}
           className="py-4 px-4 border-b border-gray-100 active:bg-gray-50"
         >
@@ -127,13 +128,13 @@ export default function SearchScreen() {
                 fadeDuration={0}
               />
 
-              {hasSpecialPrice && discount > 0 && (
+              {hasSpecialPrice && discount > 0 ? (
                 <View className="absolute -top-1 -left-1 bg-red-500 px-1.5 py-0.5 rounded">
                   <ThemedText className="text-white text-xs font-bold">
                     -{discount}%
                   </ThemedText>
                 </View>
-              )}
+              ) : null}
             </View>
 
             <View className="flex-1 justify-center">
@@ -145,14 +146,20 @@ export default function SearchScreen() {
                 {item.name}
               </ThemedText>
 
-              {item.purchase_points && (
+              {item.purchase_points ? (
                 <View className="flex-row items-center mb-1">
-                  <FontAwesome5 name="diamond" size={12} color="#5e3ebd" />
+                  {/* <FontAwesome5
+                    name="diamond"
+                    size={10}
+                    color="#5e3ebd"
+                    solid
+                  />
+                  ; */}
                   <ThemedText className="text-xs font-semibold ml-1 text-[#5e3ebd]">
                     {item.purchase_points} points
                   </ThemedText>
                 </View>
-              )}
+              ) : null}
 
               <View className="flex-row items-center">
                 {hasSpecialPrice ? (
@@ -164,28 +171,26 @@ export default function SearchScreen() {
                       ${item.price.toFixed(2)}
                     </ThemedText>
                   </>
-                ) : (
-                  item.price > 0 && (
-                    <ThemedText className="text-base font-semibold text-[#5e3ebd]">
-                      ${item.price.toFixed(2)}
-                    </ThemedText>
-                  )
-                )}
+                ) : item.price > 0 ? (
+                  <ThemedText className="text-base font-semibold text-[#5e3ebd]">
+                    ${item.price.toFixed(2)}
+                  </ThemedText>
+                ) : null}
               </View>
 
-              {item.rating && item.rating > 0 && (
+              {item.rating && item.rating > 0 ? (
                 <View className="flex-row items-center mt-1">
                   <FontAwesome5 name="star" size={12} color="#FFD700" />
                   <ThemedText className="text-xs text-gray-600 ml-1">
                     {item.rating.toFixed(1)}
                   </ThemedText>
                 </View>
-              )}
+              ) : null}
             </View>
 
             <ChevronRight size={20} color="#9ca3af" className="self-center" />
           </View>
-        </Pressable>
+        </TouchableOpacity>
       );
     },
     [onPressItem]
@@ -224,11 +229,11 @@ export default function SearchScreen() {
               value={query}
               onChangeText={onChangeText}
             />
-            {query && query.length > 0 && (
+            {query && query.length > 0 ? (
               <TouchableOpacity onPress={clearSearch} className="p-1">
                 <X size={18} color="#9ca3af" />
               </TouchableOpacity>
-            )}
+            ) : null}
           </View>
         </View>
 

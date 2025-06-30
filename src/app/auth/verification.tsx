@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-
 import {
   View,
   Text,
@@ -7,7 +6,6 @@ import {
   TouchableOpacity,
   Clipboard,
   Platform,
-  ActivityIndicator,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,14 +14,14 @@ import * as SecureStore from "expo-secure-store";
 import { Colors } from "@/constants/Colors";
 import { useSessionStore } from "@/store/useSessionStore";
 import DotsLoader from "@/components/common/AnimatedLayout";
+import Toast from "react-native-toast-message";
 
 export default function Verification() {
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
-
-  const { setIsLogged } = useSessionStore();
-
-  const { email, password } = useLocalSearchParams();
+  const [resendLoading, setResendLoading] = useState<boolean>(false);
+  // const { setIsLogged } = useSessionStore();
+  const { email, mobile, isReset } = useLocalSearchParams();
 
   const inputRefs = useRef<Array<TextInput | null>>([
     null,
@@ -45,6 +43,7 @@ export default function Verification() {
 
   const [timeLeft, setTimeLeft] = useState(600);
   const [isExpired, setIsExpired] = useState(false);
+  const [lastResendTime, setLastResendTime] = useState(0);
 
   const handleChange = (text: string, index: number) => {
     if (!/^\d*$/.test(text)) return;
@@ -75,7 +74,6 @@ export default function Verification() {
       if (/^\d{6}$/.test(content)) {
         const digits = content.split("");
         setVerificationCode(digits);
-
         inputRefs.current[5]?.focus();
       }
     } catch (error) {
@@ -87,32 +85,143 @@ export default function Verification() {
     const code = verificationCode.join("");
     if (code.length === 6) {
       setLoading(true);
-      const RequestBody = {
-        verification_code: code,
-        email: email,
-      };
+      const RequestBody: any = {};
+
+      if (isReset) {
+        RequestBody.code = code;
+      } else {
+        RequestBody.verification_code = code;
+      }
+
+      const emailParam = Array.isArray(email) ? email[0] : email;
+      const mobileParam = Array.isArray(mobile) ? mobile[0] : mobile;
+
+      if (emailParam) RequestBody.email = emailParam;
+      if (mobileParam) RequestBody.mobile = mobileParam;
+
+      const url: string = isReset ? "/password/verify-code" : "/verify-code";
 
       await axiosApi
-        .post("verify-code", RequestBody)
+        .post(url, RequestBody)
         .then((response) => {
+          console.log(response.data);
           if (response.status === 200) {
-            router.push({
-              pathname: "/auth/createAccount",
-              params: {
-                email: email.toString(),
-              },
+            if (!isReset) {
+              router.navigate({
+                pathname: "/auth/createAccount",
+                params: {
+                  email: email?.toString() || "",
+                  mobile: mobile?.toString() || "",
+                },
+              });
+            } else {
+              router.navigate({
+                pathname: "/auth/completeReset",
+              });
+            }
+          } else {
+            Toast.show({
+              type: "error",
+              text1: "Verification Failed",
+              text2: response.data.message || "An unknown error occurred",
+              position: "top",
+              autoHide: true,
+              visibilityTime: 1000,
+              topOffset: 60,
             });
           }
         })
         .finally(() => {
           setLoading(false);
         });
-    } else {
-      console.log("Please enter a complete verification code");
     }
   };
 
-  // Timer effect
+  const handleResendCode = async () => {
+    const now = Date.now();
+    if (now - lastResendTime < 30000) {
+      Toast.show({
+        type: "info",
+        text1: "Please wait",
+        text2: "You can request a new code in 30 seconds",
+        position: "top",
+        visibilityTime: 2000,
+      });
+      return;
+    }
+
+    console.log("Resending code...");
+
+    try {
+      setResendLoading(true);
+      const RequestBody: any = {};
+
+      if (email) {
+        RequestBody.email = email;
+        if (isReset) {
+          RequestBody.verification_method = "email";
+        }
+      }
+
+      if (mobile) {
+        RequestBody.mobile = `961${mobile}`;
+        if (isReset) {
+          RequestBody.verification_method = "whatsapp";
+        }
+      }
+
+      console.log("Request Body:", RequestBody);
+
+      let url: string;
+      if (isReset) {
+        url = "/password/forgot";
+      } else {
+        url = "/register";
+      }
+
+      await axiosApi
+        .post(url, RequestBody)
+        .then((response) => {
+          if (response.status === 200) {
+            Toast.show({
+              type: "success",
+              text1: "Code Resent",
+              text2: "A new verification code has been sent",
+              position: "top",
+              visibilityTime: 2000,
+              topOffset: 60,
+            });
+            setTimeLeft(600);
+            setIsExpired(false);
+            setVerificationCode(["", "", "", "", "", ""]);
+            inputRefs.current[0]?.focus();
+            setLastResendTime(now);
+          }
+        })
+        .catch((error) => {
+          Toast.show({
+            type: "error",
+            text1: "Failed to Resend",
+            text2: error.response?.data?.message || "An error occurred",
+            position: "top",
+            visibilityTime: 2000,
+            topOffset: 60,
+          });
+        });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to resend verification code",
+        position: "top",
+        visibilityTime: 2000,
+        topOffset: 60,
+      });
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (timeLeft <= 0) {
       setIsExpired(true);
@@ -126,20 +235,12 @@ export default function Verification() {
     return () => clearTimeout(timerId);
   }, [timeLeft]);
 
-  // Format time as MM:SS
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
       .toString()
       .padStart(2, "0")}`;
-  };
-
-  // Request a new code
-  const requestNewCode = () => {
-    setTimeLeft(600);
-    setIsExpired(false);
-    setVerificationCode(["", "", "", "", "", ""]);
   };
 
   return (
@@ -164,7 +265,6 @@ export default function Verification() {
           </Text>
         </Text>
 
-        {/* Verification code inputs */}
         <View className="flex-row justify-between w-full mb-8">
           {[0, 1, 2, 3, 4, 5].map((index) => (
             <TextInput
@@ -183,31 +283,37 @@ export default function Verification() {
                   handlePaste(index);
                 }
               }}
-              // onPaste={() => handlePaste(index)}
             />
           ))}
         </View>
 
-        {/* Timer */}
         <View className="mb-8 items-center">
           {isExpired ? (
-            <TouchableOpacity onPress={requestNewCode}>
-              <Text
-                className={`font-semibold`}
-                style={{
-                  color: Colors.PRIMARY,
-                }}
+            <View className="items-center">
+              <Text className="text-gray-500 mb-2">Didn't receive a code?</Text>
+              <TouchableOpacity
+                onPress={handleResendCode}
+                disabled={resendLoading}
+                accessibilityLabel="Resend verification code"
+                accessibilityHint="Sends a new verification code to your email or phone"
               >
-                Request New Code
-              </Text>
-            </TouchableOpacity>
+                {resendLoading ? (
+                  <DotsLoader size="small" color={Colors.PRIMARY} />
+                ) : (
+                  <Text
+                    className={`font-semibold`}
+                    style={{ color: Colors.PRIMARY }}
+                  >
+                    Resend Verification Code
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
           ) : (
             <View className="items-center">
               <Text className="text-gray-500 mb-1">Code expires in</Text>
               <Text
-                style={{
-                  color: Colors.PRIMARY,
-                }}
+                style={{ color: Colors.PRIMARY }}
                 className={`text-xl font-semibold`}
               >
                 {formatTime(timeLeft)}
@@ -216,7 +322,6 @@ export default function Verification() {
           )}
         </View>
 
-        {/* Submit button */}
         <TouchableOpacity
           className={`w-full py-4 rounded-xl items-center justify-center ${
             verificationCode.join("").length === 6 && !isExpired

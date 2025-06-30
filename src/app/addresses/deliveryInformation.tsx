@@ -27,7 +27,7 @@ export default function DeliveryInformation({
           </Text>
         </View>
 
-        {showDeliveryInformation && (
+        {showDeliveryInformation ? (
           <View>
             {addressParsed.free_delivery === 1 ? (
               <View className="bg-green-50 p-3 rounded-xl">
@@ -50,7 +50,7 @@ export default function DeliveryInformation({
               </View>
             )}
           </View>
-        )}
+        ) : null}
       </View>
     </View>
   );

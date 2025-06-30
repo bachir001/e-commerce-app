@@ -20,6 +20,7 @@ const SliderItem = ({ item }: SliderItemProps) => {
   return (
     <View style={{ width: SCREEN_WIDTH, height: 200 }}>
       <Image
+        fadeDuration={0}
         source={{ uri: item.mobile_image || item.image }}
         style={{ width: SCREEN_WIDTH, height: 200 }}
         resizeMode="cover"

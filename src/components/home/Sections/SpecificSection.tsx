@@ -21,6 +21,7 @@ import AnimatedLoader from "@/components/common/AnimatedLayout";
 import { ChevronRight } from "lucide-react-native";
 import { router } from "expo-router";
 import DotsLoader from "@/components/common/AnimatedLayout";
+import ErrorState from "@/components/common/ErrorState";
 
 interface MegaCategoryInfo {
   status: boolean;
@@ -60,6 +61,7 @@ const RelatedCategoryItem = React.memo(
               source={{ uri: image }}
               className="w-full h-full"
               resizeMode="cover"
+              fadeDuration={0}
             />
           ) : (
             <View className="w-full h-full bg-gray-100 items-center justify-center">
@@ -126,7 +128,13 @@ const SpecificSection = React.memo(
   }: SpecificSectionProps) => {
     const isCategoryPressable = useRef(true);
 
-    const { data: metaCategoryInfo, isLoading } = useQuery({
+    const {
+      data: metaCategoryInfo,
+      isLoading,
+      isError,
+      error,
+      refetch,
+    } = useQuery({
       queryKey: ["metaCategoryInfo", type],
       queryFn: async ({ signal }) => {
         const response = await axiosApi.get<MegaCategoryInfo>(
@@ -204,6 +212,16 @@ const SpecificSection = React.memo(
       return <DotsLoader color={color} text={`Loading ${title}`} />;
     }
 
+    if (isError) {
+      return (
+        <ErrorState
+          onRetry={refetch}
+          title={`Failed to load ${title}`}
+          subtitle={error.message}
+        />
+      );
+    }
+
     return (
       <View className="mb-2">
         {/* Categories Section */}
@@ -212,6 +230,7 @@ const SpecificSection = React.memo(
             source={{ uri: mega_mobile_bg }}
             className="py-4 mx-2 rounded-t-xl overflow-hidden"
             imageStyle={{ opacity: 0.9 }}
+            fadeDuration={0}
           >
             <View
               className="flex-row justify-between items-center px-4 mb-3 py-2 -mt-4"

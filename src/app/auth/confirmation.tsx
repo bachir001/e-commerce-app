@@ -11,8 +11,7 @@ import DotsLoader from "@/components/common/AnimatedLayout";
 export default function Confirmation() {
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
-  const { email } = useLocalSearchParams();
-
+  const { email, mobile } = useLocalSearchParams();
   const handleBack = () => {
     router.back();
   };
@@ -21,42 +20,52 @@ export default function Confirmation() {
     try {
       setLoading(true);
 
-      const RequestBody = {
-        email,
-      };
+      const RequestBody: any = {};
+
+      if (email) {
+        RequestBody.email = email;
+      }
+
+      if (mobile) {
+        RequestBody.mobile = `961${mobile}`;
+      }
+
+      console.log(mobile);
 
       await axiosApi
-        .post(`https://api-gocami-test.gocami.com/api/register`, RequestBody)
+        .post(`/register`, RequestBody)
         .then(async (response) => {
           if (response.status === 200) {
-            Toast.show({
-              type: "success",
-              text1: "Register Successful",
-              text2: "Please enter verification code",
-              position: "top",
-              autoHide: true,
-              topOffset: 60,
-            });
-
-            router.push({
+            router.navigate({
               pathname: "/auth/verification",
               params: {
                 email,
+                mobile: mobile,
               },
             });
           } else {
             Toast.show({
               type: "error",
               text1: "Register Failed",
-              text2: "Account Already Exists",
+              text2: response.data.message || "An unknown error occurred",
               position: "top",
-              autoHide: false,
+              autoHide: true,
               topOffset: 60,
+              visibilityTime: 1000,
             });
           }
         })
-        .catch((response) => {
-          console.log("HELLO");
+        .catch((err) => {
+          Toast.show({
+            type: "error",
+            text1: "Failed",
+            text2:
+              err instanceof Error ? err.message : "An unknown error occurred",
+            position: "top",
+            autoHide: true,
+            visibilityTime: 2000,
+            topOffset: 60,
+          });
         })
         .finally(() => {
           setLoading(false);
@@ -67,7 +76,7 @@ export default function Confirmation() {
         text1: "Failed",
         text2: err instanceof Error ? err.message : "An unknown error occurred",
         autoHide: true,
-        visibilityTime: 2500,
+        visibilityTime: 2000,
         topOffset: 60,
       });
     }
@@ -81,14 +90,20 @@ export default function Confirmation() {
         </View>
 
         <Text className="text-2xl font-bold text-gray-900 mb-3 text-center">
-          Confirm Your Email
+          {email !== undefined
+            ? "Confirm Your Email"
+            : "Confirm Your Phone Number"}
         </Text>
 
         <Text
           style={{ color: Colors.PRIMARY }}
           className={`text-lg font-semibold mb-4 text-center`}
         >
-          {email}
+          {email !== undefined
+            ? email.toString()
+            : mobile !== undefined
+            ? `+961 ${mobile.toString()}`
+            : "No contact information provided"}
         </Text>
 
         <Text className="text-base text-gray-500 text-center mb-10 leading-6">
@@ -97,7 +112,7 @@ export default function Confirmation() {
         </Text>
 
         <View className="flex-row w-full justify-between gap-3">
-          {!loading && (
+          {!loading ? (
             <TouchableOpacity
               className="flex-1 py-4 bg-gray-100 border border-gray-200 rounded-xl items-center justify-center"
               onPress={handleBack}
@@ -106,7 +121,7 @@ export default function Confirmation() {
                 Back
               </Text>
             </TouchableOpacity>
-          )}
+          ) : null}
 
           <TouchableOpacity
             style={{

@@ -1,7 +1,5 @@
-import axiosApi from "@/apis/axiosApi";
 import EmptyState from "@/components/common/EmptyList";
 import ProductCardWide from "@/components/common/product/ProductCardWide";
-import { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -10,63 +8,53 @@ import {
   SafeAreaView,
   TouchableOpacity,
 } from "react-native";
-import Toast from "react-native-toast-message";
 import { Heart, Filter } from "lucide-react-native";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Product } from "@/types/globalTypes";
+import { useQuery } from "@tanstack/react-query";
+import axiosApi from "@/apis/axiosApi";
+import DotsLoader from "@/components/common/AnimatedLayout";
+import ErrorState from "@/components/common/ErrorState";
 
 export default function Wishlist() {
-  const [wishList, setWishList] = useState<any[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
   const { token } = useSessionStore();
   const insets = useSafeAreaInsets();
 
-  const fetchWishList = async () => {
-    try {
-      console.log(token);
-      const response = await axiosApi.get("favorite", {
+  const {
+    data: wishList,
+    isLoading,
+    isRefetching,
+    isError,
+    refetch,
+    error,
+  } = useQuery<Product[], Error>({
+    queryKey: ["wishlist", token],
+    queryFn: async () => {
+      if (!token) {
+        throw new Error("Authentication token not available.");
+      }
+      const response = await axiosApi.get("/favorite", {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
       });
 
-      if (response.status === 200) {
-        setWishList(response.data.data);
-      } else {
-        Toast.show({
-          type: "error",
-          text1: "Error",
-          text2: "Failed to fetch wishlist. Please try again later.",
-          autoHide: true,
-          visibilityTime: 1000,
-        });
+      if (response.status === 404) {
+        return [];
       }
-    } catch (err) {
-      console.error("Error fetching wishlist:", err);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Failed to fetch wishlist. Please try again later.",
-        autoHide: true,
-        visibilityTime: 3000,
-      });
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
 
-  useEffect(() => {
-    fetchWishList();
-  }, []);
+      return response.data.data || [];
+    },
+    enabled: !!token,
+    staleTime: Infinity,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+  });
 
   const onRefresh = () => {
-    setRefreshing(true);
-    fetchWishList();
+    refetch();
   };
 
   const renderHeaderContent = () => (
@@ -157,27 +145,36 @@ export default function Wishlist() {
     );
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-white">
         <View className="flex-1 justify-center items-center">
           <View
             className="w-16 h-16 rounded-full items-center justify-center mb-4"
             style={{ backgroundColor: "#f3f0ff" }}
-          >
-            <Heart size={28} color="#6e3ebd" />
-          </View>
-          <Text className="text-gray-600 font-medium">
-            Loading your wishlist...
-          </Text>
+          ></View>
+          <DotsLoader />
         </View>
       </SafeAreaView>
     );
   }
 
-  if (wishList !== null && wishList.length === 0) {
+  if (isError) {
     return (
       <SafeAreaView className="flex-1 bg-white">
+        <ErrorState
+          onRetry={refetch}
+          title="Failed to load wishlist"
+          subtitle={error.message}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  if (wishList && wishList.length === 0) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        {renderHeaderContent()}
         <EmptyState
           title="No items in your wishlist"
           subtitle="Start adding items to your wishlist now!"
@@ -201,7 +198,7 @@ export default function Wishlist() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isRefetching}
             onRefresh={onRefresh}
             colors={["#6e3ebd"]}
             tintColor="#6e3ebd"

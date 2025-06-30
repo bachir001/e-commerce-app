@@ -1,25 +1,24 @@
-import React from "react";
-import { Image, View, type ImageSourcePropType } from "react-native";
+// components/product/CarouselImage.tsx
+import type React from "react";
+import { Image, Dimensions } from "react-native";
 
-const IMAGE_HEIGHT = 400;
+interface CarouselImageProps {
+  uri: string;
+  width: number;
+}
 
-const CarouselImage = React.memo<{ uri: string; width: number }>(
-  ({ uri, width }) => (
-    <View
-      style={{ width, height: IMAGE_HEIGHT }}
-      className="bg-gray-50 justify-center items-center"
-    >
-      <Image
-        source={{ uri } as ImageSourcePropType}
-        className="w-full h-full"
-        resizeMode="contain"
-        fadeDuration={200}
-        loadingIndicatorSource={{
-          uri: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
-        }}
-      />
-    </View>
-  )
-);
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-export default CarouselImage;
+export default function CarouselImage({
+  uri,
+  width,
+}: CarouselImageProps): React.ReactElement {
+  return (
+    <Image
+      source={{ uri }}
+      style={{ width, height: SCREEN_HEIGHT * 0.4 }}
+      resizeMode="contain"
+      fadeDuration={0}
+    />
+  );
+}

@@ -9,25 +9,18 @@ interface CircularCategoryProps {
 }
 
 function CircularCategory({ props }: CircularCategoryProps) {
-  const isPressable = useRef(true);
   return (
     <TouchableOpacity
       className="items-center"
       onPress={() => {
-        if (!isPressable.current) return;
-        isPressable.current = false;
-
         router.push({
-          pathname: "mega",
+          pathname: "category",
           params: {
             slug: String(props.slug),
             color: colorMap[props.slug as niche] || "5e3ebd",
+            id: String(props.id),
           },
         });
-
-        setTimeout(() => {
-          isPressable.current = true;
-        }, 1500);
       }}
     >
       <View
@@ -45,6 +38,7 @@ function CircularCategory({ props }: CircularCategoryProps) {
           source={{ uri: props.mega_mobile_bg }}
           className="w-[60px] h-[60px] rounded-[25px]"
           resizeMode="cover"
+          fadeDuration={0}
         />
       </View>
 

@@ -5,16 +5,16 @@ import React, {
   useRef,
   useState,
 } from "react";
-import "react-native-gesture-handler";
 import {
   SafeAreaView,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  FlatList,
+  View,
+  Platform,
 } from "react-native";
-import * as SecureStore from "expo-secure-store";
 import Header from "@/components/home/Header";
 import CategorySection from "@/components/home/Categories/CategorySection";
-import { FlatList, View, Platform } from "react-native";
 import SpecificSection from "@/components/home/Sections/SpecificSection";
 import { HOMEPAGE_SECTIONS } from "@/constants/HomePageSections";
 import { Colors } from "@/constants/Colors";
@@ -23,6 +23,7 @@ import ProductInfiniteList from "@/components/common/ProductInfiniteList";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useAppDataStore } from "@/store/useAppDataStore";
 import { useUiStore } from "@/store/useUiStore";
+import { useWishlist } from "@/hooks/home/topSection";
 
 const HOME_SCREEN_DATA_STRUCTURE = [
   { id: "beautyAndHealth", type: "specific" },
@@ -35,9 +36,10 @@ const HOME_SCREEN_DATA_STRUCTURE = [
 ];
 
 export default function HomeScreen() {
-  const { setIsLogged, setUser, setToken } = useSessionStore();
+  const { token } = useSessionStore();
   const { newArrivals } = useAppDataStore();
   const { showTabBar, hideTabBar } = useUiStore();
+  const wishlistQuery = useWishlist(token);
 
   const [visibleSections, setVisibleSections] = useState([
     HOME_SCREEN_DATA_STRUCTURE[0],
@@ -45,7 +47,6 @@ export default function HomeScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loadingSectionId, setLoadingSectionId] = useState<string | null>(null);
   const [showInfiniteList, setShowInfiniteList] = useState(false);
-  const [tokenChecked, setTokenChecked] = useState(false);
 
   const isBusy = useRef(false);
   const flatListRef =
@@ -53,36 +54,13 @@ export default function HomeScreen() {
   const lastScrollY = useRef(0);
   const lastAction = useRef<"hide" | "show" | null>(null);
 
-  const checkForToken = useCallback(async () => {
-    try {
-      const token = await SecureStore.getItemAsync("token");
-      const userJSON = await SecureStore.getItemAsync("user");
-
-      if (token) {
-        setIsLogged(true);
-        setToken(token);
-        if (userJSON) {
-          setUser(JSON.parse(userJSON));
-        }
-      }
-    } catch (error) {
-      console.error("Token check error:", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkForToken();
-  }, [checkForToken]);
-
   const loadMoreSections = useCallback(() => {
     if (isBusy.current || loadingSectionId !== null) return;
-
     const nextSectionIndex = currentIndex + 1;
     if (nextSectionIndex >= HOME_SCREEN_DATA_STRUCTURE.length) {
       setShowInfiniteList(true);
       return;
     }
-
     isBusy.current = true;
     const newSection = HOME_SCREEN_DATA_STRUCTURE[nextSectionIndex];
     setLoadingSectionId(newSection.id);
@@ -95,16 +73,11 @@ export default function HomeScreen() {
       if (!isLoading && loadingSectionId === sectionId) {
         setLoadingSectionId(null);
         isBusy.current = false;
-
         if (currentIndex < HOME_SCREEN_DATA_STRUCTURE.length - 1) {
           setTimeout(() => {
-            if (flatListRef.current) {
-              handleEndReached();
-            }
+            if (flatListRef.current) handleEndReached();
           }, 100);
-        } else if (!showInfiniteList) {
-          setShowInfiniteList(true);
-        }
+        } else if (!showInfiniteList) setShowInfiniteList(true);
       }
     },
     [loadingSectionId, currentIndex, showInfiniteList]
@@ -114,17 +87,13 @@ export default function HomeScreen() {
     ({ item }: { item: (typeof HOME_SCREEN_DATA_STRUCTURE)[0] }) => {
       const sectionData =
         HOMEPAGE_SECTIONS[item.id as keyof typeof HOMEPAGE_SECTIONS];
-
       if (!sectionData) return null;
-
       switch (item.type) {
         case "featured":
           return (
             <FeaturedSection
               {...sectionData}
-              setLoading={(loading: boolean) =>
-                handleSectionLoading(item.id, loading)
-              }
+              setLoading={(loading) => handleSectionLoading(item.id, loading)}
             />
           );
         case "specific":
@@ -137,9 +106,7 @@ export default function HomeScreen() {
                   : (Colors[item.id as keyof typeof Colors] as any)
                       ?.background || Colors.PRIMARY
               }
-              setLoading={(loading: boolean) =>
-                handleSectionLoading(item.id, loading)
-              }
+              setLoading={(loading) => handleSectionLoading(item.id, loading)}
             />
           );
         default:
@@ -150,11 +117,9 @@ export default function HomeScreen() {
   );
 
   const handleEndReached = useCallback(() => {
-    if (currentIndex < HOME_SCREEN_DATA_STRUCTURE.length - 1) {
+    if (currentIndex < HOME_SCREEN_DATA_STRUCTURE.length - 1)
       loadMoreSections();
-    } else if (!showInfiniteList) {
-      setShowInfiniteList(true);
-    }
+    else if (!showInfiniteList) setShowInfiniteList(true);
   }, [currentIndex, loadMoreSections, showInfiniteList]);
 
   const ListHeader = useMemo(
@@ -163,7 +128,7 @@ export default function HomeScreen() {
         <Header />
         <CategorySection />
         {newArrivals && newArrivals?.length > 0 && (
-          <FeaturedSection list={true} type="new-arrivals" />
+          <FeaturedSection list={true} {...HOMEPAGE_SECTIONS.newArrivals} />
         )}
       </View>
     ),
@@ -173,8 +138,6 @@ export default function HomeScreen() {
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const currentScrollY = event.nativeEvent.contentOffset.y;
-
-      // Always show tab bar if at top edge (including bounce)
       if (currentScrollY <= 0) {
         if (lastAction.current !== "show") {
           showTabBar();
@@ -183,21 +146,14 @@ export default function HomeScreen() {
         lastScrollY.current = currentScrollY;
         return;
       }
-
-      // Determine scroll direction
       const scrollingDown = currentScrollY > lastScrollY.current;
-
-      // Hide immediately on scroll down
       if (scrollingDown && lastAction.current !== "hide") {
         hideTabBar();
         lastAction.current = "hide";
-      }
-      // Show immediately on scroll up
-      else if (!scrollingDown && lastAction.current !== "show") {
+      } else if (!scrollingDown && lastAction.current !== "show") {
         showTabBar();
         lastAction.current = "show";
       }
-
       lastScrollY.current = currentScrollY;
     },
     [hideTabBar, showTabBar]
@@ -220,9 +176,7 @@ export default function HomeScreen() {
         removeClippedSubviews={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={{
-          paddingTop: 16,
-        }}
+        contentContainerStyle={{ paddingTop: 16 }}
         ListFooterComponent={
           showInfiniteList && !loadingSectionId ? (
             <View

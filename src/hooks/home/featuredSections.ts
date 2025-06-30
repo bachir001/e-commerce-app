@@ -23,7 +23,7 @@ export function useFeaturedSection(
       }
 
       const queryString = params.toString();
-      const url = `${type}${queryString ? `?${queryString}` : ""}`;
+      const url = `/${type}${queryString ? `?${queryString}` : ""}`;
 
       const response = await axiosApi.get(url, { signal });
 

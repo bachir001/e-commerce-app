@@ -7,7 +7,8 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
 import { useSessionStore } from "@/store/useSessionStore";
-import { useAppDataStore } from "@/store/useAppDataStore";
+import { useQuery } from "@tanstack/react-query";
+import { queryClient } from "index";
 
 interface Props {
   product: Product;
@@ -21,7 +22,31 @@ const ProductCardWide = React.memo(
     const router = useRouter();
     const [isFavorite, setIsFavorite] = useState<boolean>(false);
     const { isLogged, token } = useSessionStore();
-    const { wishList } = useAppDataStore();
+
+    const { data: wishListFromQuery } = useQuery<Product[], Error>({
+      queryKey: ["wishlist", token],
+      queryFn: async () => {
+        if (!token) {
+          return [];
+        }
+        const response = await axiosApi.get("/favorite", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data.data || [];
+      },
+      enabled: !!token,
+      staleTime: Infinity,
+      gcTime: 1000 * 60 * 60,
+    });
+
+    useEffect(() => {
+      if (wishListFromQuery && product) {
+        const isInWishlist = wishListFromQuery.some(
+          (item) => item.id === product.id
+        );
+        setIsFavorite(isInWishlist);
+      }
+    }, [wishListFromQuery, product]);
 
     const productData = useMemo(() => {
       if (!product) return null;
@@ -69,73 +94,103 @@ const ProductCardWide = React.memo(
       };
     }, [product]);
 
-    useEffect(() => {
-      if (!wishList || !product) return;
-      const isInWishlist = wishList.some((item) => item.id === product.id);
-      setIsFavorite(isInWishlist);
-    }, [wishList, product]);
-
-    const onPress = useCallback(() => {
+    const onPressProductCard = useCallback(() => {
       router.push({
         pathname: "/ProductDetails",
         params: { productJSON: JSON.stringify(product) },
       });
     }, [router, product]);
 
-    const handleAddToCart = useCallback(() => {}, []);
+    const handleAddToCart = useCallback(() => {
+      Toast.show({
+        type: "info",
+        text1: "Add to Cart",
+        text2: `${productData?.productName} added to cart (placeholder).`,
+        autoHide: true,
+        visibilityTime: 1500,
+        topOffset: 60,
+      });
+    }, [productData?.productName]);
 
     const handleAddToWishlist = useCallback(async () => {
+      if (!isLogged) {
+        Toast.show({
+          type: "error",
+          text1: "Login Required",
+          text2: "Please log in to add products to your wishlist.",
+          autoHide: true,
+          visibilityTime: 2000,
+          topOffset: 60,
+        });
+        return;
+      }
+
+      setIsFavorite((prev) => !prev);
+      const isCurrentlyFavorite = isFavorite;
+
       try {
-        if (!isLogged) {
-          Toast.show({
-            type: "error",
-            text1: "Login Required",
-            text2: "Please log in to add products to your wishlist.",
-            autoHide: true,
-            visibilityTime: 2000,
-            topOffset: 60,
-          });
-          return;
-        }
-
-        setIsFavorite((prev) => !prev);
-
-        const WishListBody: any = {};
+        const WishListBody: {
+          product_detail_id?: number;
+          product_id?: number;
+        } = {};
 
         if (product.has_variants) {
           WishListBody.product_detail_id = Number(product.id);
-        }
-
-        if (!product.has_variants) {
+        } else {
           WishListBody.product_id = Number(product.id);
         }
 
-        await axiosApi.post(`favorite/add`, WishListBody, {
+        const endpoint = isCurrentlyFavorite
+          ? `/favorite/remove?_method=DELETE`
+          : `/favorite/add`;
+
+        const response = await axiosApi.post(endpoint, WishListBody, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         });
 
-        Toast.show({
-          type: "success",
-          text1: "Success",
-          text2: "Product added to wishlist.",
-          autoHide: true,
-          visibilityTime: 1000,
-        });
+        if (response.data.status) {
+          Toast.show({
+            type: "success",
+            text1: "Success",
+            text2: isCurrentlyFavorite
+              ? "Product removed from wishlist."
+              : "Product added to wishlist.",
+            autoHide: true,
+            visibilityTime: 1000,
+            topOffset: 60,
+          });
+
+          await queryClient.invalidateQueries({
+            queryKey: ["wishlist", token],
+            exact: true,
+          });
+        } else {
+          setIsFavorite(isCurrentlyFavorite);
+          Toast.show({
+            type: "error",
+            text1: "Error",
+            text2: "Failed to update wishlist.",
+            autoHide: true,
+            visibilityTime: 2000,
+            topOffset: 60,
+          });
+        }
       } catch (err) {
-        console.error("Error adding to wishlist:", err);
-        setIsFavorite(false);
+        console.error("Error updating wishlist:", err);
+        setIsFavorite(isCurrentlyFavorite);
         Toast.show({
           type: "error",
           text1: "Error",
-          text2: "Failed to add product to wishlist.",
+          text2: "Failed to update wishlist.",
           autoHide: true,
           visibilityTime: 2000,
+          topOffset: 60,
         });
       }
-    }, [product, isLogged, token]);
+    }, [isLogged, token, product, isFavorite]);
 
     if (!productData) return null;
 
@@ -148,8 +203,6 @@ const ProductCardWide = React.memo(
       hasSpecialPrice,
       discount,
       purchasePoints,
-      description,
-      highlights,
       reviews,
       quantity,
       showCounter,
@@ -164,7 +217,7 @@ const ProductCardWide = React.memo(
           borderBottomColor: "rgba(110, 62, 189, 0.1)",
         }}
         activeOpacity={0.9}
-        onPress={onPress}
+        onPress={onPressProductCard}
       >
         <View className="w-36 h-36 relative bg-gray-50 flex-none">
           <Image
@@ -185,7 +238,7 @@ const ProductCardWide = React.memo(
             }}
           />
 
-          {hasSpecialPrice && discount > 0 && (
+          {hasSpecialPrice && discount > 0 ? (
             <View
               className="absolute top-3 left-3 px-2 py-1"
               style={{
@@ -195,9 +248,9 @@ const ProductCardWide = React.memo(
             >
               <Text className="text-white text-xs font-bold">-{discount}%</Text>
             </View>
-          )}
+          ) : null}
 
-          {quantity > 0 && quantity <= 10 && (
+          {quantity > 0 && quantity <= 10 ? (
             <View
               className="absolute top-3 right-3 px-2 py-1 flex-row items-center"
               style={{
@@ -210,13 +263,13 @@ const ProductCardWide = React.memo(
                 {quantity} left
               </Text>
             </View>
-          )}
+          ) : null}
         </View>
 
         <View className="flex-1 p-4 justify-between">
           <View>
             <View className="flex-row items-center justify-between mb-2">
-              {purchasePoints && (
+              {purchasePoints ? (
                 <View
                   className="flex-row items-center px-2 py-1"
                   style={{
@@ -224,7 +277,6 @@ const ProductCardWide = React.memo(
                     borderRadius: 12,
                   }}
                 >
-                  <FontAwesome5 name="diamond" size={10} color={innerColor} />
                   <Text
                     className="text-xs font-semibold ml-1"
                     style={{ color: innerColor }}
@@ -232,9 +284,9 @@ const ProductCardWide = React.memo(
                     {purchasePoints} pts
                   </Text>
                 </View>
-              )}
+              ) : null}
 
-              {product.has_variants && (
+              {product.has_variants ? (
                 <View
                   className="px-2 py-1"
                   style={{
@@ -246,7 +298,7 @@ const ProductCardWide = React.memo(
                     Multiple Options
                   </Text>
                 </View>
-              )}
+              ) : null}
             </View>
 
             <Text
@@ -256,7 +308,7 @@ const ProductCardWide = React.memo(
               {productName}
             </Text>
 
-            {productRating > 0 && (
+            {productRating > 0 ? (
               <View className="flex-row items-center mb-2">
                 <View className="flex-row items-center mr-3">
                   <Star size={14} color="#FFD700" fill="#FFD700" />
@@ -264,19 +316,19 @@ const ProductCardWide = React.memo(
                     {productRating.toFixed(1)}
                   </Text>
                 </View>
-                {reviews > 0 && (
+                {reviews > 0 ? (
                   <Text className="text-xs text-gray-500">
                     ({reviews} reviews)
                   </Text>
-                )}
+                ) : null}
               </View>
-            )}
+            ) : null}
 
-            {(highlights || description) && (
+            {productData.highlights || productData.description ? (
               <Text className="text-sm text-gray-600 mb-3" numberOfLines={2}>
-                {highlights || description}
+                {productData.highlights || productData.description}
               </Text>
-            )}
+            ) : null}
           </View>
 
           <View>
@@ -302,7 +354,7 @@ const ProductCardWide = React.memo(
               </View>
 
               <View className="flex-row items-center">
-                {!product?.has_variants && (
+                {!product?.has_variants ? (
                   <TouchableOpacity
                     className="w-11 h-11 items-center justify-center mr-3"
                     style={{
@@ -326,7 +378,7 @@ const ProductCardWide = React.memo(
                       solid={isFavorite}
                     />
                   </TouchableOpacity>
-                )}
+                ) : null}
 
                 <TouchableOpacity
                   className="w-11 h-11 items-center justify-center"
@@ -345,7 +397,7 @@ const ProductCardWide = React.memo(
               </View>
             </View>
 
-            {(quantity > 0 || showCounter) && (
+            {quantity > 0 || showCounter ? (
               <View
                 className="flex-row items-center justify-between px-3 py-2"
                 style={{
@@ -376,7 +428,7 @@ const ProductCardWide = React.memo(
                     : "Out of Stock"}
                 </Text>
               </View>
-            )}
+            ) : null}
           </View>
         </View>
       </TouchableOpacity>

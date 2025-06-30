@@ -132,7 +132,7 @@ export default function ChangePasswordModal({
                   />
                 </TouchableOpacity>
               </View>
-              {newPassword.length > 0 && (
+              {newPassword.length > 0 ? (
                 <View className="mt-2">
                   <View className="flex-row items-center">
                     <View
@@ -151,7 +151,7 @@ export default function ChangePasswordModal({
                     </Text>
                   </View>
                 </View>
-              )}
+              ) : null}
             </View>
 
             {/* Confirm New Password */}
@@ -187,18 +187,18 @@ export default function ChangePasswordModal({
                 </TouchableOpacity>
               </View>
               {confirmNewPassword.length > 0 &&
-                newPassword !== confirmNewPassword && (
-                  <View className="flex-row items-center mt-2">
-                    <FontAwesome5
-                      name="exclamation-circle"
-                      size={12}
-                      color="#EF4444"
-                    />
-                    <Text className="text-xs text-red-500 ml-1">
-                      Passwords do not match
-                    </Text>
-                  </View>
-                )}
+              newPassword !== confirmNewPassword ? (
+                <View className="flex-row items-center mt-2">
+                  <FontAwesome5
+                    name="exclamation-circle"
+                    size={12}
+                    color="#EF4444"
+                  />
+                  <Text className="text-xs text-red-500 ml-1">
+                    Passwords do not match
+                  </Text>
+                </View>
+              ) : null}
             </View>
           </View>
 
@@ -220,7 +220,7 @@ export default function ChangePasswordModal({
 
           {/* Action Buttons */}
           <View className="flex-row space-x-3 mt-6">
-            {!loading && (
+            {!loading ? (
               <TouchableOpacity
                 onPress={onClose}
                 className="flex-1 bg-gray-100 py-4 px-6 rounded-2xl items-center justify-center"
@@ -228,7 +228,7 @@ export default function ChangePasswordModal({
               >
                 <Text className="text-gray-700 font-semibold">Cancel</Text>
               </TouchableOpacity>
-            )}
+            ) : null}
 
             <TouchableOpacity
               onPress={() => {

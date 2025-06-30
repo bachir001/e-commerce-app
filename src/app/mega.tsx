@@ -72,9 +72,9 @@ export default function Mega() {
     <View className="flex-row items-center justify-between mb-4">
       <View className="flex-1">
         <Text className="text-2xl font-bold text-gray-900">{title}</Text>
-        {subtitle && (
+        {subtitle ? (
           <Text className="text-gray-500 text-sm mt-1">{subtitle}</Text>
-        )}
+        ) : null}
       </View>
     </View>
   );
@@ -93,14 +93,14 @@ export default function Mega() {
       style={{ backgroundColor: color as string }}
     >
       {category &&
-        category?.categoryInfo !== null &&
-        category.relatedCategories.length > 0 && (
-          <MegaHeader
-            name={category.categoryInfo?.name ?? ""}
-            subCount={category?.relatedCategories.length}
-            bgColor={color as string}
-          />
-        )}
+      category?.categoryInfo !== null &&
+      category.relatedCategories.length > 0 ? (
+        <MegaHeader
+          name={category.categoryInfo?.name ?? ""}
+          subCount={category?.relatedCategories.length}
+          bgColor={color as string}
+        />
+      ) : null}
 
       {/* Tabs */}
       <View
@@ -162,17 +162,18 @@ export default function Mega() {
                 source={{
                   uri: "https://gocami.gonext.tech/_next/image?url=%2Fimages%2Fcategories%2FbeautyBanner.jpeg&w=1080&q=75",
                 }}
+                fadeDuration={0}
                 style={{ width: "100%", height: "100%" }}
                 resizeMode="cover"
                 onLoadStart={() => setImageLoading(true)}
                 onLoadEnd={() => setImageLoading(false)}
               />
 
-              {imageLoading && (
+              {imageLoading ? (
                 <View className="absolute inset-0 bg-gray-200 items-center justify-center">
                   <FontAwesome5 name="image" size={32} color="#9CA3AF" />
                 </View>
-              )}
+              ) : null}
 
               <View className="absolute top-4 left-4 bg-white/90 rounded-full px-3 py-1">
                 <Text className="text-xs font-bold" style={{ color: color }}>

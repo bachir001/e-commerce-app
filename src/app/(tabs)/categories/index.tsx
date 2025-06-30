@@ -11,6 +11,7 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import useGetCategoriesData from "@/hooks/categories/useGetCategoriesData";
 import CategoryItem from "@/components/categories/CategoryItem";
 import DotsLoader from "@/components/common/AnimatedLayout";
+import ErrorState from "@/components/common/ErrorState";
 
 export interface Category {
   id: number;
@@ -65,8 +66,13 @@ const LoadingComponent = React.memo(() => (
 ));
 
 export default function CategoriesScreen() {
-  const { data: categories, isLoading: isCategoriesLoading } =
-    useGetCategoriesData();
+  const {
+    data: categories,
+    isLoading: isCategoriesLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetCategoriesData();
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -101,6 +107,16 @@ export default function CategoriesScreen() {
     return <LoadingComponent />;
   }
 
+  if (isError) {
+    return (
+      <ErrorState
+        onRetry={refetch}
+        title="Failed to load categories"
+        subtitle={error.message}
+      />
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="px-6 py-4 mb-2">
@@ -129,14 +145,14 @@ export default function CategoriesScreen() {
             autoCapitalize="none"
             selectTextOnFocus={false}
           />
-          {searchQuery && searchQuery.length > 0 && (
+          {searchQuery && searchQuery.length > 0 ? (
             <TouchableOpacity onPress={handleClearSearch}>
               <FontAwesome5 name="times" size={16} color="#9CA3AF" />
             </TouchableOpacity>
-          )}
+          ) : null}
         </View>
 
-        {filteredCategories && filteredCategories.length > 0 && (
+        {filteredCategories && filteredCategories.length > 0 ? (
           <View className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-4 mb-4">
             <View className="flex-row items-center">
               <View className="w-10 h-10 bg-white rounded-2xl items-center justify-center mr-3 shadow-sm">
@@ -154,7 +170,7 @@ export default function CategoriesScreen() {
               </View>
             </View>
           </View>
-        )}
+        ) : null}
       </View>
 
       <FlatList

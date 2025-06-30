@@ -12,16 +12,9 @@ import Brands from "./Brands";
 
 const Header = React.memo(() => {
   const router = useRouter();
-  const isPressableSearch = useRef(true);
 
   const goToSearch = () => {
-    if (!isPressableSearch.current) return;
-    isPressableSearch.current = false;
-    router.push("/SearchScreen");
-
-    setTimeout(() => {
-      isPressableSearch.current = true;
-    }, 1500);
+    router.navigate("/SearchScreen");
   };
 
   return (
@@ -31,6 +24,7 @@ const Header = React.memo(() => {
       style={{
         maxHeight: 220,
       }}
+      fadeDuration={0}
     >
       <View className="w-full flex flex-col pt-6 pb-2 bg-gradient-to-b from-white to-gray-50">
         <View className="px-4 mt-3">
@@ -47,6 +41,7 @@ const Header = React.memo(() => {
             >
               <View className="flex-row items-center flex-1">
                 <Image
+                  fadeDuration={0}
                   source={require("@/assets/images/logo.png")}
                   className="w-16 h-5 mr-3"
                   resizeMode="contain"

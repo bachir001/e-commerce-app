@@ -3,6 +3,8 @@ import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Modal from "react-native-modal";
 import EmptyState from "../common/EmptyList";
 
+type PressType = "brands" | "colors" | "sizes" | "categories" | "attributes";
+
 function FiltersModal({
   isVisible,
   onClose,
@@ -16,6 +18,8 @@ function FiltersModal({
   setColorIds,
   sizes,
   setSizeIds,
+  attributes,
+  setAttributeIds,
 }: {
   isVisible: boolean;
   onClose: () => void;
@@ -29,112 +33,79 @@ function FiltersModal({
   setColorIds: (ids: number[]) => void;
   sizes: any[];
   setSizeIds: (ids: number[]) => void;
+  attributes: any[];
+  setAttributeIds: (ids: number[]) => void;
 }) {
   const [selectedCategoriesId, setSelectedCategoriesId] = useState<number[]>(
     []
   );
-
   const [selectedBrandIds, setSelectedBrandIds] = useState<number[]>([]);
   const [selectedColorIds, setSelectedColorIds] = useState<number[]>([]);
   const [selectedSizeIds, setSelectedSizeIds] = useState<number[]>([]);
-
-  const handleCategoryPress = useCallback(
-    (categoryId: number) => {
-      setSelectedCategoriesId((prevSelected) => {
-        const categoryIdIndex = prevSelected.findIndex(
-          (selected) => selected === categoryId
-        );
-
-        let newSelected: number[];
-        if (categoryIdIndex > -1) {
-          newSelected = [
-            ...prevSelected.slice(0, categoryIdIndex),
-            ...prevSelected.slice(categoryIdIndex + 1),
-          ];
-        } else {
-          newSelected = [...prevSelected, categoryId];
-        }
-        setCategoryIds(newSelected);
-        return newSelected;
-      });
-    },
-    [setCategoryIds]
+  const [selectedAttributeIds, setSelectedAttributeIds] = useState<number[]>(
+    []
   );
 
-  const handleBrandPress = useCallback(
-    (brandId: number) => {
-      setSelectedBrandIds((prevSelected) => {
-        const brandIdIndex = prevSelected.findIndex(
-          (selected) => selected === brandId
-        );
+  const handlePress = useCallback(
+    (id: number, type: PressType) => {
+      let selectedArray: number[] = [];
+      let setFunction: (ids: number[]) => void;
+      let currentComponentSetterFunction: React.Dispatch<
+        React.SetStateAction<number[]>
+      >;
 
-        let newSelected: number[];
-        if (brandIdIndex > -1) {
-          newSelected = [
-            ...prevSelected.slice(0, brandIdIndex),
-            ...prevSelected.slice(brandIdIndex + 1),
-          ];
-        } else {
-          newSelected = [...prevSelected, brandId];
-        }
-        setBrandIds(newSelected); // Update parent state
-        return newSelected;
-      });
+      switch (type) {
+        case "brands":
+          selectedArray = selectedBrandIds;
+          setFunction = setBrandIds;
+          currentComponentSetterFunction = setSelectedBrandIds;
+          break;
+        case "categories":
+          selectedArray = selectedCategoriesId;
+          setFunction = setCategoryIds;
+          currentComponentSetterFunction = setSelectedCategoriesId;
+          break;
+        case "colors":
+          selectedArray = selectedColorIds;
+          setFunction = setColorIds;
+          currentComponentSetterFunction = setSelectedColorIds;
+          break;
+        case "sizes":
+          selectedArray = selectedSizeIds;
+          setFunction = setSizeIds;
+          currentComponentSetterFunction = setSelectedSizeIds;
+          break;
+        case "attributes":
+          selectedArray = selectedAttributeIds;
+          setFunction = setAttributeIds;
+          currentComponentSetterFunction = setSelectedAttributeIds;
+          break;
+        default:
+          return;
+      }
+
+      const newSelected = selectedArray.includes(id)
+        ? selectedArray.filter((item) => item !== id)
+        : [...selectedArray, id];
+
+      currentComponentSetterFunction(newSelected);
+      setFunction(newSelected);
     },
-    [setBrandIds]
+    [
+      selectedBrandIds,
+      selectedCategoriesId,
+      selectedColorIds,
+      selectedSizeIds,
+      selectedAttributeIds,
+      setBrandIds,
+      setCategoryIds,
+      setColorIds,
+      setSizeIds,
+      setAttributeIds,
+    ]
   );
 
-  const handleColorPress = useCallback(
-    (colorId: number) => {
-      setSelectedColorIds((prevSelected) => {
-        const colorIdIndex = prevSelected.findIndex(
-          (selected) => selected === colorId
-        );
-
-        let newSelected: number[];
-        if (colorIdIndex > -1) {
-          newSelected = [
-            ...prevSelected.slice(0, colorIdIndex),
-            ...prevSelected.slice(colorIdIndex + 1),
-          ];
-        } else {
-          newSelected = [...prevSelected, colorId];
-        }
-        setColorIds(newSelected);
-        return newSelected;
-      });
-    },
-    [setColorIds]
-  );
-
-  const handleSizePress = useCallback(
-    (sizeId: number) => {
-      setSelectedSizeIds((prevSelected) => {
-        const sizeIdIndex = prevSelected.findIndex(
-          (selected) => selected === sizeId
-        );
-
-        let newSelected: number[];
-        if (sizeIdIndex > -1) {
-          newSelected = [
-            ...prevSelected.slice(0, sizeIdIndex),
-            ...prevSelected.slice(sizeIdIndex + 1),
-          ];
-        } else {
-          newSelected = [...prevSelected, sizeId];
-        }
-        setSizeIds(newSelected);
-        return newSelected;
-      });
-    },
-    [setSizeIds]
-  );
-
-  useEffect(() => {
-    console.log(brands);
-  }, [categories]);
-
-  if (!categories && !brands && !colors && !sizes) {
+  if (!categories && !brands && !colors && !sizes && !attributes) {
     return (
       <EmptyState
         title="No Filters"
@@ -159,12 +130,9 @@ function FiltersModal({
           flexShrink: 1,
         }}
       >
-        <ScrollView
-          // Remove maxHeight from ScrollView
-          showsVerticalScrollIndicator={false} // Optional: hide scroll indicator if desired
-        >
-          {/*Categories*/}
-          {categories && categories.length > 0 && (
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Categories */}
+          {categories?.length > 0 && (
             <View className="mb-5">
               <Text className="text-lg font-bold mb-2.5 text-gray-800">
                 Categories
@@ -179,7 +147,7 @@ function FiltersModal({
                         : ""
                     }`}
                     activeOpacity={0.7}
-                    onPress={() => handleCategoryPress(category.id)}
+                    onPress={() => handlePress(category.id, "categories")}
                   >
                     <Text className="text-sm font-medium text-violet-700">
                       {category.name}
@@ -190,8 +158,8 @@ function FiltersModal({
             </View>
           )}
 
-          {/*Brands*/}
-          {brands && brands.length > 0 && (
+          {/* Brands */}
+          {brands?.length > 0 && (
             <View className="mb-5">
               <Text className="text-lg font-bold mb-2.5 text-gray-800">
                 Brands
@@ -204,7 +172,7 @@ function FiltersModal({
                       selectedBrandIds.includes(brand.id) ? "bg-yellow-400" : ""
                     }`}
                     activeOpacity={0.7}
-                    onPress={() => handleBrandPress(brand.id)}
+                    onPress={() => handlePress(brand.id, "brands")}
                   >
                     <Text className="text-sm font-medium text-violet-700">
                       {brand.name}
@@ -215,8 +183,8 @@ function FiltersModal({
             </View>
           )}
 
-          {/*Colors*/}
-          {colors && colors.length > 0 && (
+          {/* Colors */}
+          {colors?.length > 0 && (
             <View className="mb-5">
               <Text className="text-lg font-bold mb-2.5 text-gray-800">
                 Colors
@@ -227,20 +195,20 @@ function FiltersModal({
                     key={color.id}
                     className={`w-10 h-10 rounded-full border border-gray-300 items-center justify-center transition-transform duration-200 ${
                       selectedColorIds.includes(color.id)
-                        ? "scale-125 border-2 "
+                        ? "scale-125 border-2"
                         : ""
                     }`}
                     style={{ backgroundColor: color.code }}
                     activeOpacity={0.7}
-                    onPress={() => handleColorPress(color.id)}
+                    onPress={() => handlePress(color.id, "colors")}
                   />
                 ))}
               </View>
             </View>
           )}
 
-          {/*Sizes*/}
-          {sizes && sizes.length > 0 && (
+          {/* Sizes */}
+          {sizes?.length > 0 && (
             <View className="mb-5">
               <Text className="text-lg font-bold mb-2.5 text-gray-800">
                 Sizes
@@ -253,7 +221,7 @@ function FiltersModal({
                       selectedSizeIds.includes(size.id) ? "bg-yellow-400" : ""
                     }`}
                     activeOpacity={0.7}
-                    onPress={() => handleSizePress(size.id)}
+                    onPress={() => handlePress(size.id, "sizes")}
                   >
                     <Text className="text-sm font-medium text-violet-700">
                       {size.name}
@@ -261,6 +229,40 @@ function FiltersModal({
                   </TouchableOpacity>
                 ))}
               </View>
+            </View>
+          )}
+
+          {/* Attributes */}
+          {attributes?.length > 0 && (
+            <View className="mb-5">
+              <Text className="text-lg font-bold mb-2.5 text-gray-800">
+                Attributes
+              </Text>
+              {attributes.map((attribute) => (
+                <View key={attribute.id} className="mb-4">
+                  <Text className="text-md font-semibold mb-2 text-gray-700">
+                    {attribute.name}
+                  </Text>
+                  <View className="flex flex-row flex-wrap gap-2">
+                    {attribute.options.map((option: any) => (
+                      <TouchableOpacity
+                        key={option.id}
+                        className={`py-2 px-4 rounded-full bg-gray-50 border border-gray-200 ${
+                          selectedAttributeIds.includes(option.id)
+                            ? "bg-yellow-400"
+                            : ""
+                        }`}
+                        activeOpacity={0.7}
+                        onPress={() => handlePress(option.id, "attributes")}
+                      >
+                        <Text className="text-sm font-medium text-violet-700">
+                          {option.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              ))}
             </View>
           )}
         </ScrollView>
