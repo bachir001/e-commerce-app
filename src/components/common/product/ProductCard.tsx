@@ -15,7 +15,7 @@ import axiosApi from "@/apis/axiosApi";
 import { useSessionStore } from "@/store/useSessionStore";
 import ProductCardWide from "./ProductCardWide";
 import { queryClient } from "index";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Props {
   product: Product;
@@ -37,6 +37,7 @@ const ProductCard = React.memo(
     const [timeLeft, setTimeLeft] = useState<string>("");
     const [isFavorite, setIsFavorite] = useState<boolean>(false);
     const { isLogged, token } = useSessionStore();
+    const queryClient = useQueryClient();
 
     const { data: wishListFromQuery } = useQuery<Product[], Error>({
       queryKey: ["wishlist", token],
@@ -152,9 +153,13 @@ const ProductCard = React.memo(
     const navigateToProductDetails = useCallback(() => {
       if (!isPressable.current) return;
       isPressable.current = false;
+      console.log("PUSHED: " + isFavorite);
       router.push({
         pathname: "/ProductDetails",
-        params: { productJSON: JSON.stringify(product) },
+        params: {
+          productJSON: JSON.stringify(product),
+          favorite: String(isFavorite),
+        },
       });
 
       setTimeout(() => {
@@ -212,6 +217,8 @@ const ProductCard = React.memo(
         });
 
         if (response.data.status) {
+          queryClient.invalidateQueries({ queryKey: ["wishlist", token] });
+
           Toast.show({
             type: "success",
             text1: "Success",
@@ -308,7 +315,7 @@ const ProductCard = React.memo(
             >
               <FontAwesome5
                 name="heart"
-                size={isSimplifiedOrGrid ? 16 : 16}
+                size={16}
                 color={isFavorite ? "#ffb500" : "#666"}
                 solid={isFavorite}
               />

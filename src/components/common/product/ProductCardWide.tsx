@@ -7,8 +7,7 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
 import { useSessionStore } from "@/store/useSessionStore";
-import { useQuery } from "@tanstack/react-query";
-import { queryClient } from "index";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Props {
   product: Product;
@@ -22,6 +21,8 @@ const ProductCardWide = React.memo(
     const router = useRouter();
     const [isFavorite, setIsFavorite] = useState<boolean>(false);
     const { isLogged, token } = useSessionStore();
+
+    const queryClient = useQueryClient();
 
     const { data: wishListFromQuery } = useQuery<Product[], Error>({
       queryKey: ["wishlist", token],
@@ -163,10 +164,7 @@ const ProductCardWide = React.memo(
             topOffset: 60,
           });
 
-          await queryClient.invalidateQueries({
-            queryKey: ["wishlist", token],
-            exact: true,
-          });
+          queryClient.invalidateQueries({ queryKey: ["wishlist", token] });
         } else {
           setIsFavorite(isCurrentlyFavorite);
           Toast.show({

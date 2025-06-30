@@ -49,8 +49,8 @@ export default function Wishlist() {
     enabled: !!token,
     staleTime: Infinity,
     gcTime: 10 * 60 * 1000,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
+    // refetchOnMount: "always",
+    // refetchOnWindowFocus: true,
   });
 
   const onRefresh = () => {

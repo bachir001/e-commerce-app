@@ -9,7 +9,7 @@ import {
   Alert,
   TouchableOpacity,
   Share,
-  Image, // Import Image here
+  Image,
 } from "react-native";
 import { useCartStore } from "@/store/cartStore";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -27,6 +27,9 @@ import useGetRelatedProducts from "@/hooks/products/useGetRelatedProducts";
 import axiosApi from "@/apis/axiosApi";
 import DotsLoader from "@/components/common/AnimatedLayout";
 import type { MainCategory } from "./(tabs)/categories";
+import Toast from "react-native-toast-message";
+import { useSessionStore } from "@/store/useSessionStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface MainDetail extends Product {
   sku: string;
@@ -38,8 +41,8 @@ interface MainDetail extends Product {
   categories: MainCategory[];
 }
 
-export default function ProductDetailsScreen(): React.ReactElement {
-  const { productJSON } = useLocalSearchParams();
+export default function ProductDetailsScreen({}): React.ReactElement {
+  const { productJSON, favorite } = useLocalSearchParams();
   const product = useMemo(
     () =>
       typeof productJSON === "string"
@@ -48,11 +51,15 @@ export default function ProductDetailsScreen(): React.ReactElement {
     [productJSON]
   );
 
+  const { token, isLogged } = useSessionStore();
+
   const {
     data: relatedProducts,
     isLoading: relatedProductsLoading,
     isError: relatedProductsError,
   } = useGetRelatedProducts(product?.slug || "");
+
+  const queryClient = useQueryClient();
 
   const [productDetail, setProductDetail] = useState<MainDetail | null>(null);
   const [productDetailLoading, setProductDetailLoading] = useState(true);
@@ -178,10 +185,6 @@ export default function ProductDetailsScreen(): React.ReactElement {
     }
   }, [product, quantity, addToCart, cartOperationError]);
 
-  const toggleFavorite = useCallback(() => {
-    setIsFavorite((prev) => !prev);
-  }, []);
-
   const shareProduct = useCallback(async () => {
     if (!product) return;
 
@@ -217,6 +220,11 @@ export default function ProductDetailsScreen(): React.ReactElement {
     const fetchProductDetail = async () => {
       if (!product?.slug) return;
 
+      console.log(favorite);
+      if (favorite === "true") {
+        setIsFavorite(true);
+      }
+
       setProductDetailLoading(true);
       try {
         const response = await axiosApi.get(`/getProduct/${product.slug}`);
@@ -238,6 +246,82 @@ export default function ProductDetailsScreen(): React.ReactElement {
       }
     };
   }, [product?.slug]);
+
+  const toggleFavorite = useCallback(async () => {
+    if (!isLogged) {
+      Toast.show({
+        type: "error",
+        text1: "Login Required",
+        text2: "Please log in to add products to your wishlist.",
+        autoHide: true,
+        visibilityTime: 2000,
+        topOffset: 60,
+      });
+      return;
+    }
+
+    setIsFavorite((prev) => !prev);
+    const isCurrentlyFavorite = isFavorite;
+
+    try {
+      const WishListBody: {
+        product_detail_id?: number;
+        product_id?: number;
+      } = {};
+
+      if (productDetail?.has_variants) {
+        WishListBody.product_detail_id = Number(product?.id);
+      } else {
+        WishListBody.product_id = Number(product?.id);
+      }
+
+      const endpoint = isCurrentlyFavorite
+        ? `/favorite/remove?_method=DELETE`
+        : `/favorite/add`;
+      const response = await axiosApi.post(endpoint, WishListBody, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.status) {
+        queryClient.invalidateQueries({ queryKey: ["wishlist", token] });
+
+        Toast.show({
+          type: "success",
+          text1: "Success",
+          text2: isCurrentlyFavorite
+            ? "Product removed from wishlist."
+            : "Product added to wishlist.",
+          autoHide: true,
+          visibilityTime: 1000,
+          topOffset: 60,
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "Failed to update wishlist.",
+          autoHide: true,
+          visibilityTime: 2000,
+          topOffset: 60,
+        });
+        setIsFavorite(isCurrentlyFavorite);
+      }
+    } catch (err) {
+      console.error("Error updating wishlist:", err);
+      setIsFavorite(isCurrentlyFavorite);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to update wishlist.",
+        autoHide: true,
+        visibilityTime: 2000,
+        topOffset: 60,
+      });
+    }
+  }, [isLogged, token, product, isFavorite]);
 
   if (!product) {
     return (

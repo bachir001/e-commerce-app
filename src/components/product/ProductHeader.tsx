@@ -2,6 +2,7 @@ import { router } from "expo-router";
 import { ChevronLeft, Heart, Share2 } from "lucide-react-native";
 import { TouchableOpacity, View } from "react-native";
 import type React from "react";
+import { FontAwesome5 } from "@expo/vector-icons";
 
 interface ProductHeaderProps {
   toggleFavorite: () => void;
@@ -30,10 +31,11 @@ export default function ProductHeader({
           onPress={toggleFavorite}
           activeOpacity={0.7}
         >
-          <Heart
-            size={20}
-            color={isFavorite ? "#FF4D4F" : "#333"}
-            fill={isFavorite ? "#FF4D4F" : "transparent"}
+          <FontAwesome5
+            name="heart"
+            size={16}
+            color={isFavorite ? "#ffb500" : "#666"}
+            solid={isFavorite}
           />
         </TouchableOpacity>
         <TouchableOpacity
