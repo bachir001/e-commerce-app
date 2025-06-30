@@ -10,12 +10,6 @@ export default function HomeLayout() {
           headerShown: false,
         }}
       />
-      <Stack.Screen
-        name="shipping"
-        options={{
-          headerShown: false,
-        }}
-      />
     </Stack>
   );
 }

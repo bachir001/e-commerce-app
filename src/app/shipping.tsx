@@ -95,7 +95,7 @@ export default function ShippingScreen(): React.ReactElement {
   const colorScheme = isDarkMode ? "dark" : "light";
   const styles = createStyles(colorScheme);
 
-  const { isLogged, token } = useSessionStore();
+  const { isLogged, token, user } = useSessionStore();
 
   const [governorateList, setGovernorateList] = useState<Governorate[]>([]);
   const [selectedGovernorateId, setSelectedGovernorateId] = useState<number>();
@@ -227,16 +227,26 @@ export default function ShippingScreen(): React.ReactElement {
       const sessionId = await getOrCreateSessionId();
       const pickUpFlag = deliveryMethod === "pickup" ? 1 : 0;
       const requestBody = {
-        note: additionalNotes,
+        notes: additionalNotes,
         pick_up: pickUpFlag,
         delivery_price: deliveryPrice,
         address_id: addressId,
+        user_id: Number(user?.id),
       };
 
-      const response = await axiosApi.post("/checkout-data", requestBody, {
-        headers: { "x-session": sessionId, Authorization: `Bearer ${token}` },
-        withCredentials: true,
-      });
+      console.log(requestBody);
+
+      const response = await axiosApi.post(
+        "/checkout-data?login_user=true",
+        requestBody,
+        {
+          headers: {
+            "X-Session": sessionId || "",
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
+      );
 
       console.log(response.status);
       if (response.data.status) {
