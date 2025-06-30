@@ -16,6 +16,7 @@ import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSessionStore } from "@/store/useSessionStore";
 import DotsLoader from "@/components/common/AnimatedLayout";
+import ErrorState from "@/components/common/ErrorState";
 
 export interface Address {
   id: number;
@@ -52,6 +53,8 @@ export default function AddressPage() {
   const {
     data: addresses = [],
     isLoading: addressesLoading,
+    error,
+    isError,
     refetch: refetchAddresses,
   } = useQuery({
     queryKey: ["addresses", token],
@@ -63,6 +66,12 @@ export default function AddressPage() {
             Authorization: `Bearer ${token}`,
           },
         });
+
+        if (response.status === 404) {
+          //The backend implementation sets 404 = empty array
+          return [];
+        }
+
         const sortedDefault = [...response.data.data].sort(
           (a, b) => b.is_default - a.is_default
         );
@@ -150,6 +159,16 @@ export default function AddressPage() {
     }
   };
 
+  if (isError) {
+    return (
+      <ErrorState
+        onRetry={refetchAddresses}
+        title="Failed to load addresses"
+        subtitle={error.message}
+      />
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <View className="bg-white px-5 py-4 border-b border-gray-100">
@@ -173,6 +192,7 @@ export default function AddressPage() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => {
+                console.log(token);
                 setRefreshing(true);
                 refetchAddresses()
                   .then(() => {

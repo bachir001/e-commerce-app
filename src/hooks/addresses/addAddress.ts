@@ -72,6 +72,8 @@ export default function useAddAddress() {
     //   queryClient.invalidateQueries({queryKey: ["addresses"]});
     // },
     onSuccess: (data) => {
+      router.back();
+
       Toast.show({
         type: "success",
         text1: "Address created successfully",
@@ -80,9 +82,6 @@ export default function useAddAddress() {
         autoHide: true,
         topOffset: 30,
         bottomOffset: 40,
-        onHide: () => {
-          router.back();
-        },
       });
     },
   });
