@@ -76,7 +76,6 @@ function getErrorMessage(error: any): string {
   return String(error || "An unknown error occurred.");
 }
 
-
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
@@ -161,27 +160,25 @@ export const useCartStore = create<CartState>()(
         let optimisticItems: CartItem[];
         if (existingIndex >= 0) {
           optimisticItems = prevState.items.map((item, idx) => {
-            if (idx !== existingIndex) return item; // Return other items as is
-            // Calculate new quantity based on action
+            if (idx !== existingIndex) return item;
             const newQty =
               action === "increase"
                 ? item.quantity + quantity
                 : action === "decrease"
-                ? Math.max(1, item.quantity - quantity) // Ensure quantity doesn't go below 1
-                : quantity; // For direct set quantity
+                ? Math.max(1, item.quantity - quantity)
+                : quantity;
             return { ...item, quantity: newQty };
           });
         } else {
-          // Add new temporary item if not existing
           optimisticItems = [
             ...prevState.items,
             {
-              id: `temp-${Date.now()}`, // Temporary ID for optimistic item
+              id: `temp-${Date.now()}`,
               productId,
-              name: "Loading...", // Placeholder name
-              price: 0, // Placeholder price
+              name: "Loading...",
+              price: 0,
               quantity,
-              imageUrl: "", // Placeholder image
+              imageUrl: "",
             },
           ];
         }
@@ -189,15 +186,15 @@ export const useCartStore = create<CartState>()(
         // Apply optimistic update immediately
         set({
           items: optimisticItems,
-          loading: true, // Show loading indicator
-          error: null,
-          lastFetch: null, // Invalidate cache to force fresh fetch after API call
+          loading: true,
+          lastFetch: null,
+          // note: no error property here
         });
 
         try {
           const sessionId = await getOrCreateSessionId();
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+          const timeoutId = setTimeout(() => controller.abort(), 10_000);
 
           const res = await fetch(`${API_BASE}/cart/add`, {
             method: "POST",
@@ -206,34 +203,28 @@ export const useCartStore = create<CartState>()(
               "x-session": sessionId,
             },
             body: JSON.stringify({
-              product_id: Number(productId), // Ensure product_id is number for API
+              product_id: Number(productId),
               quantity,
-              ...(action && { action }), // Conditionally add action to body
+              ...(action && { action }),
             }),
             signal: controller.signal,
           });
 
-          clearTimeout(timeoutId); // Clear timeout on successful response
+          clearTimeout(timeoutId);
 
-          // Handle HTTP errors from the API
           if (!res.ok) {
             let errorMsg = `HTTP ${res.status}`;
-
-            // Specific handling for 422 (Validation errors)
             if (res.status === 422) {
               try {
-                const errorBody = await res.json();
-                errorMsg = errorBody.message || "Validation failed";
+                const body = await res.json();
+                errorMsg = body.message || "Validation failed";
               } catch {
-                errorMsg = "Invalid request data"; // Fallback if JSON parsing fails
+                errorMsg = "Invalid request data";
               }
-            }
-            // Specific handling for 500 (Server errors)
-            else if (res.status === 500) {
+            } else if (res.status === 500) {
               errorMsg = "Server error, please try again later";
             }
-
-            throw new Error(errorMsg); // Throw error to be caught below
+            throw new Error(errorMsg);
           }
 
           const json: AddToCartApiResponse = await res.json();
@@ -241,35 +232,37 @@ export const useCartStore = create<CartState>()(
             throw new Error(json.message || "Failed to add item");
           }
 
-          // SUCCESS: Force a fresh cart fetch from the server to reflect actual state
+          // On success, re-fetch cart
           await get().fetchCart(true);
-
           Toast.show({
             type: "success",
             text1: "Cart Updated",
-            position: "bottom",
+            position: "top",      // ← was "bottom"
+            topOffset: 50, 
           });
         } catch (err: any) {
-          const msg = getErrorMessage(err); // Use the helper to get message
-          
-          // Revert to the previous state only if there was a definitive error that
-          // means the optimistic update was incorrect.
-          // For network issues, it's better to show an error and let user retry.
-          set({ ...prevState, loading: false, error: msg }); // Revert state and set loading false
+          const msg = getErrorMessage(err);
+          // Revert everything, but no global error state
+          set({
+            items: prevState.items,
+            loading: false,
+            lastFetch: prevState.lastFetch,
+          });
 
-          const isStockErr = msg.includes("exceeds available stock");
-
+          const isStockErr = msg.includes("[object Object]"); // if you keep this logic
           Toast.show({
             type: "error",
             text1: isStockErr ? "Out of Stock" : "Cart Error",
             text2: msg,
-            position: "bottom",
+            position: "top",      // ← was "bottom"
+            topOffset: 50, 
           });
         } finally {
-          // Ensure loading state is always turned off
+          // ensure loading flag is off in all cases
           set({ loading: false });
         }
       },
+
 
       clearCart: () => set({ items: [], error: null, lastFetch: null }),
     }),

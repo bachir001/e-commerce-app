@@ -261,102 +261,6 @@ export default function ShippingScreen(): React.ReactElement {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.screenTitle}>Shipping Information</Text>
 
-        {/* Contact Information Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardHeader}>Contact Information</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="First Name"
-            value={firstName}
-            onChangeText={setFirstName}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Last Name"
-            value={lastName}
-            onChangeText={setLastName}
-          />
-          <Pressable style={styles.input} onPress={() => setShowDatePicker(true)}>
-            <Text style={{ color: Colors[colorScheme].text }}>
-              {dateOfBirth.toLocaleDateString()}
-            </Text>
-          </Pressable>
-          {showDatePicker && (
-            <DateTimePicker
-              value={dateOfBirth}
-              mode="date"
-              display="default"
-              onChange={(_, date) => {
-                setShowDatePicker(false);
-                if (date) setDateOfBirth(date);
-              }}
-            />
-          )}
-          <TextInput
-            style={styles.input}
-            placeholder="Mobile Number"
-            keyboardType="phone-pad"
-            value={mobileNumber}
-            onChangeText={setMobileNumber}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Email Address"
-            keyboardType="email-address"
-            value={emailAddress}
-            onChangeText={setEmailAddress}
-          />
-        </View>
-
-        {/* Address Information Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardHeader}>Address Information</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Street Address"
-            value={streetAddress1}
-            onChangeText={setStreetAddress1}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Street Address Line 2 (Optional)"
-            value={streetAddress2}
-            onChangeText={setStreetAddress2}
-          />
-            <Picker<number | undefined>
-              style={styles.picker}
-              selectedValue={selectedGovernorateId}
-              onValueChange={(v: number | undefined) => setSelectedGovernorateId(v)}
-            >
-            <Picker.Item label="Select Governorate" value={undefined} />
-            {governorateList.map((gov) => (
-              <Picker.Item key={gov.id} label={gov.name} value={gov.id} />
-            ))}
-          </Picker>
-          <Picker
-            style={styles.picker}
-            selectedValue={selectedCityId}
-            onValueChange={(v: number | undefined) => setSelectedCityId(v)}
-            enabled={cityList.length > 0}
-          >
-            <Picker.Item label="Select City" value={undefined} />
-            {cityList.map((city) => (
-              <Picker.Item key={city.id} label={city.name} value={city.id} />
-            ))}
-          </Picker>
-          <Picker
-            style={styles.picker}
-            selectedValue={selectedArea}
-            onValueChange={(value: Area | undefined) => setSelectedArea(value)}
-            enabled={areaList.length > 0}
-          >
-            <Picker.Item label="Select Area" value={undefined} />
-            {areaList.map((area) => (
-              <Picker.Item key={area.id} label={`${area.name} ($${area.price.toFixed(2)})`} value={area} />
-            ))}
-          </Picker>
-        </View>
-
         {/* Additional Information Card */}
         <View style={styles.card}>
           <Text style={styles.cardHeader}>Additional Information</Text>
@@ -367,10 +271,10 @@ export default function ShippingScreen(): React.ReactElement {
             value={additionalNotes}
             onChangeText={setAdditionalNotes}
           />
-          <Text style={{ marginBottom: 8, color: Colors[colorScheme].text, fontWeight: '600' }}>
+          {/* <Text style={{ marginBottom: 8, color: Colors[colorScheme].text, fontWeight: '600' }}>
             Delivery Method
-          </Text>
-          <View style={styles.radioGroup}>
+          </Text> */}
+          {/* <View style={styles.radioGroup}>
             <Pressable onPress={() => setDeliveryMethod('delivery')} style={styles.radioOption}>
               <View style={styles.radioOuter}>
                 {deliveryMethod === 'delivery' && <View style={styles.radioInner} />}
@@ -383,7 +287,7 @@ export default function ShippingScreen(): React.ReactElement {
               </View>
               <Text style={styles.radioLabel}>Store Pickup</Text>
             </Pressable>
-          </View>
+          </View> */}
         </View>
 
         {/* Order Details Card */}

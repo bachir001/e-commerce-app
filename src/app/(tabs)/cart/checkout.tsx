@@ -93,9 +93,9 @@ export default function CheckoutScreen() {
               </Text>
             </View>
 
-            <Pressable
+            <Pressable 
               style={styles.actionButton}
-              onPress={() => router.push('/cart/shipping')}
+              onPress={() => router.push('/shipping')}
             >
               <Text style={styles.actionText}>Proceed to Shipping</Text>
             </Pressable>
