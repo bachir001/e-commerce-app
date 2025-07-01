@@ -14,7 +14,7 @@ function CircularCategory({ props }: CircularCategoryProps) {
       className="items-center"
       onPress={() => {
         router.push({
-          pathname: "category",
+          pathname: "mega",
           params: {
             slug: String(props.slug),
             color: colorMap[props.slug as niche] || "5e3ebd",

@@ -180,14 +180,7 @@ const ProductCard = React.memo(
 
     const handleAddToWishlist = useCallback(async () => {
       if (!isLogged) {
-        Toast.show({
-          type: "error",
-          text1: "Login Required",
-          text2: "Please log in to add products to your wishlist.",
-          autoHide: true,
-          visibilityTime: 2000,
-          topOffset: 60,
-        });
+        router.navigate("/auth/signInAccount");
         return;
       }
 

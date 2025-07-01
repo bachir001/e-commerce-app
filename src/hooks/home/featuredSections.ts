@@ -28,7 +28,6 @@ export function useFeaturedSection(
       const response = await axiosApi.get(url, { signal });
 
       if (response.status !== 200) {
-        console.log("HOME");
         return [];
       }
       return response.data.data.results as Product[];

@@ -124,10 +124,7 @@ const SpecificSection = React.memo(
     mega_mobile_bg,
     color,
     setLoading,
-    onViewMorePress,
   }: SpecificSectionProps) => {
-    const isCategoryPressable = useRef(true);
-
     const {
       data: metaCategoryInfo,
       isLoading,
@@ -145,6 +142,7 @@ const SpecificSection = React.memo(
           }
         );
         return {
+          id: response.data.data.categoryInfo.id,
           relatedCategories: response.data.data.relatedCategories.slice(
             0,
             fetchParams!.per_page + 1
@@ -161,26 +159,33 @@ const SpecificSection = React.memo(
       [color]
     );
 
+    const onViewMorePress = useCallback(
+      (pageType: string) => {
+        router.navigate({
+          pathname: pageType,
+          params: {
+            slug: type,
+            color: color,
+            id: metaCategoryInfo?.id,
+          },
+        });
+      },
+      [type]
+    );
+
     const renderCategoryItem = useCallback(
       ({ item }: { item: any }) => (
         <MemoizedCategoryItem
           item={item}
           onPress={() => {
-            if (!isCategoryPressable.current) return;
-            isCategoryPressable.current = false;
-
-            router.push({
+            router.navigate({
               pathname: "category",
               params: {
-                slug: String(item.slug),
+                slug: String(item.slug), //for the category products (getCategoryData)
                 color: color,
-                id: String(item.id),
+                id: String(item.id), //for the filters
               },
             });
-
-            setTimeout(() => {
-              isCategoryPressable.current = true;
-            }, 1500);
           }}
         />
       ),
@@ -234,11 +239,15 @@ const SpecificSection = React.memo(
           >
             <View
               className="flex-row justify-between items-center px-4 mb-3 py-2 -mt-4"
-              style={{ backgroundColor: `${color}B3` }} // 70% opacity
+              style={{ backgroundColor: `${color}B3` }}
             >
               <Text className="text-base font-bold text-white">{title}</Text>
               <TouchableOpacity
-                onPress={onViewMorePress}
+                onPress={() => {
+                  if (metaCategoryInfo !== undefined) {
+                    onViewMorePress("mega");
+                  }
+                }}
                 className="bg-white/20 px-2.5 py-1 rounded-full"
               >
                 <Text className="text-xs font-semibold text-white">
@@ -267,7 +276,11 @@ const SpecificSection = React.memo(
             <View className="flex-row justify-between items-center px-4 mb-3">
               <Text className="text-base font-bold text-white">{title}</Text>
               <TouchableOpacity
-                onPress={onViewMorePress}
+                onPress={() => {
+                  if (metaCategoryInfo !== undefined) {
+                    onViewMorePress("mega");
+                  }
+                }}
                 className="bg-white/20 px-2.5 py-1 rounded-full"
               >
                 <Text className="text-xs font-semibold text-white">
@@ -298,7 +311,11 @@ const SpecificSection = React.memo(
             </Text>
             <TouchableOpacity
               className="flex-row items-center"
-              onPress={onViewMorePress}
+              onPress={() => {
+                if (metaCategoryInfo !== undefined) {
+                  onViewMorePress("category");
+                }
+              }}
             >
               <Text className="text-xs font-semibold text-gray-900 mr-0.5">
                 Shop Now

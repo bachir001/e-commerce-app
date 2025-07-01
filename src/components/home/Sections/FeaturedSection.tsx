@@ -7,6 +7,7 @@ import type { HomePageSectionProp } from "@/constants/HomePageSections";
 import { useAppDataStore } from "@/store/useAppDataStore";
 import DotsLoader from "@/components/common/AnimatedLayout";
 import ErrorState from "@/components/common/ErrorState";
+import { router } from "expo-router";
 
 interface FeaturedSectionProps extends HomePageSectionProp {
   color?: string;
@@ -43,7 +44,6 @@ const FeaturedSection = React.memo(
     type,
     color = "#5e3ebd",
     startFromLeft = false,
-    onViewMorePress,
     list,
     setLoading,
   }: FeaturedSectionProps) => {
@@ -66,6 +66,17 @@ const FeaturedSection = React.memo(
       (item: any, index: number) => `${item.id}-${index}`,
       []
     );
+
+    const onViewMorePress = useCallback((id: number) => {
+      router.navigate({
+        pathname: "category",
+        params: {
+          slug: type,
+          color: color,
+          id: String(id),
+        },
+      });
+    }, []);
 
     useEffect(() => {
       const loadingState = isLoading;
@@ -92,8 +103,11 @@ const FeaturedSection = React.memo(
       );
     }
 
-    const bgColorClass = "bg-gray-50";
     const lightColorStyle = { backgroundColor: `${color}10` };
+
+    if ((!data || data.length === 0) && !list) {
+      return null;
+    }
 
     return (
       <View

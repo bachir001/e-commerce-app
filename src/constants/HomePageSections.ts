@@ -103,4 +103,14 @@ export const HOMEPAGE_SECTIONS = {
     // mega_mobile_bg:
     //   "https://api-gocami-test.gocami.com/storage/12255/camping-mobile.webp",
   } as HomePageSectionProp,
+  specialDeals: {
+    description: "Checkout our special deals!",
+    title: "Special Deals",
+    type: "special-deals",
+    fetchParams: {
+      per_page: 15,
+      // sort: "price_high_low" as const,
+      page: 1,
+    },
+  },
 };

@@ -5,7 +5,6 @@ import {
   View,
   Text,
   ActivityIndicator,
-  TouchableOpacity,
 } from "react-native";
 import ProductCard from "./product/ProductCard";
 import type { Product } from "@/types/globalTypes";
@@ -44,6 +43,8 @@ const InfiniteList = ({
   const fetchProducts = useCallback(async () => {
     const fetchId = ++latestFetchId.current;
 
+    console.log("HELLO");
+
     if (isRefreshing) {
     } else if (page === 1) {
       setIsLoading(true);
@@ -54,23 +55,35 @@ const InfiniteList = ({
     }
     setError(null);
 
+    let params = {
+      page,
+      per_page: 20,
+    };
+    console.log("HELLOYEN");
+    if (paramsProp !== undefined && paramsProp !== null) {
+      params = {
+        page,
+        per_page: 20,
+        ...(paramsProp || {}),
+      };
+    }
+    console.log("HELLO3");
     try {
       const response = await axiosApi.get(
         `${
           isBrand ? "/get-brand-products" : "/getCategoryData"
         }/${encodeURIComponent(slug)}/`,
         {
-          params: {
-            page,
-            per_page: 20,
-            ...(paramsProp || {}),
-          },
+          params: params,
         }
       );
+
+      console.log(response.data);
 
       if (!isMountedRef.current || fetchId !== latestFetchId.current) return;
 
       if (response.data.status) {
+        console.log(response.data);
         const newProducts = response.data.data.relatedProducts?.results || [];
         const newTotalPages =
           response.data.data.relatedProducts?.total_pages || 1;

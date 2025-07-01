@@ -35,11 +35,15 @@ const SliderItem = ({ item }: SliderItemProps) => {
 
 interface SliderComponentProps {
   sliders: Slider[] | [] | null;
+  height?: number;
 }
 
-const SliderComponent = ({ sliders }: SliderComponentProps) => {
+export const SliderComponent = ({
+  sliders,
+  height = 200,
+}: SliderComponentProps) => {
   return (
-    <View style={{ width: SCREEN_WIDTH, height: 200 }}>
+    <View style={{ width: SCREEN_WIDTH }}>
       <Carousel
         width={ITEM_WIDTH}
         height={ITEM_HEIGHT}
@@ -57,13 +61,9 @@ const SliderComponent = ({ sliders }: SliderComponentProps) => {
 const CategorySection = React.memo(() => {
   const { megaCategories, sliders } = useAppDataStore();
 
-  useEffect(() => {
-    console.log(sliders);
-  }, []);
-
   return (
     <View style={{ backgroundColor: "#FFF8E1" }} className="max-h-max pb-5">
-      <SliderComponent sliders={sliders ?? []} />
+      <SliderComponent sliders={sliders ?? []} height={200} />
       <CategoryHeader
         title="All Categories"
         coloredTitle="Enjoy!"

@@ -20,6 +20,9 @@ import useGetCategoryRelatedCategories from "@/hooks/categories/useGetCategory";
 import DotsLoader from "@/components/common/AnimatedLayout";
 import InfiniteList from "@/components/common/InfiniteList";
 import ProductCard from "@/components/common/product/ProductCard";
+import { useQuery } from "@tanstack/react-query";
+import axiosApi from "@/apis/axiosApi";
+import { SliderComponent } from "@/components/home/Categories/CategorySection";
 
 enum Tab {
   Overview = "Overview",
@@ -30,6 +33,24 @@ export default function Mega() {
   const { slug, color = Colors.beautyAndHealth } = useLocalSearchParams();
   const [imageLoading, setImageLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>(Tab.Overview);
+
+  const { data: sliders } = useQuery({
+    queryKey: ["sliders", slug],
+    queryFn: async (): Promise<any[] | null> => {
+      try {
+        const response = await axiosApi.get(`/getSlider/${slug}`);
+
+        if (response.status === 200) {
+          return response.data.data.slides;
+        } else {
+          return [];
+        }
+      } catch (err) {
+        console.error(err);
+        return [];
+      }
+    },
+  });
 
   const { data: category, isLoading: categoryLoading } =
     useGetCategoryRelatedCategories(
@@ -158,16 +179,20 @@ export default function Mega() {
                 elevation: 8,
               }}
             >
-              <Image
-                source={{
-                  uri: "https://gocami.gonext.tech/_next/image?url=%2Fimages%2Fcategories%2FbeautyBanner.jpeg&w=1080&q=75",
-                }}
-                fadeDuration={0}
-                style={{ width: "100%", height: "100%" }}
-                resizeMode="cover"
-                onLoadStart={() => setImageLoading(true)}
-                onLoadEnd={() => setImageLoading(false)}
-              />
+              {sliders && sliders.length > 0 ? (
+                <SliderComponent sliders={sliders} />
+              ) : (
+                <Image
+                  source={{
+                    uri: "https://gocami.gonext.tech/_next/image?url=%2Fimages%2Fcategories%2FbeautyBanner.jpeg&w=1080&q=75",
+                  }}
+                  fadeDuration={0}
+                  style={{ width: "100%", height: "100%" }}
+                  resizeMode="cover"
+                  onLoadStart={() => setImageLoading(true)}
+                  onLoadEnd={() => setImageLoading(false)}
+                />
+              )}
 
               {imageLoading ? (
                 <View className="absolute inset-0 bg-gray-200 items-center justify-center">

@@ -19,24 +19,24 @@ async function prefetchInitialData() {
       queryClient.prefetchQuery({
         queryKey: ["brands"],
         queryFn: () =>
-          axios.get("/get-brand-data").then((res) => res.data.data || []),
+          axiosApi.get("/get-brand-data").then((res) => res.data.data || []),
       }),
       queryClient.prefetchQuery({
-        queryKey: ["sliders"],
+        queryKey: ["sliders", "home"],
         queryFn: () =>
-          axios
+          axiosApi
             .get("/getSlider/home-slider")
             .then((res) => res.data.data.slides || []),
       }),
       queryClient.prefetchQuery({
         queryKey: ["megaCategories"],
         queryFn: () =>
-          axios.get("/getMegaCategories").then((res) => res.data.data || []),
+          axiosApi.get("/getMegaCategories").then((res) => res.data.data || []),
       }),
       queryClient.prefetchQuery({
         queryKey: ["featuredSection", "new-arrivals", newArrivalsOptions],
         queryFn: () =>
-          axios
+          axiosApi
             .get("/featured-section/new-arrivals", {
               params: newArrivalsOptions,
             })
