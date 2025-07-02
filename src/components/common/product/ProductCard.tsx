@@ -16,6 +16,7 @@ import { useSessionStore } from "@/store/useSessionStore";
 import ProductCardWide from "./ProductCardWide";
 import { queryClient } from "index";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCartStore } from "@/store/cartStore";
 
 interface Props {
   product: Product;
@@ -97,6 +98,9 @@ const ProductCard = React.memo(
       };
     }, [product]);
 
+    const addToCart = useCartStore((state) => state.addToCart);
+    const cartOperationError = useCartStore((state) => state.error);
+    
     useEffect(() => {
       if (!productData?.endDate) {
         setTimeLeft("");
@@ -167,15 +171,42 @@ const ProductCard = React.memo(
       }, 1500);
     }, [router, product]);
 
-    const handleAddToCart = useCallback(() => {
-      Toast.show({
-        type: "info",
-        text1: "Add to Cart",
-        text2: `${productData?.productName} added to cart (placeholder).`,
-        autoHide: true,
-        visibilityTime: 1500,
-        topOffset: 60,
-      });
+    const handleAddToCart = useCallback(async () => {
+      
+     if (!product || !product.id) return;    
+     
+     if (product.quantity<=0) {
+                   Toast.show({
+                  type: "error",
+                  text1: "Add to Cart",
+                  text2: `Out Of Stock`,
+                  autoHide: true,
+                  visibilityTime: 1500,
+                  topOffset: 60,
+                });
+     }  
+    
+     try {
+          await addToCart(String(product.id), 1);
+          Toast.show({
+                  type: "success",
+                  text1: "Add to Cart",
+                  text2: `${productData?.productName} added to cart (placeholder).`,
+                  autoHide: true,
+                  visibilityTime: 1500,
+                  topOffset: 60,
+                });
+        } catch {
+             Toast.show({
+                  type: "error",
+                  text1: "Add to Cart",
+                  text2: `${cartOperationError}`,
+                  autoHide: true,
+                  visibilityTime: 1500,
+                  topOffset: 60,
+                });
+        }
+
     }, [productData?.productName]);
 
     const handleAddToWishlist = useCallback(async () => {
