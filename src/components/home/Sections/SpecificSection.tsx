@@ -223,6 +223,7 @@ const SpecificSection = React.memo(
           onRetry={refetch}
           title={`Failed to load ${title}`}
           subtitle={error.message}
+          onDismiss={() => setLoading?.(false)}
         />
       );
     }

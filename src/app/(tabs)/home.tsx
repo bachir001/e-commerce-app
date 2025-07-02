@@ -87,7 +87,12 @@ export default function HomeScreen() {
       if (!sectionData) return null;
       switch (item.type) {
         case "featured":
-          return <FeaturedSection {...sectionData} />;
+          return (
+            <FeaturedSection
+              {...sectionData}
+              setLoading={(loading) => handleSectionLoading(item.id, loading)}
+            />
+          );
         case "specific":
           return (
             <SpecificSection

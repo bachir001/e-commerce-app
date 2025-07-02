@@ -14,7 +14,7 @@ interface FeaturedSectionProps extends HomePageSectionProp {
   startFromLeft?: boolean;
   onViewMorePress?: () => void;
   list?: any;
-  setLoading: (b: boolean) => void;
+  setLoading?: (b: boolean) => void;
 }
 
 const MemoizedProductItem = React.memo(
@@ -73,6 +73,19 @@ const FeaturedSection = React.memo(
       });
     }, []);
 
+    useEffect(() => {
+      const loadingState = isLoading;
+      if (!isError) {
+        setLoading?.(loadingState);
+      }
+
+      return () => {
+        if (loadingState) {
+          setLoading?.(false);
+        }
+      };
+    }, [isLoading, setLoading]);
+
     if (isLoading) {
       return <DotsLoader color={color} text={`Loading ${title}`} />;
     }
@@ -83,6 +96,7 @@ const FeaturedSection = React.memo(
           onRetry={refetch}
           title={`Failed to load ${title}`}
           subtitle={error.message}
+          onDismiss={() => setLoading?.(false)}
         />
       );
     }
@@ -92,12 +106,6 @@ const FeaturedSection = React.memo(
     if ((!data || data.length === 0) && !list) {
       return null;
     }
-
-    useEffect(() => {
-      if (setLoading) {
-        setLoading(isLoading);
-      }
-    }, [isLoading, setLoading]);
 
     return (
       <View
