@@ -101,7 +101,7 @@ export default function Verification() {
       if (mobileParam) RequestBody.mobile = mobileParam;
 
       const url: string = isReset ? "/password/verify-code" : "/verify-code";
-
+      console.log(RequestBody);
       await axiosApi
         .post(url, RequestBody)
         .then((response) => {
@@ -165,7 +165,7 @@ export default function Verification() {
       }
 
       if (mobile) {
-        RequestBody.mobile = `961${mobile}`;
+        RequestBody.mobile = mobile;
         if (isReset) {
           RequestBody.verification_method = "whatsapp";
         }

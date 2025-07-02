@@ -18,11 +18,11 @@ interface SliderItemProps {
 
 const SliderItem = ({ item }: SliderItemProps) => {
   return (
-    <View style={{ width: SCREEN_WIDTH, height: 200 }}>
+    <View style={{ width: SCREEN_WIDTH, height: 220 }}>
       <Image
         fadeDuration={0}
         source={{ uri: item.mobile_image || item.image }}
-        style={{ width: SCREEN_WIDTH, height: 200 }}
+        style={{ width: SCREEN_WIDTH, height: 220 }}
         resizeMode="cover"
         onError={(e) => console.log("Image load error:", e.nativeEvent.error)}
         defaultSource={{
@@ -35,18 +35,14 @@ const SliderItem = ({ item }: SliderItemProps) => {
 
 interface SliderComponentProps {
   sliders: Slider[] | [] | null;
-  height?: number;
 }
 
-export const SliderComponent = ({
-  sliders,
-  height = 200,
-}: SliderComponentProps) => {
+export const SliderComponent = ({ sliders }: SliderComponentProps) => {
   return (
     <View style={{ width: SCREEN_WIDTH }}>
       <Carousel
         width={ITEM_WIDTH}
-        height={ITEM_HEIGHT}
+        height={220}
         data={sliders ?? []}
         scrollAnimationDuration={500}
         autoPlay={true}

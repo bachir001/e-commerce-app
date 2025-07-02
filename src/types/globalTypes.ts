@@ -80,6 +80,7 @@ export interface Product {
   purchase_points: number | null;
   reviews?: number;
   product_image?: string;
+  product_detail_id?: number;
 }
 
 export interface popularSearches {

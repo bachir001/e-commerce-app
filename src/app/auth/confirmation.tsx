@@ -27,7 +27,7 @@ export default function Confirmation() {
       }
 
       if (mobile) {
-        RequestBody.mobile = `961${mobile}`;
+        RequestBody.mobile = mobile;
       }
 
       console.log(mobile);

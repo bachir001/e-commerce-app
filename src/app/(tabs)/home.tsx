@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   SafeAreaView,
   NativeScrollEvent,
@@ -19,10 +13,8 @@ import SpecificSection from "@/components/home/Sections/SpecificSection";
 import { HOMEPAGE_SECTIONS } from "@/constants/HomePageSections";
 import { Colors } from "@/constants/Colors";
 import FeaturedSection from "@/components/home/Sections/FeaturedSection";
-import { useSessionStore } from "@/store/useSessionStore";
 import { useAppDataStore } from "@/store/useAppDataStore";
 import { useUiStore } from "@/store/useUiStore";
-import { useWishlist } from "@/hooks/home/topSection";
 import HomeInfiniteList from "@/components/common/ProductInfiniteList";
 
 const HOME_SCREEN_DATA_STRUCTURE = [
@@ -37,7 +29,6 @@ const HOME_SCREEN_DATA_STRUCTURE = [
 ];
 
 export default function HomeScreen() {
-  const { token } = useSessionStore();
   const { newArrivals } = useAppDataStore();
   const { showTabBar, hideTabBar } = useUiStore();
 
@@ -100,12 +91,7 @@ export default function HomeScreen() {
       if (!sectionData) return null;
       switch (item.type) {
         case "featured":
-          return (
-            <FeaturedSection
-              {...sectionData}
-              setLoading={(loading) => handleSectionLoading(item.id, loading)}
-            />
-          );
+          return <FeaturedSection {...sectionData} />;
         case "specific":
           return (
             <SpecificSection

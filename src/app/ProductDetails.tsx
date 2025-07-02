@@ -51,7 +51,7 @@ export default function ProductDetailsScreen({}): React.ReactElement {
     [productJSON]
   );
 
-  const { token, isLogged } = useSessionStore();
+  const { token, isLogged, user } = useSessionStore();
 
   const {
     data: relatedProducts,
@@ -267,10 +267,13 @@ export default function ProductDetailsScreen({}): React.ReactElement {
       const WishListBody: {
         product_detail_id?: number;
         product_id?: number;
-      } = {};
+        user_id: number;
+      } = {
+        user_id: Number(user?.id),
+      };
 
       if (productDetail?.has_variants) {
-        WishListBody.product_detail_id = Number(product?.id);
+        WishListBody.product_detail_id = Number(product?.product_detail_id);
       } else {
         WishListBody.product_id = Number(product?.id);
       }
@@ -284,6 +287,8 @@ export default function ProductDetailsScreen({}): React.ReactElement {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      console.log(response.data);
 
       if (response.data.status) {
         queryClient.invalidateQueries({ queryKey: ["wishlist", token] });

@@ -37,7 +37,7 @@ async function prefetchInitialData() {
         queryKey: ["featuredSection", "new-arrivals", newArrivalsOptions],
         queryFn: () =>
           axiosApi
-            .get("/featured-section/new-arrivals", {
+            .get("/new-arrivals", {
               params: newArrivalsOptions,
             })
             .then((res) => res.data.data || []),

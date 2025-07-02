@@ -109,7 +109,7 @@ export const HOMEPAGE_SECTIONS = {
     type: "special-deals",
     fetchParams: {
       per_page: 15,
-      // sort: "price_high_low" as const,
+      sort: "default" as const,
       page: 1,
     },
   },

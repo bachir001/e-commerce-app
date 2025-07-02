@@ -31,7 +31,7 @@ enum Tab {
 
 export default function Mega() {
   const { slug, color = Colors.beautyAndHealth } = useLocalSearchParams();
-  const [imageLoading, setImageLoading] = useState(true);
+  const [imageLoading, setImageLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>(Tab.Overview);
 
   const { data: sliders } = useQuery({
@@ -180,11 +180,13 @@ export default function Mega() {
               }}
             >
               {sliders && sliders.length > 0 ? (
-                <SliderComponent sliders={sliders} />
+                <SliderComponent sliders={sliders || []} />
               ) : (
                 <Image
                   source={{
-                    uri: "https://gocami.gonext.tech/_next/image?url=%2Fimages%2Fcategories%2FbeautyBanner.jpeg&w=1080&q=75",
+                    uri:
+                      sliders?.[1]?.mobile_image ||
+                      "https://gocami.gonext.tech/_next/image?url=%2Fimages%2Fcategories%2FbeautyBanner.jpeg&w=1080&q=75",
                   }}
                   fadeDuration={0}
                   style={{ width: "100%", height: "100%" }}

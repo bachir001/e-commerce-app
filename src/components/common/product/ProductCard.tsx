@@ -266,7 +266,6 @@ const ProductCard = React.memo(
           product={product}
           innerColor={innerColor}
           containerColor={containerColor}
-          simplified={simplified}
         />
       );
     }

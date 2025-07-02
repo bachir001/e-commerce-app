@@ -14,18 +14,12 @@ interface FeaturedSectionProps extends HomePageSectionProp {
   startFromLeft?: boolean;
   onViewMorePress?: () => void;
   list?: any;
-  setLoading?: (loading: boolean) => void;
 }
 
 const MemoizedProductItem = React.memo(
   ({ item, innerColor }: { item: any; innerColor: string }) => (
     <View className="mr-3">
-      <ProductCard
-        product={item}
-        innerColor={innerColor}
-        onAddToCart={() => console.log("Add to cart:", item.id)}
-        onAddToWishlist={() => console.log("Add to wishlist:", item.id)}
-      />
+      <ProductCard product={item} innerColor={innerColor} />
     </View>
   ),
   (prevProps, nextProps) => {
@@ -45,7 +39,6 @@ const FeaturedSection = React.memo(
     color = "#5e3ebd",
     startFromLeft = false,
     list,
-    setLoading,
   }: FeaturedSectionProps) => {
     const { data, isLoading, error, isError, refetch } = useFeaturedSection(
       type,
@@ -77,17 +70,6 @@ const FeaturedSection = React.memo(
         },
       });
     }, []);
-
-    useEffect(() => {
-      const loadingState = isLoading;
-      setLoading?.(loadingState);
-
-      return () => {
-        if (loadingState) {
-          setLoading?.(false);
-        }
-      };
-    }, [isLoading, setLoading]);
 
     if (isLoading) {
       return <DotsLoader color={color} text={`Loading ${title}`} />;
