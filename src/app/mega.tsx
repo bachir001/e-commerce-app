@@ -172,11 +172,11 @@ export default function Mega() {
               className="relative rounded-3xl overflow-hidden"
               style={{
                 height: 220,
-                shadowColor: "#000",
+                // shadowColor: "#000",
                 shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: 0.15,
-                shadowRadius: 16,
-                elevation: 8,
+                // shadowOpacity: 0.15,
+                // shadowRadius: 16,
+                // elevation: 8,
               }}
             >
               {sliders && sliders.length > 0 ? (

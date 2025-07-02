@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import Modal from "react-native-modal";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Colors } from "@/constants/Colors";
@@ -246,7 +252,7 @@ export default function ChangePasswordModal({
             >
               {loading ? (
                 <View className="flex-row items-center">
-                  <DotsLoader size="small" color="white" />
+                  <ActivityIndicator size="small" color="white" />
                 </View>
               ) : (
                 <Text className="text-white font-semibold">

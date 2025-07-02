@@ -23,12 +23,14 @@ const InfiniteList = ({
   paramsProp,
   setActiveTab,
   isBrand,
+  isFeatured,
 }: {
   slug: string;
   color: string;
   paramsProp?: any;
   setActiveTab?: (tab: string) => void;
   isBrand: boolean;
+  isFeatured: boolean;
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [page, setPage] = useState(1);
@@ -42,8 +44,6 @@ const InfiniteList = ({
 
   const fetchProducts = useCallback(async () => {
     const fetchId = ++latestFetchId.current;
-
-    console.log("HELLO");
 
     if (isRefreshing) {
     } else if (page === 1) {
@@ -59,7 +59,6 @@ const InfiniteList = ({
       page,
       per_page: 20,
     };
-    console.log("HELLOYEN");
     if (paramsProp !== undefined && paramsProp !== null) {
       params = {
         page,
@@ -67,26 +66,30 @@ const InfiniteList = ({
         ...(paramsProp || {}),
       };
     }
-    console.log("HELLO3");
-    try {
-      const response = await axiosApi.get(
-        `${
-          isBrand ? "/get-brand-products" : "/getCategoryData"
-        }/${encodeURIComponent(slug)}/`,
-        {
-          params: params,
-        }
-      );
 
-      console.log(response.data);
+    let url: string;
+    if (isBrand) {
+      url = `/get-brand-products/${slug}`;
+    } else if (isFeatured) {
+      url = `/${slug}`;
+    } else {
+      url = `/getCategoryData/${slug}`;
+    }
+
+    try {
+      const response = await axiosApi.get(url, {
+        params: params,
+      });
 
       if (!isMountedRef.current || fetchId !== latestFetchId.current) return;
 
       if (response.data.status) {
-        console.log(response.data);
-        const newProducts = response.data.data.relatedProducts?.results || [];
-        const newTotalPages =
-          response.data.data.relatedProducts?.total_pages || 1;
+        const newProducts = isFeatured
+          ? response.data.data.results
+          : response.data.data.relatedProducts?.results || [];
+        const newTotalPages = isFeatured
+          ? response.data.data.total_pages
+          : response.data.data.relatedProducts?.total_pages || 1;
 
         if (page === 1) {
           setProducts(newProducts);

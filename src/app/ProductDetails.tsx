@@ -8,8 +8,8 @@ import {
   type FlatList,
   Alert,
   TouchableOpacity,
-  Share,
   Image,
+  Share,
 } from "react-native";
 import { useCartStore } from "@/store/cartStore";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -30,11 +30,11 @@ import type { MainCategory } from "./(tabs)/categories";
 import Toast from "react-native-toast-message";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useQueryClient } from "@tanstack/react-query";
+// import Share from "react-native-share";
 
 interface MainDetail extends Product {
   sku: string;
   video_url: string | null;
-  quantity: number;
   value_points: number;
   details: string;
   brand: Brand;
@@ -82,22 +82,23 @@ export default function ProductDetailsScreen({}): React.ReactElement {
   const isCartOperationInProgress = useCartStore((state) => state.loading);
   const cartOperationError = useCartStore((state) => state.error);
 
-  const inStock = useMemo(
-    () => (productDetail?.quantity || 0) > 0,
-    [productDetail?.quantity]
-  );
+  const inStock = useMemo(() => {
+    const qty = productDetail?.quantity ?? product?.quantity ?? 0;
+    return qty > 0;
+  }, [productDetail?.quantity, product?.quantity]);
 
   const priceData = useMemo(() => {
+    if (!product) return null;
     const currentProduct = productDetail || product;
-    if (!currentProduct) return null;
 
     const regularPrice = currentProduct.price || 0;
     const specialPrice = currentProduct.special_price;
-    const hasSpecialPrice = specialPrice !== undefined && specialPrice !== null;
+    const hasSpecialPrice = specialPrice != null && specialPrice > 0;
     const finalPrice = hasSpecialPrice ? specialPrice : regularPrice;
-    const discount = hasSpecialPrice
-      ? Math.round(((regularPrice - specialPrice) / regularPrice) * 100)
-      : 0;
+    const discount =
+      hasSpecialPrice && regularPrice > 0
+        ? Math.round(((regularPrice - specialPrice) / regularPrice) * 100)
+        : 0;
 
     return {
       regularPrice,
@@ -110,11 +111,14 @@ export default function ProductDetailsScreen({}): React.ReactElement {
   }, [productDetail, product, quantity]);
 
   const purchasePoints = useMemo(() => {
-    return productDetail?.purchase_points || product?.purchase_points || null;
+    return productDetail?.purchase_points ?? product?.purchase_points ?? null;
   }, [productDetail?.purchase_points, product?.purchase_points]);
 
+  const endDate = useMemo(() => {
+    return productDetail?.end_date ?? product?.end_date;
+  }, [productDetail?.end_date, product?.end_date]);
+
   useEffect(() => {
-    const endDate = productDetail?.end_date || product?.end_date;
     if (!endDate) {
       setTimeLeft(null);
       return;
@@ -150,7 +154,7 @@ export default function ProductDetailsScreen({}): React.ReactElement {
     const interval = setInterval(updateTimer, 60000);
 
     return () => clearInterval(interval);
-  }, [productDetail?.end_date, product?.end_date]);
+  }, [endDate]);
 
   const handleThumbnailPress = useCallback(
     (index: number): void => {
@@ -220,7 +224,6 @@ export default function ProductDetailsScreen({}): React.ReactElement {
     const fetchProductDetail = async () => {
       if (!product?.slug) return;
 
-      console.log(favorite);
       if (favorite === "true") {
         setIsFavorite(true);
       }
@@ -288,8 +291,6 @@ export default function ProductDetailsScreen({}): React.ReactElement {
         },
       });
 
-      console.log(response.data);
-
       if (response.data.status) {
         queryClient.invalidateQueries({ queryKey: ["wishlist", token] });
 
@@ -326,7 +327,7 @@ export default function ProductDetailsScreen({}): React.ReactElement {
         topOffset: 60,
       });
     }
-  }, [isLogged, token, product, isFavorite]);
+  }, [isLogged, token, product, isFavorite, user, productDetail, queryClient]);
 
   if (!product) {
     return (
@@ -379,7 +380,6 @@ export default function ProductDetailsScreen({}): React.ReactElement {
         <View className="px-4 py-4 bg-white">
           {purchasePoints ? (
             <View className="flex-row items-center mb-3 bg-purple-50 px-3 py-2 rounded-lg">
-              {/* <FontAwesome5 name="diamond" size={10} color="#5e3ebd" solid />; */}
               <Text className="text-purple-700 font-semibold ml-2">
                 Earn {purchasePoints} points with this purchase
               </Text>
@@ -444,14 +444,14 @@ export default function ProductDetailsScreen({}): React.ReactElement {
         <ProductInformation
           brand={productDetail?.brand}
           categories={productDetail?.categories}
-          description={product.description}
+          description={productDetail?.description ?? product.description}
           expandedSections={expandedSections}
-          highlights={product.highlights}
+          highlights={productDetail?.highlights ?? product.highlights}
           inStock={inStock}
           name={product.name}
-          rating={productDetail?.rating}
-          reviews={productDetail?.reviews}
-          sku={productDetail?.sku}
+          rating={productDetail?.rating ?? product.rating}
+          reviews={productDetail?.reviews ?? product.reviews}
+          sku={productDetail?.sku ?? product.sku}
           toggleSection={toggleSection}
           productDetailLoading={productDetailLoading}
         />

@@ -131,7 +131,7 @@ export default function Confirmation() {
             onPress={handleContinue}
           >
             {loading ? (
-              <DotsLoader size="small" color="white" />
+              <ActivityIndicator size="small" color="white" />
             ) : (
               <Text className="text-base font-semibold text-white">
                 Continue

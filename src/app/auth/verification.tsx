@@ -299,7 +299,7 @@ export default function Verification() {
                 accessibilityHint="Sends a new verification code to your email or phone"
               >
                 {resendLoading ? (
-                  <DotsLoader size="small" color={Colors.PRIMARY} />
+                  <ActivityIndicator size="small" color={Colors.PRIMARY} />
                 ) : (
                   <Text
                     className={`font-semibold`}

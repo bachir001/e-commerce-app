@@ -64,11 +64,17 @@ const FeaturedSection = React.memo(
 
     const onViewMorePress = useCallback((id: number) => {
       router.navigate({
-        pathname: "category",
+        pathname: "featuredPage",
         params: {
+          pageName:
+            type === "best-sellers"
+              ? "Best Sellers"
+              : type === "new-arrivals"
+              ? "New Arrivals"
+              : type === "special-deals"
+              ? "Special Deals"
+              : "Unknown",
           slug: type,
-          color: color,
-          id: String(id),
         },
       });
     }, []);

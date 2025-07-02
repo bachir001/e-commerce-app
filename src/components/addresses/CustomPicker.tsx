@@ -32,7 +32,7 @@ export function CustomPicker({
         disabled={disabled}
       >
         {loading ? (
-          <DotsLoader size="small" color="#5e3ebd" />
+          <ActivityIndicator size="small" color="#5e3ebd" />
         ) : (
           <Text
             className={`flex-1 ${value ? "text-gray-800" : "text-gray-400"}`}
