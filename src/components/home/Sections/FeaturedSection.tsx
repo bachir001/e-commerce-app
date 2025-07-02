@@ -14,6 +14,7 @@ interface FeaturedSectionProps extends HomePageSectionProp {
   startFromLeft?: boolean;
   onViewMorePress?: () => void;
   list?: any;
+  setLoading: (b: boolean) => void;
 }
 
 const MemoizedProductItem = React.memo(
@@ -39,6 +40,7 @@ const FeaturedSection = React.memo(
     color = "#5e3ebd",
     startFromLeft = false,
     list,
+    setLoading,
   }: FeaturedSectionProps) => {
     const { data, isLoading, error, isError, refetch } = useFeaturedSection(
       type,
@@ -90,6 +92,12 @@ const FeaturedSection = React.memo(
     if ((!data || data.length === 0) && !list) {
       return null;
     }
+
+    useEffect(() => {
+      if (setLoading) {
+        setLoading(isLoading);
+      }
+    }, [isLoading, setLoading]);
 
     return (
       <View

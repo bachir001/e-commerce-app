@@ -46,10 +46,6 @@ export default function HomeScreen() {
   const lastScrollY = useRef(0);
   const lastAction = useRef<"hide" | "show" | null>(null);
 
-  const handleInfiniteListEndReached = useCallback(() => {
-    console.log("Infinite list reached end - could load more content here");
-  }, []);
-
   const handleInfiniteListRefresh = useCallback(() => {
     setInfiniteListRefreshing(true);
     setTimeout(() => {
@@ -189,7 +185,6 @@ export default function HomeScreen() {
               <HomeInfiniteList
                 slug="beauty-health"
                 color="#5e3ebd"
-                onEndReached={handleInfiniteListEndReached}
                 onRefresh={handleInfiniteListRefresh}
                 refreshing={infiniteListRefreshing}
               />
