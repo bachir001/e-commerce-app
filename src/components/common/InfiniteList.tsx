@@ -12,6 +12,7 @@ import DotsLoader from "./AnimatedLayout";
 import EmptyState from "./EmptyList";
 import ErrorState from "./ErrorState";
 import axiosApi from "@/apis/axiosApi";
+import { isError } from "lodash";
 
 const { width } = Dimensions.get("window");
 const ITEM_WIDTH = (width - 48) / 2;
@@ -59,6 +60,7 @@ const InfiniteList = ({
       page,
       per_page: 20,
     };
+
     if (paramsProp !== undefined && paramsProp !== null) {
       params = {
         page,
@@ -84,21 +86,29 @@ const InfiniteList = ({
       if (!isMountedRef.current || fetchId !== latestFetchId.current) return;
 
       if (response.data.status) {
-        const newProducts = isFeatured
-          ? response.data.data.results
-          : response.data.data.relatedProducts?.results || [];
-        const newTotalPages = isFeatured
-          ? response.data.data.total_pages
-          : response.data.data.relatedProducts?.total_pages || 1;
+        if (isFeatured) {
+          const newProducts = response.data.data.results || [];
+          const newTotalPages = response.data.data.total_pages || 1;
 
-        if (page === 1) {
-          setProducts(newProducts);
+          if (page === 1) {
+            setProducts(newProducts);
+          } else {
+            setProducts((prev) => [...prev, ...newProducts]);
+          }
+          setTotalPages(newTotalPages);
         } else {
-          setProducts((prev) => [...prev, ...newProducts]);
-        }
-        setTotalPages(newTotalPages);
-        if (Object.keys(paramsProp).length > 1) {
-          if (setActiveTab !== undefined) {
+          const newProducts = response.data.data.relatedProducts?.results || [];
+          const newTotalPages =
+            response.data.data.relatedProducts?.total_pages || 1;
+
+          if (page === 1) {
+            setProducts(newProducts);
+          } else {
+            setProducts((prev) => [...prev, ...newProducts]);
+          }
+          setTotalPages(newTotalPages);
+
+          if (Object.keys(paramsProp).length > 1 && setActiveTab) {
             setActiveTab("filters");
           }
         }
@@ -203,7 +213,13 @@ const InfiniteList = ({
   }, [isLoadingMore, isLoading, page, totalPages, products.length, color]);
 
   if (error) {
-    return <ErrorState onRetry={handleRefresh} subtitle={error} />;
+    return (
+      <ErrorState
+        onRetry={handleRefresh}
+        subtitle={error}
+        title="Cannot fetch products"
+      />
+    );
   }
 
   if (isLoading && products.length === 0 && !isRefreshing) {

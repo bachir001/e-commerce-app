@@ -9,6 +9,14 @@ export default function ErrorState({
   onDismiss, // Add this new prop
   retryText = "Try again",
   dismissText = "Continue", // New optional prop
+}: {
+  title: string;
+  subtitle: string;
+  icon?: string;
+  onRetry?: any;
+  onDismiss?: any;
+  retryText?: string;
+  dismissText?: string;
 }) {
   return (
     <View className="flex-1 justify-center items-center px-8 py-12">
