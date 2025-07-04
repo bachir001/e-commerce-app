@@ -19,23 +19,25 @@ import {
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 import { useRouter } from "expo-router";
-import { useCartStore, CartItem } from "@/store/cartStore";
+import { useCartStore, CartItem } from "@/store/cartStore"; // Ensure CartItem is imported
 import axios from "axios";
-import { MaterialIcons } from "@expo/vector-icons";
-import { getOrCreateSessionId } from "@/lib/session";
-import DotsLoader from "@/components/common/AnimatedLayout";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Toast from "react-native-toast-message";
+import { MaterialIcons } from "@expo/vector-icons"; // For icons
+import { getOrCreateSessionId } from "@/lib/session"; // Session utility
+import DotsLoader from "@/components/common/AnimatedLayout"; // Custom loading component
+import { useSafeAreaInsets } from "react-native-safe-area-context"; // Hook for safe area insets
+import Toast from "react-native-toast-message"; // Import Toast for messages
 import axiosApi from "@/apis/axiosApi";
 
+// Interface for raw best-seller data from API
 interface BestSellerRaw {
   id: number;
   name: string;
   price: number;
-  image: string;
-  product_image?: string;
+  image: string; // Used if product_image is null
+  product_image?: string; // Preferred image URL
 }
 
+// Interface for best-sellers API response structure
 interface BestSellersApiResponse {
   status: boolean;
   message: string;
@@ -46,6 +48,7 @@ interface BestSellersApiResponse {
   code: number;
 }
 
+// Interface for mapped best-seller item for UI
 interface BestSellerItem {
   id: string;
   name: string;
@@ -55,44 +58,53 @@ interface BestSellerItem {
 
 export default function CartScreen(): React.ReactElement {
   const router = useRouter();
+  // Determine color scheme (light/dark)
   const rawColorScheme = useColorScheme();
   const colorScheme: "light" | "dark" =
     rawColorScheme === "dark" ? "dark" : "light";
-  const styles = createStyles(colorScheme);
-  
+  const styles = createStyles(colorScheme); // Generate styles based on color scheme
+
   // Zustand cart store selectors
-  const cartItems = useCartStore((state) => state.items);
-  const loadingItems = useCartStore((state) => state.loadingItems);
-  const cartErrorMessage = useCartStore((state) => state.error);
-  const fetchCart = useCartStore((state) => state.fetchCart);
-  const addToCart = useCartStore((state) => state.addToCart);
+  const cartItems = useCartStore((s) => s.items);
+  const isCartLoading = useCartStore((s) => s.loading);
+  const cartErrorMessage = useCartStore((s) => s.error);
+  const fetchCart = useCartStore((s) => s.fetchCart);
+  const addToCart = useCartStore((s) => s.addToCart);
 
+  // Ref to track if cart has been fetched to prevent multiple fetches on mount
   const hasFetchedCart = useRef(false);
-  const [bestSellerItems, setBestSellerItems] = useState<BestSellerItem[]>([]);
-  const [isBestSellersLoading, setIsBestSellersLoading] = useState(false);
-  const [bestSellersErrorMessage, setBestSellersErrorMessage] = useState<
-    string | null
-  >(null);
-  const bestSellersCache = useRef<BestSellerItem[] | null>(null);
-  
-  const insets = useSafeAreaInsets();
-  const tabBarHeight = 65;
-  const aestheticMarginAboveInsets = 20;
-  const tabBarSpace = tabBarHeight + aestheticMarginAboveInsets + insets.bottom;
 
+  // Fetch cart data on component mount
   useEffect(() => {
     if (!hasFetchedCart.current) {
       fetchCart();
       hasFetchedCart.current = true;
     }
-  }, [fetchCart]);
+  }, [fetchCart]); // Dependency array to re-run effect if fetchCart changes (unlikely)
 
+  // State for best-seller products
+  const [bestSellerItems, setBestSellerItems] = useState<BestSellerItem[]>([]);
+  const [isBestSellersLoading, setIsBestSellersLoading] = useState(false);
+  const [bestSellersErrorMessage, setBestSellersErrorMessage] = useState<
+    string | null
+  >(null);
+  // Ref to cache best-seller data to avoid re-fetching if cart becomes empty again
+  const bestSellersCache = useRef<BestSellerItem[] | null>(null);
+
+  // Get safe area insets for handling notch/dynamic island
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 65; // Estimated tab bar height
+  const aestheticMarginAboveInsets = 20; // Additional margin for aesthetics
+  const tabBarSpace = tabBarHeight + aestheticMarginAboveInsets + insets.bottom; // Total space for tab bar
+
+  // Effect to fetch best sellers when cart is empty
   useEffect(() => {
     let abortController: AbortController | null = null;
 
+    // Only fetch best sellers if cart is empty AND they haven't been cached yet
     if (cartItems.length === 0 && !bestSellersCache.current) {
       setIsBestSellersLoading(true);
-      setBestSellersErrorMessage(null);
+      setBestSellersErrorMessage(null); // Clear previous errors
       abortController = new AbortController();
 
       axios
@@ -106,17 +118,19 @@ export default function CartScreen(): React.ReactElement {
               response.data.message || "Failed to load best sellers"
             );
           }
+          // Map raw API data to BestSellerItem format
           const mapped = response.data.data.results.map((raw) => ({
-            id: raw.id.toString(),
+            id: raw.id.toString(), // Ensure ID is string
             name: raw.name,
             price: raw.price,
-            imageUrl: raw.product_image ?? raw.image,
+            imageUrl: raw.product_image ?? raw.image, // Prefer product_image
           }));
 
-          bestSellersCache.current = mapped;
+          bestSellersCache.current = mapped; // Cache the fetched data
           setBestSellerItems(mapped);
         })
         .catch((err) => {
+          // Ignore if the request was cancelled (e.g., component unmounted)
           if (!axios.isCancel(err)) {
             setBestSellersErrorMessage(
               err instanceof Error ? err.message : "Unknown error"
@@ -124,33 +138,36 @@ export default function CartScreen(): React.ReactElement {
           }
         })
         .finally(() => {
-          setIsBestSellersLoading(false);
+          setIsBestSellersLoading(false); // End loading regardless of success/failure
         });
     } else if (cartItems.length === 0 && bestSellersCache.current) {
+      // If cart is empty but best-sellers are cached, use cached data
       setBestSellerItems(bestSellersCache.current);
     }
 
+    // Cleanup function for abort controller
     return () => {
       if (abortController) {
         abortController.abort();
       }
     };
-  }, [cartItems.length]);
+  }, [cartItems.length]); // Re-run effect when cartItems length changes
 
+  // Callback to handle removing an item from the cart
   const handleRemove = useCallback(
     async (cartItemId: string) => {
       try {
-        const sessionId = await getOrCreateSessionId();
+        const sessionId = await getOrCreateSessionId(); // Get session ID
 
         await axiosApi.delete("/cart/remove", {
           headers: {
             "Content-Type": "application/json",
             "x-session": sessionId,
           },
-          data: { cart_item_id: cartItemId },
+          data: { cart_item_id: cartItemId }, // Send item ID in request body
         });
 
-        await fetchCart(true);
+        await fetchCart(true); // Force re-fetch cart to update UI
         Toast.show({
           type: "success",
           text1: "Item Removed",
@@ -168,71 +185,71 @@ export default function CartScreen(): React.ReactElement {
         });
       }
     },
-    [fetchCart]
+    [fetchCart] // Dependency on fetchCart to ensure it's up-to-date
   );
 
+  // Render function for individual cart item row
   const renderCartRow = useCallback(
-    ({ item }: { item: CartItem }) => {
-      const isItemLoading = loadingItems.includes(item.id);
-
-      return (
-        <View style={styles.cartItemContainer}>
-          <Image
-            fadeDuration={0}
-            source={{ uri: item.imageUrl }}
-            style={styles.productImage}
-          />
-          <View style={styles.details}>
-            <Text style={styles.productName} numberOfLines={2}>
-              {item.name}
-            </Text>
-            <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
-          </View>
-          <View style={styles.quantityContainer}>
-            <Pressable
-              onPress={() =>
-                item.quantity > 1
-                  ? addToCart(item.productId, 1, "decrease")
-                  : handleRemove(item.id)
-              }
-              disabled={item.quantity <= 1 || isItemLoading}
-            >
-              <Text
-                style={[
-                  styles.qtyButton,
-                  (item.quantity <= 1 || isItemLoading) &&
-                    styles.qtyButtonDisabled,
-                ]}
-              >
-                –
-              </Text>
-            </Pressable>
-
-            {isItemLoading ? (
-              <DotsLoader />
-            ) : (
-              <Text style={styles.qtyText}>{item.quantity}</Text>
-            )}
-
-            <Pressable
-              onPress={() => addToCart(item.productId, 1, "increase")}
-              disabled={isItemLoading}
-            >
-              <Text style={styles.qtyButton}>+</Text>
-            </Pressable>
-          </View>
+    ({ item }: { item: CartItem }) => (
+      <View style={styles.cartItemContainer}>
+        <Image
+          fadeDuration={0}
+          source={{ uri: item.imageUrl }} // Use item.imageUrl directly
+          style={styles.productImage}
+        />
+        <View style={styles.details}>
+          <Text style={styles.productName} numberOfLines={2}>
+            {item.name}
+          </Text>
+          <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
+        </View>
+        <View style={styles.quantityContainer}>
           <Pressable
-            onPress={() => handleRemove(item.id)}
-            disabled={isItemLoading}
+            // Decrease quantity or remove item if quantity is 1
+            onPress={() =>
+              item.quantity > 1
+                ? addToCart(item.productId, 1, "decrease")
+                : handleRemove(item.id)
+            }
+            // Disable button if quantity is 1 or cart is loading
+            disabled={item.quantity <= 1 || isCartLoading}
           >
-            <MaterialIcons name="delete-outline" size={24} color="#E53935" />
+            <Text
+              style={[
+                styles.qtyButton,
+                (item.quantity <= 1 || isCartLoading) &&
+                  styles.qtyButtonDisabled,
+              ]}
+            >
+              –
+            </Text>
+          </Pressable>
+
+          {/* Show DotsLoader when cart is loading for a specific item */}
+          {isCartLoading ? (
+            <DotsLoader />
+          ) : (
+            <Text style={styles.qtyText}>{item.quantity}</Text>
+          )}
+          <Pressable
+            onPress={() => addToCart(item.productId, 1, "increase")}
+            disabled={isCartLoading} // Disable while cart is loading
+          >
+            <Text style={styles.qtyButton}>+</Text>
           </Pressable>
         </View>
-      );
-    },
-    [styles, addToCart, handleRemove, loadingItems]
+        <Pressable
+          onPress={() => handleRemove(item.id)}
+          disabled={isCartLoading}
+        >
+          <MaterialIcons name="delete-outline" size={24} color="#E53935" />
+        </Pressable>
+      </View>
+    ),
+    [styles, addToCart, handleRemove, isCartLoading] // Dependencies for useCallback
   );
 
+  // Render function for individual best-seller card
   const renderBestSellerCard = useCallback(
     ({ item }: { item: BestSellerItem }) => (
       <View style={styles.bestSellerCard}>
@@ -248,31 +265,35 @@ export default function CartScreen(): React.ReactElement {
         <Pressable
           style={styles.bestSellerButton}
           onPress={() => addToCart(item.id, 1)}
-          disabled={loadingItems.length > 0}
+          disabled={isCartLoading} // Disable while cart is loading
         >
           <Text style={styles.bestSellerButtonText}>Add to Cart</Text>
         </Pressable>
       </View>
     ),
-    [styles, addToCart, loadingItems]
+    [styles, addToCart, isCartLoading] // Dependencies for useCallback
   );
 
+  // Memoized calculation of total cart cost
   const totalCartCost = useMemo(
-    () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    [cartItems]
+    () => cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0),
+    [cartItems] // Re-calculate when cartItems change
   );
 
+  // Key extractors for FlatList optimization
   const cartKeyExtractor = useCallback((item: CartItem) => item.id, []);
   const bestSellerKeyExtractor = useCallback(
     (item: BestSellerItem) => item.id,
     []
   );
 
+  // Item separator component for FlatList
   const ItemSeparator = useCallback(
     () => <View style={styles.itemSeparator} />,
     [styles]
   );
 
+  // Conditional rendering based on cart error message
   if (cartErrorMessage) {
     return (
       <View style={styles.centeredContainer}>
@@ -281,6 +302,7 @@ export default function CartScreen(): React.ReactElement {
     );
   }
 
+  // Conditional rendering for empty cart state
   if (cartItems.length === 0) {
     return (
       <SafeAreaView
@@ -299,35 +321,36 @@ export default function CartScreen(): React.ReactElement {
         <View>
           <Text style={styles.sectionTitle}>Check These Products</Text>
           {isBestSellersLoading && <ActivityIndicator />}
-          {bestSellersErrorMessage && (
+          {bestSellersErrorMessage ? (
             <Text style={styles.errorText}>
               Error: {bestSellersErrorMessage}
             </Text>
-          )}
-          {!isBestSellersLoading && !bestSellersErrorMessage && (
+          ) : null}
+          {!isBestSellersLoading && !bestSellersErrorMessage ? (
             <FlatList
               data={bestSellerItems}
-              horizontal
+              horizontal // Horizontal scrolling
               showsHorizontalScrollIndicator={false}
               keyExtractor={bestSellerKeyExtractor}
               renderItem={renderBestSellerCard}
               contentContainerStyle={styles.bestSellersListContainer}
-              removeClippedSubviews={true}
+              removeClippedSubviews={true} // Performance optimization
               maxToRenderPerBatch={5}
               windowSize={10}
               initialNumToRender={5}
               getItemLayout={(data, index) => ({
-                length: 140,
+                length: 140, // Fixed item width for layout calculation
                 offset: 140 * index,
                 index,
               })}
             />
-          )}
+          ) : null}
         </View>
       </SafeAreaView>
     );
   }
 
+  // Main rendering for non-empty cart
   return (
     <SafeAreaView
       style={[styles.mainContainer, { paddingBottom: tabBarSpace }]}
@@ -338,7 +361,7 @@ export default function CartScreen(): React.ReactElement {
         renderItem={renderCartRow}
         ItemSeparatorComponent={ItemSeparator}
         ListHeaderComponent={<Text style={styles.cartTitle}>Your Cart</Text>}
-        ListFooterComponent={
+        ListFooterComponent = {
           <View style={styles.footer}>
             <View style={styles.footerRow}>
               <Text style={styles.footerLabel}>Subtotal</Text>
@@ -366,7 +389,7 @@ export default function CartScreen(): React.ReactElement {
             </Pressable>
           </View>
         }
-        removeClippedSubviews={true}
+        removeClippedSubviews={true} // Performance optimization
         maxToRenderPerBatch={10}
         windowSize={10}
         initialNumToRender={10}
@@ -375,16 +398,17 @@ export default function CartScreen(): React.ReactElement {
   );
 }
 
-const BRAND = "#5E3EBD";
-const screenWidth = Dimensions.get("window").width;
+const BRAND = "#5E3EBD"; // Primary brand color
+const screenWidth = Dimensions.get("window").width; // Get screen width for responsive sizing
 
+// Function to create StyleSheet based on color scheme
 export function createStyles(colorScheme: "light" | "dark") {
   const backgroundColor = Colors[colorScheme].background;
   const textColor = Colors[colorScheme].text;
 
   return StyleSheet.create({
-    qtyButtonDisabled: { color: "#CCC" },
-    mainContainer: { flex: 1, backgroundColor, paddingTop: 16 },
+    qtyButtonDisabled: { color: "#CCC" }, // Style for disabled quantity buttons
+    mainContainer: { flex: 1, backgroundColor, paddingTop: 16 }, // Main container style
     centeredContainer: {
       flex: 1,
       justifyContent: "center",
@@ -405,7 +429,7 @@ export function createStyles(colorScheme: "light" | "dark") {
       backgroundColor,
     },
     productImage: { width: 60, height: 60, borderRadius: 8, marginRight: 12 },
-    details: { flex: 1 },
+    details: { flex: 1 }, // Flex to take available space
     productName: {
       fontSize: 16,
       fontWeight: "500",
