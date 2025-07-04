@@ -7,7 +7,10 @@ import {
   TouchableOpacity,
 } from "react-native";
 import React, { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import AuthHeader from "./AuthHeader";
 import AuthButton from "./AuthButton";
 import { Link, router } from "expo-router";
@@ -38,12 +41,16 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
 
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView
+    <View
       className="flex-1"
       style={{
         backgroundColor: "#fafafa",
         paddingHorizontal: _paddingHorizontal,
+        paddingBottom: insets.bottom,
+        paddingTop: insets.top,
       }}
     >
       <View className="pt-12">
@@ -307,6 +314,6 @@ export default function AuthForm({ authType = "sign-up" }: AuthParams) {
           </Text>
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
