@@ -1,6 +1,5 @@
 import React, { useCallback, useRef, useEffect } from "react";
 import { Tabs } from "expo-router";
-import { useColorScheme } from "@/hooks/useColorScheme";
 import { useCartStore } from "@/store/cartStore";
 import { Home, LayoutGrid, ShoppingBag, User } from "lucide-react-native";
 import { Platform, Animated } from "react-native";

@@ -14,7 +14,6 @@ import Toast from "react-native-toast-message";
 import axiosApi from "@/apis/axiosApi";
 import { useSessionStore } from "@/store/useSessionStore";
 import ProductCardWide from "./ProductCardWide";
-import { queryClient } from "index";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCartStore } from "@/store/cartStore";
 
@@ -184,6 +183,7 @@ const ProductCard = React.memo(
                   visibilityTime: 1500,
                   topOffset: 60,
                 });
+                return;
      }  
     
      try {
