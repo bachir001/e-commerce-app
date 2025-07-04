@@ -14,18 +14,13 @@ interface FeaturedSectionProps extends HomePageSectionProp {
   startFromLeft?: boolean;
   onViewMorePress?: () => void;
   list?: any;
-  setLoading?: (loading: boolean) => void;
+  setLoading?: (b: boolean) => void;
 }
 
 const MemoizedProductItem = React.memo(
   ({ item, innerColor }: { item: any; innerColor: string }) => (
     <View className="mr-3">
-      <ProductCard
-        product={item}
-        innerColor={innerColor}
-        onAddToCart={() => console.log("Add to cart:", item.id)}
-        onAddToWishlist={() => console.log("Add to wishlist:", item.id)}
-      />
+      <ProductCard product={item} innerColor={innerColor} />
     </View>
   ),
   (prevProps, nextProps) => {
@@ -69,18 +64,26 @@ const FeaturedSection = React.memo(
 
     const onViewMorePress = useCallback((id: number) => {
       router.navigate({
-        pathname: "category",
+        pathname: "featuredPage",
         params: {
+          pageName:
+            type === "best-sellers"
+              ? "Best Sellers"
+              : type === "new-arrivals"
+              ? "New Arrivals"
+              : type === "special-deals"
+              ? "Special Deals"
+              : "Unknown",
           slug: type,
-          color: color,
-          id: String(id),
         },
       });
     }, []);
 
     useEffect(() => {
       const loadingState = isLoading;
-      setLoading?.(loadingState);
+      if (!isError) {
+        setLoading?.(loadingState);
+      }
 
       return () => {
         if (loadingState) {
@@ -99,6 +102,7 @@ const FeaturedSection = React.memo(
           onRetry={refetch}
           title={`Failed to load ${title}`}
           subtitle={error.message}
+          onDismiss={() => setLoading?.(false)}
         />
       );
     }

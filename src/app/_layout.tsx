@@ -80,9 +80,15 @@ function AppLayout() {
   }, []);
 
   const appNotReady =
-    brandsQuery.isLoading || slidersQuery.isLoading || megaQuery.isLoading;
+    brandsQuery.isLoading ||
+    slidersQuery.isLoading ||
+    megaQuery.isLoading ||
+    newArrivalsQuery.isLoading;
   const anyError =
-    brandsQuery.isError || slidersQuery.isError || megaQuery.isError;
+    brandsQuery.isError ||
+    slidersQuery.isError ||
+    megaQuery.isError ||
+    newArrivalsQuery.isError;
 
   if (anyError) {
     return (

@@ -99,7 +99,7 @@ const ProductCard = React.memo(
 
     const addToCart = useCartStore((state) => state.addToCart);
     const cartOperationError = useCartStore((state) => state.error);
-    
+
     useEffect(() => {
       if (!productData?.endDate) {
         setTimeLeft("");
@@ -156,7 +156,6 @@ const ProductCard = React.memo(
     const navigateToProductDetails = useCallback(() => {
       if (!isPressable.current) return;
       isPressable.current = false;
-      console.log("PUSHED: " + isFavorite);
       router.push({
         pathname: "/ProductDetails",
         params: {
@@ -171,42 +170,39 @@ const ProductCard = React.memo(
     }, [router, product]);
 
     const handleAddToCart = useCallback(async () => {
-      
-     if (!product || !product.id) return;    
-     
-     if (product.quantity<=0) {
-                   Toast.show({
-                  type: "error",
-                  text1: "Add to Cart",
-                  text2: `Out Of Stock`,
-                  autoHide: true,
-                  visibilityTime: 1500,
-                  topOffset: 60,
-                });
-                return;
-     }  
-    
-     try {
-          await addToCart(String(product.id), 1);
-          Toast.show({
-                  type: "success",
-                  text1: "Add to Cart",
-                  text2: `${productData?.productName} added to cart (placeholder).`,
-                  autoHide: true,
-                  visibilityTime: 1500,
-                  topOffset: 60,
-                });
-        } catch {
-             Toast.show({
-                  type: "error",
-                  text1: "Add to Cart",
-                  text2: `${cartOperationError}`,
-                  autoHide: true,
-                  visibilityTime: 1500,
-                  topOffset: 60,
-                });
-        }
+      if (!product || !product.id) return;
 
+      if (product.quantity <= 0) {
+        Toast.show({
+          type: "error",
+          text1: "Add to Cart",
+          text2: `Out Of Stock`,
+          autoHide: true,
+          visibilityTime: 1500,
+          topOffset: 60,
+        });
+      }
+
+      try {
+        await addToCart(String(product.id), 1);
+        Toast.show({
+          type: "success",
+          text1: "Add to Cart",
+          text2: `${productData?.productName} added to cart (placeholder).`,
+          autoHide: true,
+          visibilityTime: 1500,
+          topOffset: 60,
+        });
+      } catch {
+        Toast.show({
+          type: "error",
+          text1: "Add to Cart",
+          text2: `${cartOperationError}`,
+          autoHide: true,
+          visibilityTime: 1500,
+          topOffset: 60,
+        });
+      }
     }, [productData?.productName]);
 
     const handleAddToWishlist = useCallback(async () => {
@@ -297,7 +293,6 @@ const ProductCard = React.memo(
           product={product}
           innerColor={innerColor}
           containerColor={containerColor}
-          simplified={simplified}
         />
       );
     }

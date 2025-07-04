@@ -134,8 +134,6 @@ export default function Category() {
           }`
         );
 
-        console.log(response.data);
-
         if (response.status === 200) {
           if (response.data.data.categories) {
             setCategories(response.data.data.categories);

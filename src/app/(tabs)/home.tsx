@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   SafeAreaView,
   NativeScrollEvent,
@@ -19,10 +13,8 @@ import SpecificSection from "@/components/home/Sections/SpecificSection";
 import { HOMEPAGE_SECTIONS } from "@/constants/HomePageSections";
 import { Colors } from "@/constants/Colors";
 import FeaturedSection from "@/components/home/Sections/FeaturedSection";
-import { useSessionStore } from "@/store/useSessionStore";
 import { useAppDataStore } from "@/store/useAppDataStore";
 import { useUiStore } from "@/store/useUiStore";
-import { useWishlist } from "@/hooks/home/topSection";
 import HomeInfiniteList from "@/components/common/ProductInfiniteList";
 
 const HOME_SCREEN_DATA_STRUCTURE = [
@@ -37,7 +29,6 @@ const HOME_SCREEN_DATA_STRUCTURE = [
 ];
 
 export default function HomeScreen() {
-  const { token } = useSessionStore();
   const { newArrivals } = useAppDataStore();
   const { showTabBar, hideTabBar } = useUiStore();
 
@@ -54,10 +45,6 @@ export default function HomeScreen() {
     useRef<FlatList<(typeof HOME_SCREEN_DATA_STRUCTURE)[0]>>(null);
   const lastScrollY = useRef(0);
   const lastAction = useRef<"hide" | "show" | null>(null);
-
-  const handleInfiniteListEndReached = useCallback(() => {
-    console.log("Infinite list reached end - could load more content here");
-  }, []);
 
   const handleInfiniteListRefresh = useCallback(() => {
     setInfiniteListRefreshing(true);
@@ -203,7 +190,6 @@ export default function HomeScreen() {
               <HomeInfiniteList
                 slug="beauty-health"
                 color="#5e3ebd"
-                onEndReached={handleInfiniteListEndReached}
                 onRefresh={handleInfiniteListRefresh}
                 refreshing={infiniteListRefreshing}
               />

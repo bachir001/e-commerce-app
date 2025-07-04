@@ -34,10 +34,10 @@ async function prefetchInitialData() {
           axiosApi.get("/getMegaCategories").then((res) => res.data.data || []),
       }),
       queryClient.prefetchQuery({
-        queryKey: ["featuredSection", "new-arrivals", newArrivalsOptions],
+        queryKey: ["new-arrivals", newArrivalsOptions],
         queryFn: () =>
           axiosApi
-            .get("/featured-section/new-arrivals", {
+            .get("/new-arrivals", {
               params: newArrivalsOptions,
             })
             .then((res) => res.data.data || []),

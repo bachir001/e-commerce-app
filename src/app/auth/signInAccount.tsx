@@ -45,7 +45,7 @@ export default function loginAccount() {
       };
 
       if (email.length >= 1) RequestBody.email = email;
-      if (phoneNumber.length >= 1) RequestBody.mobile = `961${phoneNumber}`;
+      if (phoneNumber.length >= 1) RequestBody.mobile = phoneNumber;
 
       await axiosApi
         .post("/login", RequestBody)

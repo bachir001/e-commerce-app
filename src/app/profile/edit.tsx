@@ -52,6 +52,7 @@ export default function EditProfile() {
         { password: newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      console.log(response.data);
 
       if (response.data.status) {
         Toast.show({
@@ -114,7 +115,6 @@ export default function EditProfile() {
       } else {
         try {
           setLoading(true);
-
           await axiosApi
             .post("/users-data/update", updateBody, {
               headers: {
@@ -210,7 +210,7 @@ export default function EditProfile() {
           }}
         >
           {loading ? (
-            <DotsLoader size="small" color="white" />
+            <ActivityIndicator size="small" color="white" />
           ) : (
             <Text className="text-white font-medium text-sm">Save</Text>
           )}
@@ -266,10 +266,11 @@ export default function EditProfile() {
                 placeholderTextColor="#9CA3AF"
                 value={mobile ?? ""}
                 onChangeText={setMobile}
+                editable={false}
               />
             </View>
 
-            <View>
+            {/* <View>
               <Text className="text-sm font-medium text-gray-700 mb-2 mt-5">
                 Date of Birth
               </Text>
@@ -277,7 +278,7 @@ export default function EditProfile() {
                 <Text className="text-gray-800">{dateOfBirth}</Text>
                 <FontAwesome5 name="calendar-alt" size={16} color="#6B7280" />
               </TouchableOpacity>
-            </View>
+            </View> */}
           </View>
         </View>
 
@@ -286,7 +287,7 @@ export default function EditProfile() {
             Account Actions
           </Text>
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             className="flex-row items-center py-3 border-b border-gray-100"
             onPress={() => {
               setIsModalVisible(true);
@@ -297,7 +298,7 @@ export default function EditProfile() {
             </View>
             <Text className="flex-1 text-gray-800">Change Password</Text>
             <FontAwesome5 name="chevron-right" size={14} color="#6B7280" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <TouchableOpacity className="flex-row items-center py-3 border-b border-gray-100">
             <View className="w-10 h-10 bg-green-100 rounded-full items-center justify-center mr-3">

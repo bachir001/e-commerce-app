@@ -62,9 +62,9 @@ export default function ResetPassword() {
         RequestBody.mobile = mobile;
         RequestBody.verification_method = "whatsapp";
       }
-
+      console.log(RequestBody);
       const response = await axiosApi.post("/password/forgot", RequestBody);
-
+      console.log(response.data);
       if (response.status === 200) {
         router.replace({
           pathname: "/auth/verification",

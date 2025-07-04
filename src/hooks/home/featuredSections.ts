@@ -10,7 +10,6 @@ export function useFeaturedSection(
   return useQuery({
     queryKey: ["products", type, fetchParams],
     enabled: shouldFetch,
-    retry: type !== "new-arrivals",
     queryFn: async ({ signal }) => {
       const params = new URLSearchParams();
 

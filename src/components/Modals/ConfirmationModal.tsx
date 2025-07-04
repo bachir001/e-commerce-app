@@ -113,7 +113,7 @@ export default function ConfirmationModal({
               className={`flex-1 py-3 px-4 ${getConfirmButtonStyles()} rounded-xl items-center justify-center`}
             >
               {loading ? (
-                <DotsLoader size="small" color="white" />
+                <ActivityIndicator size="small" color="white" />
               ) : (
                 <Text className="font-semibold text-white">
                   {confirmButtonText}

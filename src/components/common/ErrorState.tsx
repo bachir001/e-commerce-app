@@ -6,7 +6,17 @@ export default function ErrorState({
   subtitle = "We're having trouble loading this content",
   icon = "alert-circle",
   onRetry,
+  onDismiss, // Add this new prop
   retryText = "Try again",
+  dismissText = "Continue", // New optional prop
+}: {
+  title: string;
+  subtitle: string;
+  icon?: string;
+  onRetry?: any;
+  onDismiss?: any;
+  retryText?: string;
+  dismissText?: string;
 }) {
   return (
     <View className="flex-1 justify-center items-center px-8 py-12">
@@ -19,40 +29,48 @@ export default function ErrorState({
       </View>
 
       {/* Main Message */}
-      <Text
-        className="text-xl font-semibold text-center mb-2"
-        style={{ color: "#1f2937" }}
-      >
+      <Text className="text-xl font-semibold text-center mb-2 text-gray-800">
         {title}
       </Text>
 
       {/* Subtitle */}
-      <Text
-        className="text-base text-center leading-6 mb-8"
-        style={{ color: "#6b7280" }}
-      >
+      <Text className="text-base text-center leading-6 mb-8 text-gray-600">
         {subtitle}
       </Text>
 
-      {/* Retry Button */}
-      {onRetry ? (
-        <TouchableOpacity
-          onPress={onRetry}
-          className="py-3 px-6 rounded-full flex-row items-center"
-          style={{ backgroundColor: "#6e3ebd" }}
-          activeOpacity={0.8}
-        >
-          <Feather
-            name="refresh-cw"
-            size={16}
-            color="white"
-            style={{ marginRight: 8 }}
-          />
-          <Text className="text-base font-medium" style={{ color: "white" }}>
-            {retryText}
-          </Text>
-        </TouchableOpacity>
-      ) : null}
+      {/* Action Buttons */}
+      <View className="flex-row space-x-4">
+        {onDismiss && (
+          <TouchableOpacity
+            onPress={onDismiss}
+            className="py-3 px-6 rounded-full border border-gray-300"
+            activeOpacity={0.8}
+          >
+            <Text className="text-base font-medium text-gray-700">
+              {dismissText}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {onRetry && (
+          <TouchableOpacity
+            onPress={onRetry}
+            className="py-3 px-6 rounded-full flex-row items-center"
+            style={{ backgroundColor: "#6e3ebd" }}
+            activeOpacity={0.8}
+          >
+            <Feather
+              name="refresh-cw"
+              size={16}
+              color="white"
+              style={{ marginRight: 8 }}
+            />
+            <Text className="text-base font-medium text-white">
+              {retryText}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
